@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* App-specific styles */
+.sidebar-transition {
+  transition: width 0.3s ease-in-out;
+}
+
+.sidebar-item-active {
+  @apply bg-blue-600 text-white;
+}
+
+.sidebar-item-inactive {
+  @apply text-gray-600 hover:bg-gray-100 hover:text-gray-900;
+}
