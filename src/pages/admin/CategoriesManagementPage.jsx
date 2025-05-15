@@ -1,6 +1,7 @@
 import React from "react"
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import {getAllCategories, createCategory, updateCategory, deleteCategory} from "../api/categoryApi"
 import { useState, useEffect,useRef } from "react"
 import {
   Search,
@@ -16,80 +17,80 @@ import {
 } from "lucide-react"
 
 // Mock data for categories
-const mockCategories = [
-  {
-    id: 1,
-    name: "Món chính",
-    description: "Các món ăn chính trong thực đơn",
-    dishCount: 12,
-    status: "Hoạt động",
-    createdAt: "2023-01-10",
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 2,
-    name: "Món khai vị",
-    description: "Các món ăn nhẹ dùng trước bữa chính",
-    dishCount: 8,
-    status: "Hoạt động",
-    createdAt: "2023-01-15",
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 3,
-    name: "Món tráng miệng",
-    description: "Các món ngọt dùng sau bữa ăn",
-    dishCount: 6,
-    status: "Hoạt động",
-    createdAt: "2023-02-01",
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 4,
-    name: "Đồ uống",
-    description: "Các loại nước uống và đồ uống có cồn",
-    dishCount: 10,
-    status: "Hoạt động",
-    createdAt: "2023-01-20",
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 5,
-    name: "Món đặc biệt",
-    description: "Các món đặc biệt của nhà hàng",
-    dishCount: 5,
-    status: "Hoạt động",
-    createdAt: "2022-12-01",
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 6,
-    name: "Món chay",
-    description: "Các món ăn chay không có thịt",
-    dishCount: 7,
-    status: "Không hoạt động",
-    createdAt: "2023-02-10",
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 7,
-    name: "Món hải sản",
-    description: "Các món ăn từ hải sản tươi sống",
-    dishCount: 9,
-    status: "Hoạt động",
-    createdAt: "2022-12-15",
-    image: "/placeholder.svg?height=40&width=40",
-  },
-  {
-    id: 8,
-    name: "Món lẩu",
-    description: "Các loại lẩu đặc trưng",
-    dishCount: 4,
-    status: "Hoạt động",
-    createdAt: "2023-03-01",
-    image: "/placeholder.svg?height=40&width=40",
-  },
-]
+// const mockCategories = [
+//   {
+//     id: 1,
+//     name: "Món chính",
+//     description: "Các món ăn chính trong thực đơn",
+//     dishCount: 12,
+//     status: "Hoạt động",
+//     createdAt: "2023-01-10",
+//     image: "/placeholder.svg?height=40&width=40",
+//   },
+//   {
+//     id: 2,
+//     name: "Món khai vị",
+//     description: "Các món ăn nhẹ dùng trước bữa chính",
+//     dishCount: 8,
+//     status: "Hoạt động",
+//     createdAt: "2023-01-15",
+//     image: "/placeholder.svg?height=40&width=40",
+//   },
+//   {
+//     id: 3,
+//     name: "Món tráng miệng",
+//     description: "Các món ngọt dùng sau bữa ăn",
+//     dishCount: 6,
+//     status: "Hoạt động",
+//     createdAt: "2023-02-01",
+//     image: "/placeholder.svg?height=40&width=40",
+//   },
+//   {
+//     id: 4,
+//     name: "Đồ uống",
+//     description: "Các loại nước uống và đồ uống có cồn",
+//     dishCount: 10,
+//     status: "Hoạt động",
+//     createdAt: "2023-01-20",
+//     image: "/placeholder.svg?height=40&width=40",
+//   },
+//   {
+//     id: 5,
+//     name: "Món đặc biệt",
+//     description: "Các món đặc biệt của nhà hàng",
+//     dishCount: 5,
+//     status: "Hoạt động",
+//     createdAt: "2022-12-01",
+//     image: "/placeholder.svg?height=40&width=40",
+//   },
+//   {
+//     id: 6,
+//     name: "Món chay",
+//     description: "Các món ăn chay không có thịt",
+//     dishCount: 7,
+//     status: "Không hoạt động",
+//     createdAt: "2023-02-10",
+//     image: "/placeholder.svg?height=40&width=40",
+//   },
+//   {
+//     id: 7,
+//     name: "Món hải sản",
+//     description: "Các món ăn từ hải sản tươi sống",
+//     dishCount: 9,
+//     status: "Hoạt động",
+//     createdAt: "2022-12-15",
+//     image: "/placeholder.svg?height=40&width=40",
+//   },
+//   {
+//     id: 8,
+//     name: "Món lẩu",
+//     description: "Các loại lẩu đặc trưng",
+//     dishCount: 4,
+//     status: "Hoạt động",
+//     createdAt: "2023-03-01",
+//     image: "/placeholder.svg?height=40&width=40",
+//   },
+// ]
 
 const CategoriesManagementPage = () => {
   const [categories, setCategories] = useState([])
@@ -140,12 +141,24 @@ const CategoriesManagementPage = () => {
 
   const [formErrors, setFormErrors] = useState({})
 
+  // useEffect(() => {
+  //   // In a real app, you would fetch categories from an API
+  //   setCategories(mockCategories)
+  //   setFilteredCategories(mockCategories)
+  // }, [])
   useEffect(() => {
-    // In a real app, you would fetch categories from an API
-    setCategories(mockCategories)
-    setFilteredCategories(mockCategories)
+    const fetchCategories = async () => {
+      try {
+        
+        const response = await getAllCategories()
+        setCategories(response.data)
+        setFilteredCategories(response.data)
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+      }
+    }
+    fetchCategories()
   }, [])
-
   useEffect(() => {
     // Filter categories based on search term and status
     let filtered = categories
@@ -475,7 +488,7 @@ const CategoriesManagementPage = () => {
                   onClick={() => handleSort("id")}
                 >
                   <div className="flex items-center">
-                    ID
+                    Mã danh mục
                     {sortConfig.key === "id" && (
                       <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
@@ -487,12 +500,24 @@ const CategoriesManagementPage = () => {
                   onClick={() => handleSort("name")}
                 >
                   <div className="flex items-center">
-                    Danh mục
+                    Tên danh mục
                     {sortConfig.key === "name" && (
                       <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
                 </th>
+                {/* <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                  onClick={() => handleSort("name")}
+                >
+                  <div className="flex items-center">
+                    Hình ảnh
+                    {sortConfig.key === "name" && (
+                      <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                    )}
+                  </div>
+                </th> */}
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
@@ -517,7 +542,7 @@ const CategoriesManagementPage = () => {
                     )}
                   </div>
                 </th>
-                <th
+                {/* <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                   onClick={() => handleSort("createdAt")}
@@ -528,7 +553,7 @@ const CategoriesManagementPage = () => {
                       <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
                     )}
                   </div>
-                </th>
+                </th> */}
                 <th
                   scope="col"
                   className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -539,37 +564,38 @@ const CategoriesManagementPage = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {getCurrentPageCategories().map((category) => (
-                <tr key={category.id} className="hover:bg-gray-50">
+                <tr key={category.maDanhMuc} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <input
                       type="checkbox"
                       className="rounded text-blue-600 focus:ring-blue-500"
-                      checked={selectedCategories.includes(category.id)}
-                      onChange={() => handleSelectCategory(category.id)}
+                      checked={selectedCategories.includes(category.maDanhMuc)}
+                      onChange={() => handleSelectCategory(category.maDanhMuc)}
                     />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.id}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.maDanhMuc}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
-                        <img className="h-10 w-10 rounded-full" src={category.image || "/placeholder.svg"} alt="" />
+                        <img className="h-10 w-10 rounded-full" src={category.HinhAnh || "/placeholder.svg"} alt="" />
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{category.name}</div>
-                        <div className="text-sm text-gray-500">{category.description}</div>
+                        <div className="text-sm font-medium text-gray-900">{category.tenDanhMuc}</div>
+                        <div className="text-sm text-gray-500">{category.moTa}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.dishCount}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.soLuongMonAn}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${category.status === "Hoạt động" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
+                      ${category.trangThai === "Hoạt động" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
                     >
-                      {category.status}
+                      {category.trangThai}
                     </span>
+                    
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.createdAt}</td>
+                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.createdAt}</td> */}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
                       <button

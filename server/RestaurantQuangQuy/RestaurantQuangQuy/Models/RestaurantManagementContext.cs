@@ -16,16 +16,16 @@ public partial class RestaurantManagementContext : DbContext
     }
 
     public virtual DbSet<Banan> Banans { get; set; }
-
-    public virtual DbSet<Baocaodoanhthu> Baocaodoanhthus { get; set; }
+	
+	public virtual DbSet<Baocaodoanhthu> Baocaodoanhthus { get; set; }
 
     public virtual DbSet<Chitietdondatmon> Chitietdondatmons { get; set; }
 
     public virtual DbSet<Danhgium> Danhgia { get; set; }
 
     public virtual DbSet<Danhmuc> Danhmucs { get; set; }
-
-    public virtual DbSet<Datban> Datbans { get; set; }
+	public object DanhMucs { get; internal set; }
+	public virtual DbSet<Datban> Datbans { get; set; }
 
     public virtual DbSet<Dondatmon> Dondatmons { get; set; }
 
@@ -42,8 +42,9 @@ public partial class RestaurantManagementContext : DbContext
     public virtual DbSet<Quyentruycap> Quyentruycaps { get; set; }
 
     public virtual DbSet<Taikhoan> Taikhoans { get; set; }
+	public object BanAnDTO { get; internal set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=DefaultConnection");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

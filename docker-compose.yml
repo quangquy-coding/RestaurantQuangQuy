@@ -1,0 +1,6 @@
+services:
+  restaurantquangquy:
+    image: ${DOCKER_REGISTRY-}restaurantquangquy
+    build:
+      context: .
+      dockerfile: server/RestaurantQuangQuy/RestaurantQuangQuy/Dockerfile

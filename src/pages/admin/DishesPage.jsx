@@ -3,75 +3,15 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { useState, useEffect } from "react"
 import { Search, Plus, Edit, Trash2, Eye, Upload,Download } from "lucide-react"
+import { getDishes, addDish, updateDish, deleteDish,getCategories} from "../api/dishApi"
 
-// Mock data for dishes
-const mockDishes = [
-  {
-    id: 1,
-    name: "Phở bò tái",
-    category: "Món chính",
-    price: 85000,
-    description: "Phở bò truyền thống với thịt bò tái",
-    ingredients: "Bánh phở, thịt bò, hành, gừng, gia vị",
-    image: "/placeholder.svg?height=80&width=80",
-    isAvailable: true,
-    isSpecial: false,
-    isNew: false,
-  },
-  {
-    id: 2,
-    name: "Gỏi cuốn tôm thịt",
-    category: "Món khai vị",
-    price: 65000,
-    description: "Gỏi cuốn tươi với tôm và thịt heo",
-    ingredients: "Bánh tráng, tôm, thịt heo, rau sống, bún",
-    image: "/placeholder.svg?height=80&width=80",
-    isAvailable: true,
-    isSpecial: false,
-    isNew: true,
-  },
-  {
-    id: 3,
-    name: "Cơm rang hải sản",
-    category: "Món chính",
-    price: 95000,
-    description: "Cơm rang với các loại hải sản tươi ngon",
-    ingredients: "Gạo, tôm, mực, cua, rau củ, gia vị",
-    image: "/placeholder.svg?height=80&width=80",
-    isAvailable: true,
-    isSpecial: true,
-    isNew: false,
-  },
-  {
-    id: 4,
-    name: "Chè khúc bạch",
-    category: "Món tráng miệng",
-    price: 45000,
-    description: "Chè khúc bạch mát lạnh",
-    ingredients: "Sữa, gelatin, đường, trái cây",
-    image: "/placeholder.svg?height=80&width=80",
-    isAvailable: false,
-    isSpecial: false,
-    isNew: false,
-  },
-  {
-    id: 5,
-    name: "Trà đào cam sả",
-    category: "Đồ uống",
-    price: 35000,
-    description: "Trà đào thơm mát với cam và sả",
-    ingredients: "Trà, đào, cam, sả, đường",
-    image: "/placeholder.svg?height=80&width=80",
-    isAvailable: true,
-    isSpecial: false,
-    isNew: true,
-  },
-]
 
-// Mock data for categories
-const categories = ["Món chính", "Món khai vị", "Món tráng miệng", "Đồ uống", "Món đặc biệt"]
+
+
+
 
 const DishesPage = () => {
+  const [categories, setCategories] = useState([]);
   const [dishes, setDishes] = useState([])
   const [filteredDishes, setFilteredDishes] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -82,23 +22,147 @@ const DishesPage = () => {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [currentDish, setCurrentDish] = useState(null)
   const [newDish, setNewDish] = useState({
-    name: "",
-    category: "",
-    price: 0,
-    description: "",
-    ingredients: "",
-    image: "/placeholder.svg?height=80&width=80",
-    isAvailable: true,
-    isSpecial: false,
-    isNew: false,
-  })
+  tenMon: "",
+  maDanhMuc: "",
+  gia: "",
+  moTa: "", 
+  hinhAnh: "/placeholder.svg?height=80&width=80",
+  thoiGianMon: "",
+  thanhPhan: "",
+  dinhDuong: "",
+  diUng: "",
+  isAvailable: true,
+  isSpecial: false,
+  isNew: false,
+});
+  const handleInputChange = (e) => {
+  const { name, value, type, checked } = e.target;
+  setNewDish((prev) => ({
+    ...prev,
+    [name]: type === "checkbox" ? checked : value,
+  }));
+};
 
-  useEffect(() => {
-    // In a real app, you would fetch dishes from an API
-    setDishes(mockDishes)
-    setFilteredDishes(mockDishes)
-  }, [])
+function getSafeImageSrc(src) {
+  if (
+    typeof src === "string" &&
+    src.startsWith("data:image/") &&
+    src.length > 30 // base64 tối thiểu phải dài
+  ) {
+    return src;
+  }
+  return "/placeholder.svg";
+}
+const handleAddDish = async () => {
+  if (!newDish.tenMon || !newDish.maDanhMuc || !newDish.gia || !newDish.moTa || !newDish.hinhAnh)  {
+    alert("Vui lòng điền đầy đủ thông tin bắt buộc");
+    return;
+  }
 
+  const dishToAdd = {
+    tenMon: newDish.tenMon,
+    maDanhMuc: newDish.maDanhMuc,
+    gia: Number(newDish.gia),
+    thoiGianMon: newDish.thoiGianMon,
+    moTa: newDish.moTa,
+    thanhPhan: newDish.thanhPhan,
+    dinhDuong: newDish.dinhDuong,
+    diUng: newDish.diUng,
+
+    hinhAnh: newDish.hinhAnh,
+    tinhTrang: newDish.isSpecial
+      ? "Món đặc biệt"
+      : newDish.isNew
+      ? "Món mới"
+      : newDish.isAvailable
+      ? "Còn hàng"
+      : "Hết hàng",
+  };
+
+  try {
+    await addDish(dishToAdd);
+    // Gọi lại API lấy danh sách món ăn mới nhất
+    const res = await getDishes();
+    setDishes(res.data);
+    setFilteredDishes(res.data);
+    alert("Thêm món ăn thành công!");
+
+    setNewDish({
+      tenMon: "",
+      maDanhMuc: "",
+      gia: "",
+      thoiGianMon: "",
+      moTa: "",
+      thanhPhan: "",
+      dinhDuong: "",
+      diUng: "",
+
+      hinhAnh: "/placeholder.svg?height=80&width=80",
+      isAvailable: true,
+      isSpecial: false,
+      isNew: false,
+    });
+
+    setIsAddModalOpen(false);
+  } catch (err) {
+    alert(
+      "Lỗi khi thêm món ăn: " +
+        JSON.stringify(
+          err.response?.data?.errors ||
+          err.response?.data ||
+          err.message
+        )
+    );
+    console.error(err);
+  }
+};
+
+  const handleNewDishImageUpload = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setNewDish((prev) => ({
+        ...prev,
+        hinhAnh: reader.result, // base64
+      }));
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+
+
+useEffect(() => {
+  const fetchCategories = async () => {
+    try {
+      const res = await getCategories();
+      setCategories(res.data);
+      setFilteredDishes(res.data);
+    } catch (err) {
+      alert("Lỗi khi lấy danh mục món ăn");
+      console.error(err);
+    }
+  }
+  fetchCategories();
+},[])
+
+
+// getDishes
+useEffect(()=>{
+  const fetchDishes = async () => {
+    try {
+      const res = await getDishes();
+      setDishes(res.data);
+      setFilteredDishes(res.data);
+    } catch (err) {
+      alert("Lỗi khi lấy danh sách món ăn");
+      console.error(err);
+    }
+  }
+  fetchDishes();
+},[])
+// lọc 
   useEffect(() => {
     // Filter dishes based on search term and category
     let filtered = dishes
@@ -118,102 +182,88 @@ const DishesPage = () => {
     setFilteredDishes(filtered)
   }, [searchTerm, selectedCategory, dishes])
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target
 
-    if (currentDish) {
-      // Editing existing dish
-      setCurrentDish({
-        ...currentDish,
-        [name]: type === "checkbox" ? checked : value,
-      })
-    } else {
-      // Adding new dish
-      setNewDish({
-        ...newDish,
-        [name]: type === "checkbox" ? checked : value,
-      })
-    }
+
+
+  // Cập nhật món ăn
+  const handleEditDishInputChange = (e) => {
+  const { name, value, type, checked } = e.target;
+  setCurrentDish((prev) => ({
+    ...prev,
+    [name]: type === "checkbox" ? checked : value,
+  }));
+};
+
+const handleEditDish = async () => {
+  if (!currentDish.tenMon || !currentDish.maDanhMuc || currentDish.gia <= 0 || !currentDish.moTa || !currentDish.hinhAnh) {
+    alert("Vui lòng điền đầy đủ thông tin bắt buộc");
+    return;
   }
 
-  const handleAddDish = () => {
-    // Validate required fields
-    if (!newDish.name || !newDish.category || newDish.price <= 0) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc")
-      return
-    }
+  // Xác định lại trường tinhTrang
+  let tinhTrang = "Hết hàng";
+  if (currentDish.isSpecial) tinhTrang = "Món đặc biệt";
+  else if (currentDish.isNew) tinhTrang = "Món mới";
+  else if (currentDish.isAvailable) tinhTrang = "Còn hàng";
 
-    // Generate a new ID (in a real app, this would be handled by the backend)
-    const id = Math.max(...dishes.map((dish) => dish.id), 0) + 1
+  try {
+    const res = await updateDish(currentDish.maMon, {
+      ...currentDish,
+      gia: Number(currentDish.gia),
+      tinhTrang, // cập nhật trạng thái đúng
+    });
 
-    const dishToAdd = {
-      ...newDish,
-      id,
-      price: Number(newDish.price),
-    }
+    // Gọi lại API lấy danh sách món ăn mới nhất để tự render lại
+    const dishesRes = await getDishes();
+    setDishes(dishesRes.data);
+    setFilteredDishes(dishesRes.data);
 
-    // Add the new dish to the list
-    const updatedDishes = [...dishes, dishToAdd]
-    setDishes(updatedDishes)
-    setFilteredDishes(updatedDishes)
+    setCurrentDish(null);
+    setIsEditModalOpen(false);
+    alert("Cập nhật món ăn thành công!");
+  } catch (err) {
+    alert("Lỗi khi cập nhật món ăn");
+    console.error(err);
+  }
+};
 
-    // Reset form and close modal
-    setNewDish({
-      name: "",
-      category: "",
-      price: 0,
-      description: "",
-      ingredients: "",
-      image: "/placeholder.svg?height=80&width=80",
-      isAvailable: true,
-      isSpecial: false,
-      isNew: false,
-    })
-    setIsAddModalOpen(false)
+const handleDeleteDish = async () => {
+  if (!currentDish) return;
+
+  try {
+    // Gọi API xóa món ăn theo mã món
+    await deleteDish(currentDish.maMon);
+
+    // Sau khi xóa thành công, gọi lại API lấy danh sách món ăn mới nhất
+    const res = await getDishes();
+    setDishes(res.data);
+    setFilteredDishes(res.data);
+
+    alert("Xóa món ăn thành công!");
+  } catch (err) {
+    alert("Lỗi khi xóa món ăn");
+    console.error(err);
   }
 
-  const handleEditDish = () => {
-    // Validate required fields
-    if (!currentDish.name || !currentDish.category || currentDish.price <= 0) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc")
-      return
-    }
-
-    // Update the dish in the list
-    const updatedDishes = dishes.map((dish) =>
-      dish.id === currentDish.id ? { ...currentDish, price: Number(currentDish.price) } : dish,
-    )
-
-    setDishes(updatedDishes)
-    setFilteredDishes(updatedDishes)
-
-    // Reset form and close modal
-    setCurrentDish(null)
-    setIsEditModalOpen(false)
-  }
-
-  const handleDeleteDish = () => {
-    if (!currentDish) return
-
-    // Remove the dish from the list
-    const updatedDishes = dishes.filter((dish) => dish.id !== currentDish.id)
-    setDishes(updatedDishes)
-    setFilteredDishes(updatedDishes)
-
-    // Reset and close modal
-    setCurrentDish(null)
-    setIsDeleteModalOpen(false)
-  }
+  // Reset và đóng modal
+  setCurrentDish(null);
+  setIsDeleteModalOpen(false);
+};
 
   const openViewModal = (dish) => {
     setCurrentDish(dish)
     setIsViewModalOpen(true)
   }
 
-  const openEditModal = (dish) => {
-    setCurrentDish(dish)
-    setIsEditModalOpen(true)
-  }
+ const openEditModal = (dish) => {
+  setCurrentDish({
+    ...dish,
+    isAvailable: dish.tinhTrang === "Còn hàng",
+    isSpecial: dish.tinhTrang === "Món đặc biệt",
+    isNew: dish.tinhTrang === "Món mới",
+  });
+  setIsEditModalOpen(true);
+};
 
   const openDeleteModal = (dish) => {
     setCurrentDish(dish)
@@ -224,13 +274,12 @@ const DishesPage = () => {
       const exportData = dishes.map((e, index) => ({
         STT: index + 1,
         "Hình ảnh" : e.image,
-
         "Tên món ăn": e.name,
-        
         "Mô tả": e.description,
         "Danh mục": e.name,
-        
-        "Giá": e.price.toLocaleString("vi-VN") + " ₫",
+
+        "Giá": e.gia?.toLocaleString("vi-VN") + " ₫" || "0 ₫",
+
         "Trạng thái": [
         e.isAvailable ? "Còn hàng" : "Hết hàng",
         e.isNew ? " Mới" : null,
@@ -261,19 +310,7 @@ const DishesPage = () => {
     
       saveAs(file, "DanhSachMonAn.xlsx");
     };
-    const handleNewDishImageUpload = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setNewDish((prev) => ({
-            ...prev,
-            image: reader.result,
-          }));
-        };
-        reader.readAsDataURL(file);
-      }
-    };
+
     const handleEditDishImageUpload = (e) => {
       const file = e.target.files[0];
       if (file) {
@@ -281,7 +318,7 @@ const DishesPage = () => {
         reader.onloadend = () => {
           setCurrentDish((prev) => ({
             ...prev,
-            image: reader.result,
+            hinhAnh: reader.result,
           }));
         };
         reader.readAsDataURL(file);
@@ -324,11 +361,11 @@ const DishesPage = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Tất cả danh mục</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
+         {Array.isArray(categories) && categories.map((cat) => (
+  <option key={cat.maDanhMuc} value={cat.maDanhMuc}>
+    {cat.tenDanhMuc}
+  </option>
+))}
             </select>
 
 
@@ -358,13 +395,43 @@ const DishesPage = () => {
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Danh mục
+                  Giá
                 </th>
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
-                  Giá
+                  Thời gian món
+                </th>
+                  <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Thành phần
+                </th>
+                  <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Thông tin dinh dưỡng
+                </th>
+                  <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Chứa dị ứng
+                </th>
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Danh mục
+                </th>
+                 <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Mã danh mục
                 </th>
                 <th
                   scope="col"
@@ -381,54 +448,96 @@ const DishesPage = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredDishes.map((dish) => (
-                <tr key={dish.id} className="hover:bg-gray-50">
+              {filteredDishes.map((dish, index) => (
+                <tr key={dish.maMon || index} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        <img
-                          src={dish.image || "/placeholder.svg"}
-                          alt={dish.name}
-                          className="h-10 w-10 rounded-full object-cover"
-                        />
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{dish.name}</div>
-                        <div className="text-sm text-gray-500 truncate max-w-xs">{dish.description}</div>
-                      </div>
+                  <div className="flex items-center">
+                    <div className="h-10 w-10 flex-shrink-0">
+                <img
+                  src={getSafeImageSrc(dish.hinhAnh)}
+                  alt={dish.tenMon}
+                  className="h-10 w-10 rounded-full object-cover"
+                />
                     </div>
+                    <div className="ml-4">
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {dish.maMon}
+                      </span>
+                      <div className="text-sm font-medium text-gray-900">{dish.tenMon}</div>
+                      <div className="text-sm text-gray-500 truncate max-w-xs">{dish.moTa}</div>
+                    </div>
+                  </div>
+                </td>
+                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {typeof dish.gia === "number"
+                    ? dish.gia.toLocaleString("vi-VN") + " ₫"
+                    : "0 ₫"}
+           
+                    
+
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                      {dish.category}
+                      {dish.thoiGianMon}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {dish.price.toLocaleString("vi-VN")} ₫
+                    <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {dish.thanhPhan}
+                    </span>
                   </td>
+                  
+                       <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {dish.dinhDuong}
+                    </span>
+                  </td>
+                       <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {dish.diUng}
+                    </span>
+                  </td>
+                  
+                  
+                     
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {dish.tenDanhMuc}
+                    </span>
+                  </td>
+                   <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {dish.maDanhMuc}
+                    </span>
+                  </td>
+                 
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      {dish.isAvailable ? (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          Còn hàng
-                        </span>
-                      ) : (
+                      {{
+                        "Còn hàng": (
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Còn hàng
+                          </span>
+                        ),
+                        "Món đặc biệt": (
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                            Món đặc biệt
+                          </span>
+                        ),
+                        "Món mới": (
+                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Món mới
+                          </span>
+                        ),
+                      }[dish.tinhTrang] || (
                         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
                           Hết hàng
                         </span>
                       )}
-                      {dish.isSpecial && (
-                        <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                          Đặc biệt
-                        </span>
-                      )}
-                      {dish.isNew && (
-                        <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                          Mới
-                        </span>
-                      )}
                     </div>
                   </td>
+
+
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button onClick={() => openViewModal(dish)} className="text-indigo-600 hover:text-indigo-900 mr-3">
                       <Eye className="h-5 w-5" />
@@ -461,8 +570,8 @@ const DishesPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tên món ăn *</label>
                   <input
                     type="text"
-                    name="name"
-                    value={newDish.name}
+                    name="tenMon"
+                    value={newDish.tenMon}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
@@ -471,28 +580,41 @@ const DishesPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục *</label>
-                  <select
-                    name="category"
-                    value={newDish.category}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Chọn danh mục</option>
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
+                      <select
+                      name="maDanhMuc"
+                      value={newDish.maDanhMuc}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      required
+                    >
+                      <option value="">Chọn danh mục</option>
+                      {Array.isArray(categories) &&
+                        categories.map((cat) => (
+                          <option key={cat.maDanhMuc} value={cat.maDanhMuc}>
+                            {cat.tenDanhMuc}
+                          </option>
+                        ))}
+                    </select>
+
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Giá (VNĐ) *</label>
                   <input
                     type="number"
-                    name="price"
-                    value={newDish.price}
+                    name="gia"
+                    value={newDish.gia}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian món *</label>
+                  <input
+                    type="text"
+                    name="thoiGianMon"
+                    value={newDish.thoiGianMon}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
@@ -500,42 +622,75 @@ const DishesPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Hình ảnh</label>
-                  <label className="cursor-pointer inline-block bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
-  Chọn ảnh
-                  <div className="flex items-center">
-                  <input
-  type="file"
-  accept="image/*"
-  onChange={handleNewDishImageUpload}
-  className="hidden"
-/>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hình ảnh</label>
 
-                    
-                    
-                  </div>
-                  </label>
-                  {newDish.image && (
-  <img
-    src={newDish.image}
-    alt="Preview"
-    className="w-24 h-24 mt-2 object-cover rounded-md"
-  />
-)}
-                </div>
+                <label htmlFor="upload-image" className="cursor-pointer inline-block bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
+                  Chọn ảnh
+                </label>
+
+                <input
+                  type="file"
+                  name="hinhAnh"
+                  accept="image/*"
+                  onChange={handleNewDishImageUpload}
+                  className="hidden"
+                  id="upload-image"
+                />
+
+                {newDish.hinhAnh && (
+                  <img
+                    src={newDish.hinhAnh}
+                    alt="Xem trước"
+                    className="w-24 h-24 mt-2 object-cover rounded-md"
+                  />
+                )}
+              </div>
+              
+
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
                   <textarea
-                    name="description"
-                    value={newDish.description}
+                    name="moTa"
+                    value={newDish.moTa}
                     onChange={handleInputChange}
                     rows="3"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   ></textarea>
                 </div>
-
                 <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Thành phần</label>
+                  <textarea
+                    name="thanhPhan"
+                    value={newDish.thanhPhan}
+                    onChange={handleInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  ></textarea>
+                </div>
+                 <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Dinh dưỡng</label>
+                  <textarea
+                    name="dinhDuong"
+                    value={newDish.dinhDuong}
+                    onChange={handleInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  ></textarea>
+                </div>
+                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Chứa dị ứng</label>
+                  <input
+                    type="text"
+                    name="diUng"
+                    value={newDish.diUng}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+                {/* <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Thành phần</label>
                   <textarea
                     name="ingredients"
@@ -544,7 +699,7 @@ const DishesPage = () => {
                     rows="3"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   ></textarea>
-                </div>
+                </div> */}
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
@@ -624,9 +779,9 @@ const DishesPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tên món ăn *</label>
                   <input
                     type="text"
-                    name="name"
-                    value={currentDish.name}
-                    onChange={handleInputChange}
+                    name="tenMon"
+                    value={currentDish.tenMon}
+                    onChange={handleEditDishInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
@@ -635,18 +790,18 @@ const DishesPage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục *</label>
                   <select
-                    name="category"
-                    value={currentDish.category}
-                    onChange={handleInputChange}
+                    name="maDanhMuc"
+                    value={currentDish.maDanhMuc}
+                    onChange={handleEditDishInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   >
                     <option value="">Chọn danh mục</option>
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
+             {Array.isArray(categories) && categories.map((cat) => (
+  <option key={cat.maDanhMuc} value={cat.maDanhMuc}>
+    {cat.tenDanhMuc}
+  </option>
+))}
                   </select>
                 </div>
 
@@ -654,48 +809,92 @@ const DishesPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Giá (VNĐ) *</label>
                   <input
                     type="number"
-                    name="price"
-                    value={currentDish.price}
-                    onChange={handleInputChange}
+                    name="gia"
+                    value={currentDish.gia}
+                    onChange={handleEditDishInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
                   />
                 </div>
-
+                  <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian món</label>
+                  <input
+                    type="text"
+                    name="thoiGianMon"
+                    value={currentDish.thoiGianMon}
+                    onChange={handleEditDishInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    required
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Hình ảnh</label>
                   <div className="flex items-center">
                   <label className="cursor-pointer inline-block bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
                   Sửa ảnh
                   <input
-  type="file"
-  accept="image/*"
-  onChange={handleEditDishImageUpload}
-  className="hidden"
-/>
+                  type="file"
+                  name="hinhAnh"
+                  accept="image/*"
+                  onChange={handleEditDishImageUpload}
+                  className="hidden"
+                />
 
-</label>
+        </label>
                   </div>
-                  {currentDish?.image && (
-  <img
-    src={currentDish.image}
-    alt="Preview"
-    className="w-24 h-24 mt-2 object-cover rounded-md"
-  />
+                  {currentDish?.hinhAnh && (
+                  <img
+                    src={currentDish.hinhAnh}
+                    alt="Preview"
+                    className="w-24 h-24 mt-2 object-cover rounded-md"
+                  />
 )}
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
                   <textarea
-                    name="description"
-                    value={currentDish.description}
-                    onChange={handleInputChange}
+                    name="moTa"
+                    value={currentDish.moTa}
+                    onChange={handleEditDishInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  ></textarea>
+                </div>
+                 <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Thành phần</label>
+                  <textarea
+                    name="thanhPhan"
+                    value={currentDish.thanhPhan}
+                    onChange={handleEditDishInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  ></textarea>
+                </div>
+                 <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Dinh dưỡng</label>
+                  <textarea
+                    name="dinhDuong"
+                    value={currentDish.dinhDuong}
+                    onChange={handleEditDishInputChange}
                     rows="3"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   ></textarea>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Chứa dị ứng</label>
+                  <input
+                    type="text"
+                    name="diUng"
+                    value={currentDish.diUng}
+                    onChange={handleEditDishInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+{/* 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Thành phần</label>
                   <textarea
@@ -705,7 +904,7 @@ const DishesPage = () => {
                     rows="3"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   ></textarea>
-                </div>
+                </div> */}
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
@@ -716,7 +915,7 @@ const DishesPage = () => {
                         id="edit-isAvailable"
                         name="isAvailable"
                         checked={currentDish.isAvailable}
-                        onChange={handleInputChange}
+                        onChange={handleEditDishInputChange}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                       <label htmlFor="edit-isAvailable" className="ml-2 text-sm text-gray-700">
@@ -730,7 +929,7 @@ const DishesPage = () => {
                         id="edit-isSpecial"
                         name="isSpecial"
                         checked={currentDish.isSpecial}
-                        onChange={handleInputChange}
+                        onChange={handleEditDishInputChange}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                       <label htmlFor="edit-isSpecial" className="ml-2 text-sm text-gray-700">
@@ -744,7 +943,7 @@ const DishesPage = () => {
                         id="edit-isNew"
                         name="isNew"
                         checked={currentDish.isNew}
-                        onChange={handleInputChange}
+                        onChange={handleEditDishInputChange}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                       <label htmlFor="edit-isNew" className="ml-2 text-sm text-gray-700">
@@ -876,13 +1075,13 @@ const DishesPage = () => {
               <div className="bg-gray-50 p-4 rounded-md">
                 <div className="flex items-center">
                   <img
-                    src={currentDish.image || "/placeholder.svg"}
-                    alt={currentDish.name}
+                    src={currentDish.hinhAnh || "/placeholder.svg"}
+                    alt={currentDish.tenMon}
                     className="h-12 w-12 rounded-full object-cover mr-4"
                   />
                   <div>
-                    <h3 className="font-medium">{currentDish.name}</h3>
-                    <p className="text-sm text-gray-500">{currentDish.category}</p>
+                    <h3 className="font-medium">{currentDish.tenMon}</h3>
+                    <p className="text-sm text-gray-500">{currentDish.maDanhMuc}</p>
                   </div>
                 </div>
               </div>
