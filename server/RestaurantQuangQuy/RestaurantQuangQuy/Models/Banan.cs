@@ -16,5 +16,5 @@ public partial class Banan
 
     public string? GhiChu { get; set; }
 
-    public virtual ICollection<Datban> MaBanAns { get; set; } = new List<Datban>();
+    public virtual ICollection<DatBanBanAn> DatBanBanAns { get; set; } = new List<DatBanBanAn>();
 }

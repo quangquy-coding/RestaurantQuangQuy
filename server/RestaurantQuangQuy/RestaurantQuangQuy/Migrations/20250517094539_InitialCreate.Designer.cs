@@ -12,8 +12,8 @@ using RestaurantQuangQuy.Models;
 namespace RestaurantQuangQuy.Migrations
 {
     [DbContext(typeof(RestaurantManagementContext))]
-    [Migration("20250512141524_Banan")]
-    partial class Banan
+    [Migration("20250517094539_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -48,33 +48,6 @@ namespace RestaurantQuangQuy.Migrations
             modelBuilder.HasSequence("QuyenSeq");
 
             modelBuilder.HasSequence("TaiKhoanSeq");
-
-            modelBuilder.Entity("DatbanBanan", b =>
-                {
-                    b.Property<string>("MaBan")
-                        .HasMaxLength(10)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(10)")
-                        .HasColumnName("maBan");
-
-                    b.Property<string>("MaBanAn")
-                        .HasMaxLength(10)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(10)")
-                        .HasColumnName("maBanAn");
-
-                    b.HasKey("MaBan", "MaBanAn")
-                        .HasName("PK__DATBAN_B__241A23E6A4488252");
-
-                    b.HasIndex("MaBanAn");
-
-                    b.ToTable("DATBAN_BANAN", null, t =>
-                        {
-                            t.HasTrigger("trg_CapNhatTrangThaiBan");
-                        });
-
-                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
-                });
 
             modelBuilder.Entity("RestaurantQuangQuy.Models.Banan", b =>
                 {
@@ -247,10 +220,16 @@ namespace RestaurantQuangQuy.Migrations
                         .HasColumnType("varchar(10)")
                         .HasColumnName("maDanhMuc");
 
+                    b.Property<string>("HinhAnh")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("MoTa")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("moTa");
+
+                    b.Property<int>("SoLuongMonAn")
+                        .HasColumnType("int");
 
                     b.Property<string>("TenDanhMuc")
                         .IsRequired()
@@ -267,6 +246,33 @@ namespace RestaurantQuangQuy.Migrations
                         .HasName("PK__DANHMUC__6B0F914C953BE2DE");
 
                     b.ToTable("DANHMUC", (string)null);
+                });
+
+            modelBuilder.Entity("RestaurantQuangQuy.Models.DatBanBanAn", b =>
+                {
+                    b.Property<string>("MaDatBan")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)")
+                        .HasColumnName("maBan");
+
+                    b.Property<string>("MaBanAn")
+                        .HasMaxLength(10)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(10)")
+                        .HasColumnName("maBanAn");
+
+                    b.HasKey("MaDatBan", "MaBanAn")
+                        .HasName("PK__DATBAN_B__241A23E6A4488252");
+
+                    b.HasIndex("MaBanAn");
+
+                    b.ToTable("DATBANBANAN", null, t =>
+                        {
+                            t.HasTrigger("trg_CapNhatTrangThaiBan");
+                        });
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("RestaurantQuangQuy.Models.Datban", b =>
@@ -570,6 +576,12 @@ namespace RestaurantQuangQuy.Migrations
                         .HasColumnType("varchar(10)")
                         .HasColumnName("maMon");
 
+                    b.Property<string>("DiUng")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DinhDuong")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<decimal>("Gia")
                         .HasColumnType("decimal(10, 2)")
                         .HasColumnName("gia");
@@ -596,6 +608,9 @@ namespace RestaurantQuangQuy.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("tenMon");
+
+                    b.Property<string>("ThanhPhan")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ThoiGianMon")
                         .HasMaxLength(50)
@@ -762,21 +777,6 @@ namespace RestaurantQuangQuy.Migrations
                     b.ToTable("TAIKHOAN", (string)null);
                 });
 
-            modelBuilder.Entity("DatbanBanan", b =>
-                {
-                    b.HasOne("RestaurantQuangQuy.Models.Banan", null)
-                        .WithMany()
-                        .HasForeignKey("MaBan")
-                        .IsRequired()
-                        .HasConstraintName("FK__DATBAN_BA__maBan__571DF1D5");
-
-                    b.HasOne("RestaurantQuangQuy.Models.Datban", null)
-                        .WithMany()
-                        .HasForeignKey("MaBanAn")
-                        .IsRequired()
-                        .HasConstraintName("FK__DATBAN_BA__maBan__5812160E");
-                });
-
             modelBuilder.Entity("RestaurantQuangQuy.Models.Baocaodoanhthu", b =>
                 {
                     b.HasOne("RestaurantQuangQuy.Models.Hoadonthanhtoan", "MaHoaDonNavigation")
@@ -823,6 +823,25 @@ namespace RestaurantQuangQuy.Migrations
                     b.Navigation("MaHoaDonNavigation");
 
                     b.Navigation("MaKhachHangNavigation");
+                });
+
+            modelBuilder.Entity("RestaurantQuangQuy.Models.DatBanBanAn", b =>
+                {
+                    b.HasOne("RestaurantQuangQuy.Models.Banan", "Banans")
+                        .WithMany("DatBanBanAns")
+                        .HasForeignKey("MaBanAn")
+                        .IsRequired()
+                        .HasConstraintName("FK__DATBAN_BA__maBan__571DF1D5");
+
+                    b.HasOne("RestaurantQuangQuy.Models.Datban", "Datbans")
+                        .WithMany("DatBanBanAns")
+                        .HasForeignKey("MaDatBan")
+                        .IsRequired()
+                        .HasConstraintName("FK__DATBAN_BA__maBan__5812160E");
+
+                    b.Navigation("Banans");
+
+                    b.Navigation("Datbans");
                 });
 
             modelBuilder.Entity("RestaurantQuangQuy.Models.Datban", b =>
@@ -932,6 +951,11 @@ namespace RestaurantQuangQuy.Migrations
                     b.Navigation("MaQuyenNavigation");
                 });
 
+            modelBuilder.Entity("RestaurantQuangQuy.Models.Banan", b =>
+                {
+                    b.Navigation("DatBanBanAns");
+                });
+
             modelBuilder.Entity("RestaurantQuangQuy.Models.Danhmuc", b =>
                 {
                     b.Navigation("Monans");
@@ -939,6 +963,8 @@ namespace RestaurantQuangQuy.Migrations
 
             modelBuilder.Entity("RestaurantQuangQuy.Models.Datban", b =>
                 {
+                    b.Navigation("DatBanBanAns");
+
                     b.Navigation("Dondatmons");
 
                     b.Navigation("Hoadonthanhtoans");

@@ -1,0 +1,17 @@
+﻿using RestaurantQuangQuy.DTO.BanAnDTO;
+namespace RestaurantQuangQuy.DTO.DatBanDTO
+{
+    public class DatBanDTO
+    {
+        public string MaBanAn { get; set; } = null!;
+        public List<string> MaBans { get; set; } = new List<string>();
+        public string MaKhachHang { get; set; } = null!;
+        public DateTime ThoiGianDat { get; set; }
+        public DateTime ThoiGianDen { get; set; }
+        public string TrangThai { get; set; } = null!;
+        public string? GhiChu { get; set; }
+
+        // Fully qualify the type to avoid ambiguity
+        public List<RestaurantQuangQuy.DTO.BanAnDTO.BanAnDTO> Banans { get; set; } = new List<RestaurantQuangQuy.DTO.BanAnDTO.BanAnDTO>();
+    }
+}

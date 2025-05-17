@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RestaurantQuangQuy.DTO.BanAnDTO;
-using RestaurantQuangQuy.Migrations;
 using RestaurantQuangQuy.Models;
 
 

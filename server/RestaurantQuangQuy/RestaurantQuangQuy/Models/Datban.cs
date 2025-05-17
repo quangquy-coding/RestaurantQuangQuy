@@ -23,5 +23,5 @@ public partial class Datban
 
     public virtual Khachhang MaKhachHangNavigation { get; set; } = null!;
 
-    public virtual ICollection<Banan> MaBans { get; set; } = new List<Banan>();
+    public virtual ICollection<DatBanBanAn> DatBanBanAns { get; set; } = new List<DatBanBanAn>();
 }

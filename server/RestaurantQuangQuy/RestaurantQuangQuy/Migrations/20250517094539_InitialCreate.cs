@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace RestaurantQuangQuy.Migrations
 {
     /// <inheritdoc />
-    public partial class TenMigration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -53,6 +53,7 @@ namespace RestaurantQuangQuy.Migrations
                 {
                     maBan = table.Column<string>(type: "varchar(10)", unicode: false, maxLength: 10, nullable: false),
                     tenBan = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    ViTri = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     soChoNgoi = table.Column<int>(type: "int", nullable: false),
                     trangThai = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     ghiChu = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true)
@@ -69,7 +70,9 @@ namespace RestaurantQuangQuy.Migrations
                     maDanhMuc = table.Column<string>(type: "varchar(10)", unicode: false, maxLength: 10, nullable: false),
                     tenDanhMuc = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     moTa = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    tinhTrang = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
+                    tinhTrang = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    HinhAnh = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SoLuongMonAn = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -117,7 +120,10 @@ namespace RestaurantQuangQuy.Migrations
                     hinhAnh = table.Column<string>(type: "varchar(200)", unicode: false, maxLength: 200, nullable: true),
                     thoiGianMon = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     tinhTrang = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    maDanhMuc = table.Column<string>(type: "varchar(10)", unicode: false, maxLength: 10, nullable: true)
+                    maDanhMuc = table.Column<string>(type: "varchar(10)", unicode: false, maxLength: 10, nullable: true),
+                    ThanhPhan = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DinhDuong = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    DiUng = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -218,7 +224,7 @@ namespace RestaurantQuangQuy.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DATBAN_BANAN",
+                name: "DATBANBANAN",
                 columns: table => new
                 {
                     maBan = table.Column<string>(type: "varchar(10)", unicode: false, maxLength: 10, nullable: false),
@@ -229,12 +235,12 @@ namespace RestaurantQuangQuy.Migrations
                     table.PrimaryKey("PK__DATBAN_B__241A23E6A4488252", x => new { x.maBan, x.maBanAn });
                     table.ForeignKey(
                         name: "FK__DATBAN_BA__maBan__571DF1D5",
-                        column: x => x.maBan,
+                        column: x => x.maBanAn,
                         principalTable: "BANAN",
                         principalColumn: "maBan");
                     table.ForeignKey(
                         name: "FK__DATBAN_BA__maBan__5812160E",
-                        column: x => x.maBanAn,
+                        column: x => x.maBan,
                         principalTable: "DATBAN",
                         principalColumn: "maBanAn");
                 });
@@ -414,8 +420,8 @@ namespace RestaurantQuangQuy.Migrations
                 column: "maKhachHang");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DATBAN_BANAN_maBanAn",
-                table: "DATBAN_BANAN",
+                name: "IX_DATBANBANAN_maBanAn",
+                table: "DATBANBANAN",
                 column: "maBanAn");
 
             migrationBuilder.CreateIndex(
@@ -518,7 +524,7 @@ namespace RestaurantQuangQuy.Migrations
                 name: "DANHGIA");
 
             migrationBuilder.DropTable(
-                name: "DATBAN_BANAN");
+                name: "DATBANBANAN");
 
             migrationBuilder.DropTable(
                 name: "MONAN");
