@@ -1,8 +1,8 @@
 import React from "react"
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
-import {getAllCategories, createCategory, updateCategory, deleteCategory} from "../api/categoryApi"
-import { useState, useEffect,useRef } from "react"
+import * as XLSX from "xlsx"
+import { saveAs } from "file-saver"
+import { getAllCategories, createCategory, updateCategory, deleteCategory } from "../api/categoryApi"
+import { useState, useEffect, useRef } from "react"
 import {
   Search,
   Plus,
@@ -16,82 +16,6 @@ import {
   X,
 } from "lucide-react"
 
-// Mock data for categories
-// const mockCategories = [
-//   {
-//     id: 1,
-//     name: "Món chính",
-//     description: "Các món ăn chính trong thực đơn",
-//     dishCount: 12,
-//     status: "Hoạt động",
-//     createdAt: "2023-01-10",
-//     image: "/placeholder.svg?height=40&width=40",
-//   },
-//   {
-//     id: 2,
-//     name: "Món khai vị",
-//     description: "Các món ăn nhẹ dùng trước bữa chính",
-//     dishCount: 8,
-//     status: "Hoạt động",
-//     createdAt: "2023-01-15",
-//     image: "/placeholder.svg?height=40&width=40",
-//   },
-//   {
-//     id: 3,
-//     name: "Món tráng miệng",
-//     description: "Các món ngọt dùng sau bữa ăn",
-//     dishCount: 6,
-//     status: "Hoạt động",
-//     createdAt: "2023-02-01",
-//     image: "/placeholder.svg?height=40&width=40",
-//   },
-//   {
-//     id: 4,
-//     name: "Đồ uống",
-//     description: "Các loại nước uống và đồ uống có cồn",
-//     dishCount: 10,
-//     status: "Hoạt động",
-//     createdAt: "2023-01-20",
-//     image: "/placeholder.svg?height=40&width=40",
-//   },
-//   {
-//     id: 5,
-//     name: "Món đặc biệt",
-//     description: "Các món đặc biệt của nhà hàng",
-//     dishCount: 5,
-//     status: "Hoạt động",
-//     createdAt: "2022-12-01",
-//     image: "/placeholder.svg?height=40&width=40",
-//   },
-//   {
-//     id: 6,
-//     name: "Món chay",
-//     description: "Các món ăn chay không có thịt",
-//     dishCount: 7,
-//     status: "Không hoạt động",
-//     createdAt: "2023-02-10",
-//     image: "/placeholder.svg?height=40&width=40",
-//   },
-//   {
-//     id: 7,
-//     name: "Món hải sản",
-//     description: "Các món ăn từ hải sản tươi sống",
-//     dishCount: 9,
-//     status: "Hoạt động",
-//     createdAt: "2022-12-15",
-//     image: "/placeholder.svg?height=40&width=40",
-//   },
-//   {
-//     id: 8,
-//     name: "Món lẩu",
-//     description: "Các loại lẩu đặc trưng",
-//     dishCount: 4,
-//     status: "Hoạt động",
-//     createdAt: "2023-03-01",
-//     image: "/placeholder.svg?height=40&width=40",
-//   },
-// ]
-
 const CategoriesManagementPage = () => {
   const [categories, setCategories] = useState([])
   const [filteredCategories, setFilteredCategories] = useState([])
@@ -104,25 +28,31 @@ const CategoriesManagementPage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [categoryToDelete, setCategoryToDelete] = useState(null)
   const [categoryToEdit, setCategoryToEdit] = useState(null)
-  
-  
-  const [selectedImage, setSelectedImage] = useState(null);
-  const fileInputRef = useRef(null); // Tạo ref để tham chiếu đến input file
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formErrors, setFormErrors] = useState({})
+  // Thêm state để theo dõi trạng thái tải dữ liệu
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleNewCategoryImageChange = (e) => {
-    const file = e.target.files[0];  // Lấy file ảnh được chọn
-    if (file) {
-      setNewCategory((prev) => ({
-        ...prev,
-        image: URL.createObjectURL(file), // Tạo URL cho file ảnh đã chọn
-      }));
-    }
-  }
+  // Refs
+  const addFileInputRef = useRef(null)
+  const editFileInputRef = useRef(null)
 
-  const handleChangeClick = () => {
-    // Khi bấm nút "Chọn ảnh" hoặc "Sửa ảnh", sẽ tự động mở input file
-    fileInputRef.current.click();
-  };
+  // State cho form thêm mới
+  const [newCategory, setNewCategory] = useState({
+    tenDanhMuc: "",
+    moTa: "",
+    trangThai: "Hoạt động",
+    hinhAnh: null,
+  })
+
+  // State cho form chỉnh sửa
+  const [editedCategory, setEditedCategory] = useState({
+    tenDanhMuc: "",
+    moTa: "",
+    trangThai: "Hoạt động",
+    hinhAnh: null,
+  })
+
   const [sortConfig, setSortConfig] = useState({
     key: "id",
     direction: "asc",
@@ -131,34 +61,39 @@ const CategoriesManagementPage = () => {
   const categoriesPerPage = 5
   const statusOptions = ["Tất cả", "Hoạt động", "Không hoạt động"]
 
-  // New category form state
-  const [newCategory, setNewCategory] = useState({
-    name: "",
-    description: "",
-    status: "Hoạt động",
-    image: null,
-  })
+  // Thêm state cho modal xem ảnh
+  const [isImageViewModalOpen, setIsImageViewModalOpen] = useState(false)
+  const [imageToView, setImageToView] = useState(null)
 
-  const [formErrors, setFormErrors] = useState({})
-
-  // useEffect(() => {
-  //   // In a real app, you would fetch categories from an API
-  //   setCategories(mockCategories)
-  //   setFilteredCategories(mockCategories)
-  // }, [])
+  // Cập nhật hàm fetchCategories để sử dụng state isLoading
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        
+        setIsLoading(true)
         const response = await getAllCategories()
         setCategories(response.data)
         setFilteredCategories(response.data)
       } catch (error) {
         console.error("Error fetching categories:", error)
+      } finally {
+        setIsLoading(false)
       }
     }
     fetchCategories()
   }, [])
+
+  // Cập nhật form chỉnh sửa khi categoryToEdit thay đổi
+  useEffect(() => {
+    if (categoryToEdit) {
+      setEditedCategory({
+        tenDanhMuc: categoryToEdit.tenDanhMuc || categoryToEdit.name || "",
+        moTa: categoryToEdit.moTa || categoryToEdit.description || "",
+        trangThai: categoryToEdit.trangThai || categoryToEdit.status || "Hoạt động",
+        hinhAnh: categoryToEdit.hinhAnh || categoryToEdit.image || null,
+      })
+    }
+  }, [categoryToEdit])
+
   useEffect(() => {
     // Filter categories based on search term and status
     let filtered = categories
@@ -166,22 +101,27 @@ const CategoriesManagementPage = () => {
     if (searchTerm) {
       filtered = filtered.filter(
         (category) =>
-          category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          category.description.toLowerCase().includes(searchTerm.toLowerCase()),
+          category.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          category.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          category.tenDanhMuc?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          category.moTa?.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
 
     if (statusFilter !== "Tất cả") {
-      filtered = filtered.filter((category) => category.status === statusFilter)
+      filtered = filtered.filter((category) => category.status === statusFilter || category.trangThai === statusFilter)
     }
 
     // Sort categories
     if (sortConfig.key) {
       filtered.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
+        const aValue = a[sortConfig.key] || ""
+        const bValue = b[sortConfig.key] || ""
+
+        if (aValue < bValue) {
           return sortConfig.direction === "asc" ? -1 : 1
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
+        if (aValue > bValue) {
           return sortConfig.direction === "asc" ? 1 : -1
         }
         return 0
@@ -202,7 +142,7 @@ const CategoriesManagementPage = () => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      const currentPageCategories = getCurrentPageCategories().map((category) => category.id)
+      const currentPageCategories = getCurrentPageCategories().map((category) => category.id || category.maDanhMuc)
       setSelectedCategories(currentPageCategories)
     } else {
       setSelectedCategories([])
@@ -218,7 +158,7 @@ const CategoriesManagementPage = () => {
   }
 
   const handleDeleteSelected = () => {
-    setCategories(categories.filter((category) => !selectedCategories.includes(category.id)))
+    setCategories(categories.filter((category) => !selectedCategories.includes(category.id || category.maDanhMuc)))
     setSelectedCategories([])
   }
 
@@ -227,106 +167,64 @@ const CategoriesManagementPage = () => {
     setIsDeleteModalOpen(true)
   }
 
-  const confirmDeleteCategory = () => {
-    setCategories(categories.filter((category) => category.id !== categoryToDelete.id))
-    setIsDeleteModalOpen(false)
-    setCategoryToDelete(null)
+  const confirmDeleteCategory = async () => {
+    try {
+      await deleteCategory(categoryToDelete.maDanhMuc)
+      setCategories(categories.filter((category) => category.maDanhMuc !== categoryToDelete.maDanhMuc))
+      setIsDeleteModalOpen(false)
+      setCategoryToDelete(null)
+      alert("Xóa danh mục thành công!")
+    } catch (error) {
+      console.error("Error deleting category:", error)
+      alert("Lỗi khi xóa danh mục. Vui lòng thử lại sau.")
+    }
   }
 
   const handleEditCategory = (category) => {
     setCategoryToEdit(category)
-    setNewCategory({
-      name: category.name,
-      description: category.description,
-      status: category.status,
-      image: null,
-    })
     setIsEditCategoryModalOpen(true)
   }
 
-  const handleAddCategory = (e) => {
-    e.preventDefault();
-  
-    // Validate form
-    const errors = {};
-    if (!newCategory.name.trim()) errors.name = "Tên danh mục không được để trống";
-  
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
-  
-    if (isEditCategoryModalOpen) {
-      // Cập nhật danh mục đã có
-      const updatedCategories = categories.map((category) => {
-        if (category.id === categoryToEdit.id) {
-          return {
-            ...category,
-            name: newCategory.name,
-            description: newCategory.description,
-            status: newCategory.status,
-            image: newCategory.image || category.image,  // Cập nhật ảnh mới nếu có
-          };
-        }
-        return category;
-      });
-  
-      setCategories(updatedCategories);
-      setIsEditCategoryModalOpen(false);
-    } else {
-      // Thêm danh mục mới
-      const newCategoryId = Math.max(...categories.map((category) => category.id)) + 1;
-      const categoryToAdd = {
-        id: newCategoryId,
-        name: newCategory.name,
-        description: newCategory.description,
-        status: newCategory.status,
-        dishCount: 0,
-        createdAt: new Date().toISOString().split("T")[0],
-        image: newCategory.image || "/placeholder.svg",  // Sử dụng ảnh đã chọn nếu có
-      };
-  
-      setCategories([...categories, categoryToAdd]);
-      setIsAddCategoryModalOpen(false);
-    }
-  
+  // Xử lý thêm danh mục mới
+  const handleAddCategoryClick = () => {
     // Reset form
     setNewCategory({
-      name: "",
-      description: "",
-      status: "Hoạt động",
-      image: null,
-    });
-    setFormErrors({});
+      tenDanhMuc: "",
+      moTa: "",
+      trangThai: "Hoạt động",
+      hinhAnh: null,
+    })
+    setFormErrors({})
+    setIsAddCategoryModalOpen(true)
   }
-  
-  
- // Hàm xử lý khi chọn ảnh
- const handleImageChange = (e) => {
-  const file = e.target.files[0];
-  if (file) {
-    const imageUrl = URL.createObjectURL(file); // Tạo URL tạm thời cho ảnh
-    if (isEditCategoryModalOpen && categoryToEdit) {
-      // Cập nhật ảnh trong danh mục đang chỉnh sửa
-      setCategoryToEdit((prevCategory) => ({
-        ...prevCategory,
-        image: imageUrl,
-      }));
-      setNewCategory((prevCategory) => ({
-        ...prevCategory,
-        image: imageUrl,
-      }));
-    } else {
-      // Cập nhật ảnh trong danh mục mới
-      setNewCategory((prevCategory) => ({
-        ...prevCategory,
-        image: imageUrl,
-      }));
-    }
-  }
-};
 
-  const handleInputChange = (e) => {
+  // Xử lý đóng modal thêm mới
+  const handleCloseAddModal = () => {
+    setIsAddCategoryModalOpen(false)
+    setNewCategory({
+      tenDanhMuc: "",
+      moTa: "",
+      trangThai: "Hoạt động",
+      hinhAnh: null,
+    })
+    setFormErrors({})
+  }
+
+  // Xử lý đóng modal chỉnh sửa
+  const handleCloseEditModal = () => {
+    setIsEditCategoryModalOpen(false)
+    setCategoryToEdit(null)
+    setEditedCategory({
+      tenDanhMuc: "",
+      moTa: "",
+      trangThai: "Hoạt động",
+      hinhAnh: null,
+    })
+    setFormErrors({})
+  }
+
+  // Xử lý thay đổi input cho form thêm mới
+  const handleAddInputChange = (e) => {
     const { name, value } = e.target
     setNewCategory({
       ...newCategory,
@@ -339,6 +237,188 @@ const CategoriesManagementPage = () => {
         ...formErrors,
         [name]: "",
       })
+    }
+  }
+
+  // Xử lý thay đổi input cho form chỉnh sửa
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target
+    setEditedCategory({
+      ...editedCategory,
+      [name]: value,
+    })
+
+    // Clear error when user types
+    if (formErrors[name]) {
+      setFormErrors({
+        ...formErrors,
+        [name]: "",
+      })
+    }
+  }
+
+  // Xử lý chọn ảnh cho form thêm mới
+  const handleAddImageClick = () => {
+    addFileInputRef.current.click()
+  }
+
+  // Xử lý chọn ảnh cho form chỉnh sửa
+  const handleEditImageClick = () => {
+    editFileInputRef.current.click()
+  }
+
+  // Thêm hàm xử lý xem ảnh
+  const handleViewImage = (imageUrl) => {
+    setImageToView(imageUrl)
+    setIsImageViewModalOpen(true)
+  }
+
+  // Xử lý thay đổi ảnh cho form thêm mới
+  const handleAddImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      // Tạo URL tạm thời cho ảnh để hiển thị preview
+      const imageUrl = URL.createObjectURL(file)
+      setNewCategory((prev) => ({
+        ...prev,
+        hinhAnh: imageUrl,
+        imageFile: file, // Lưu file để upload sau
+      }))
+    }
+  }
+
+  // Xử lý thay đổi ảnh cho form chỉnh sửa
+  const handleEditImageChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      // Tạo URL tạm thời cho ảnh để hiển thị preview
+      const imageUrl = URL.createObjectURL(file)
+      setEditedCategory((prev) => ({
+        ...prev,
+        hinhAnh: imageUrl,
+        imageFile: file, // Lưu file để upload sau
+      }))
+    }
+  }
+
+  // Tối ưu hóa việc tải lại dữ liệu sau khi thêm/sửa/xóa
+  // Cập nhật hàm handleAddCategory
+  const handleAddCategory = async (e) => {
+    e.preventDefault()
+    if (isSubmitting) return
+
+    // Validate form
+    const errors = {}
+    if (typeof newCategory.tenDanhMuc !== "string" || !newCategory.tenDanhMuc.trim()) {
+      errors.tenDanhMuc = "Tên danh mục không được để trống"
+    }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors)
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      // Xử lý upload ảnh nếu có file ảnh mới
+      const imageUrl = newCategory.hinhAnh
+      if (newCategory.imageFile) {
+        // Trong thực tế, bạn sẽ upload ảnh lên server hoặc dịch vụ lưu trữ ảnh
+        // Ở đây chúng ta giả định đã upload thành công và nhận được URL
+        // imageUrl = await uploadImage(newCategory.imageFile);
+
+        // Giả lập upload ảnh thành công
+        console.log("Đang upload ảnh...")
+        // Giữ nguyên URL tạm thời cho demo
+      }
+
+      const data = {
+        maDanhMuc: "",
+        tenDanhMuc: newCategory.tenDanhMuc,
+        moTa: newCategory.moTa,
+        hinhAnh: imageUrl || "",
+        trangThai: newCategory.trangThai,
+      }
+
+      await createCategory(data)
+      const response = await getAllCategories()
+      setCategories(response.data)
+      setFilteredCategories(response.data)
+      setIsAddCategoryModalOpen(false)
+      setNewCategory({
+        tenDanhMuc: "",
+        moTa: "",
+        trangThai: "Hoạt động",
+        hinhAnh: null,
+      })
+      setFormErrors({})
+      alert("Thêm danh mục thành công!")
+    } catch (err) {
+      alert("Lỗi khi thêm danh mục. Vui lòng kiểm tra lại dữ liệu hoặc thử lại sau.")
+      console.error("Error creating category:", err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  // Cập nhật hàm handleUpdateCategory
+  const handleUpdateCategory = async (e) => {
+    e.preventDefault()
+    if (isSubmitting) return
+
+    // Validate form
+    const errors = {}
+    if (typeof editedCategory.tenDanhMuc !== "string" || !editedCategory.tenDanhMuc.trim()) {
+      errors.tenDanhMuc = "Tên danh mục không được để trống"
+    }
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors)
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      // Xử lý upload ảnh nếu có file ảnh mới
+      const imageUrl = editedCategory.hinhAnh
+      if (editedCategory.imageFile) {
+        // Trong thực tế, bạn sẽ upload ảnh lên server hoặc dịch vụ lưu trữ ảnh
+        // Ở đây chúng ta giả định đã upload thành công và nhận được URL
+        // imageUrl = await uploadImage(editedCategory.imageFile);
+
+        // Giả lập upload ảnh thành công
+        console.log("Đang upload ảnh...")
+        // Giữ nguyên URL tạm thời cho demo
+      }
+
+      const id = categoryToEdit?.maDanhMuc || categoryToEdit?.id
+      const data = {
+        maDanhMuc: id,
+        tenDanhMuc: editedCategory.tenDanhMuc,
+        moTa: editedCategory.moTa,
+        hinhAnh: imageUrl || "",
+        trangThai: editedCategory.trangThai,
+      }
+
+      await updateCategory(id, data)
+      const response = await getAllCategories()
+      setCategories(response.data)
+      setFilteredCategories(response.data)
+      setIsEditCategoryModalOpen(false)
+      setCategoryToEdit(null)
+      setEditedCategory({
+        tenDanhMuc: "",
+        moTa: "",
+        trangThai: "Hoạt động",
+        hinhAnh: null,
+      })
+      setFormErrors({})
+      alert("Cập nhật danh mục thành công!")
+    } catch (err) {
+      alert("Lỗi khi cập nhật danh mục. Vui lòng kiểm tra lại dữ liệu hoặc thử lại sau.")
+      console.error("Error updating category:", err)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -361,39 +441,39 @@ const CategoriesManagementPage = () => {
   const handleExportExcel = () => {
     const exportData = categories.map((e, index) => ({
       STT: index + 1,
-      "Hình ảnh" : e.image,
-      "Danh mục": e.name,
-      "Mô tả": e.description,
-      "Số món": e.dishCount,
-   
-      "Trạng thái": e.status,
-      "Ngày tạo": e.createdAt,
-    }));
-  
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachNguoiDung");
-  
+      "Hình ảnh": e.image || e.hinhAnh,
+      "Danh mục": e.name || e.tenDanhMuc,
+      "Mô tả": e.description || e.moTa,
+      "Số món": e.dishCount || e.soLuongMonAn,
+      "Trạng thái": e.status || e.trangThai,
+      "Ngày tạo": e.createdAt || "",
+    }))
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachNguoiDung")
+
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "array",
-    });
-  
+    })
+
     const file = new Blob([excelBuffer], {
       type: "application/octet-stream",
-    });
-  
-    saveAs(file, "DanhMucMonAn.xlsx");
-  };
+    })
 
+    saveAs(file, "DanhMucMonAn.xlsx")
+  }
+
+  // Render component
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-base font-bold">Quản lý danh mục món ăn</h1>
 
         <button
-          onClick={() => setIsAddCategoryModalOpen(true)}
-              className="flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700"
+          onClick={handleAddCategoryClick}
+          className="flex items-center px-3 py-1.5 bg-blue-600 text-white text-xs rounded-md hover:bg-blue-700"
         >
           <Plus className="w-4 h-4 mr-2" />
           Thêm danh mục
@@ -430,7 +510,10 @@ const CategoriesManagementPage = () => {
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             </div>
 
-            <button className="flex items-center px-4 py-2 text-gray-700 bg-white border rounded-lg hover:bg-gray-50" onClick={handleExportExcel}>
+            <button
+              className="flex items-center px-4 py-2 text-gray-700 bg-white border rounded-lg hover:bg-gray-50"
+              onClick={handleExportExcel}
+            >
               <Download className="w-4 h-4 mr-2" />
               Xuất Excel
             </button>
@@ -440,6 +523,12 @@ const CategoriesManagementPage = () => {
 
       {/* Categories Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
+        {isLoading && (
+          <div className="p-4 flex justify-center items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <span className="ml-2">Đang tải dữ liệu...</span>
+          </div>
+        )}
         <div className="flex justify-between items-center p-4 border-b">
           <div className="flex items-center">
             <input
@@ -506,18 +595,6 @@ const CategoriesManagementPage = () => {
                     )}
                   </div>
                 </th>
-                {/* <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort("name")}
-                >
-                  <div className="flex items-center">
-                    Hình ảnh
-                    {sortConfig.key === "name" && (
-                      <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
-                    )}
-                  </div>
-                </th> */}
                 <th
                   scope="col"
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
@@ -542,18 +619,6 @@ const CategoriesManagementPage = () => {
                     )}
                   </div>
                 </th>
-                {/* <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort("createdAt")}
-                >
-                  <div className="flex items-center">
-                    Ngày tạo
-                    {sortConfig.key === "createdAt" && (
-                      <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
-                    )}
-                  </div>
-                </th> */}
                 <th
                   scope="col"
                   className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -564,67 +629,112 @@ const CategoriesManagementPage = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {getCurrentPageCategories().map((category) => (
-                <tr key={category.maDanhMuc} className="hover:bg-gray-50">
+                <tr key={category.maDanhMuc || category.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <input
                       type="checkbox"
                       className="rounded text-blue-600 focus:ring-blue-500"
-                      checked={selectedCategories.includes(category.maDanhMuc)}
-                      onChange={() => handleSelectCategory(category.maDanhMuc)}
+                      checked={selectedCategories.includes(category.maDanhMuc || category.id)}
+                      onChange={() => handleSelectCategory(category.maDanhMuc || category.id)}
                     />
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.maDanhMuc}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {category.maDanhMuc || category.id}
+                  </td>
+                  
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <img className="h-10 w-10 rounded-full" src={category.HinhAnh || "/placeholder.svg"} alt="" />
+                      <div className="flex-shrink-0 h-10 w-10 cursor-pointer" onClick={() => handleViewImage(category.hinhAnh || "/placeholder.svg")}>
+                        <img
+                          className="h-10 w-10 rounded-full object-cover hover:opacity-80 transition-opacity"
+                          src={category.hinhAnh || "/placeholder.svg"}
+                          alt=""
+                        />
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{category.tenDanhMuc}</div>
-                        <div className="text-sm text-gray-500">{category.moTa}</div>
+                        <div className="text-sm font-medium text-gray-900">{category.tenDanhMuc || category.name}</div>
+                        <div className="text-sm text-gray-500">{category.moTa || category.description}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.soLuongMonAn}</td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {category.soLuongMonAn || category.dishCount}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${category.trangThai === "Hoạt động" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
+                      ${(category.trangThai || category.status) === "Hoạt động" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
                     >
-                      {category.trangThai}
+                      {category.trangThai || category.status}
                     </span>
-                    
                   </td>
-                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{category.createdAt}</td> */}
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        onClick={() => handleEditCategory(category)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCategory(category)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                      <button className="text-gray-600 hover:text-gray-900">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                    </div>
+                  <div className="flex justify-end space-x-2">
+  <button
+    onClick={() => handleEditCategory(category)}
+    className="text-blue-600 hover:text-blue-900"
+  >
+    <Edit className="h-4 w-4" />
+  </button>
+  <button
+    onClick={() => handleDeleteCategory(category)}
+    className="text-red-600 hover:text-red-900"
+  >
+    <Trash2 className="h-4 w-4" />
+  </button>
+  <button className="text-gray-600 hover:text-gray-900">
+    <MoreHorizontal className="h-4 w-4" />
+  </button>
+</div>
+
                   </td>
                 </tr>
               ))}
 
-              {getCurrentPageCategories().length === 0 && (
+              {getCurrentPageCategories().length === 0 && !isLoading && (
                 <tr>
                   <td colSpan="7" className="px-6 py-10 text-center text-gray-500">
                     Không tìm thấy danh mục nào
                   </td>
                 </tr>
               )}
+
+             {isLoading && (
+  Array.from({ length: 3 }).map((_, index) => (
+    <tr key={`skeleton-${index}`} className="animate-pulse">
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 w-4 bg-gray-200 rounded"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 w-16 bg-gray-200 rounded"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center">
+          <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full"></div>
+          <div className="ml-4">
+            <div className="h-4 w-24 bg-gray-200 rounded mb-2"></div>
+            <div className="h-3 w-32 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-4 w-8 bg-gray-200 rounded"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="h-5 w-16 bg-gray-200 rounded-full"></div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-right">
+        <div className="flex justify-end space-x-2">
+          <div className="h-4 w-4 bg-gray-200 rounded"></div>
+          <div className="h-4 w-4 bg-gray-200 rounded"></div>
+          <div className="h-4 w-4 bg-gray-200 rounded"></div>
+        </div>
+      </td>
+    </tr>
+  ))
+)}
+
             </tbody>
           </table>
         </div>
@@ -693,30 +803,16 @@ const CategoriesManagementPage = () => {
         )}
       </div>
 
-      {/* Add/Edit Category Modal */}
-      {(isAddCategoryModalOpen || isEditCategoryModalOpen) && (
+      {/* Add Category Modal */}
+      {isAddCategoryModalOpen && (
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div
-              className="fixed inset-0 bg-black opacity-30"
-              onClick={() => {
-                setIsAddCategoryModalOpen(false)
-                setIsEditCategoryModalOpen(false)
-              }}
-            ></div>
+            <div className="fixed inset-0 bg-black opacity-30" onClick={handleCloseAddModal}></div>
 
             <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full p-6 z-20">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium">
-                  {isEditCategoryModalOpen ? "Chỉnh sửa danh mục" : "Thêm danh mục mới"}
-                </h3>
-                <button
-                  onClick={() => {
-                    setIsAddCategoryModalOpen(false)
-                    setIsEditCategoryModalOpen(false)
-                  }}
-                  className="text-gray-400 hover:text-gray-500"
-                >
+                <h3 className="text-lg font-medium">Thêm danh mục mới</h3>
+                <button onClick={handleCloseAddModal} className="text-gray-400 hover:text-gray-500">
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -724,45 +820,45 @@ const CategoriesManagementPage = () => {
               <form onSubmit={handleAddCategory}>
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="add-name" className="block text-sm font-medium text-gray-700">
                       Tên danh mục <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
-                      id="name"
-                      name="name"
-                      value={newCategory.name}
-                      onChange={handleInputChange}
+                      id="add-name"
+                      name="tenDanhMuc"
+                      value={newCategory.tenDanhMuc || ""}
+                      onChange={handleAddInputChange}
                       className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
-                        formErrors.name ? "border-red-500" : ""
+                        formErrors.tenDanhMuc ? "border-red-500" : ""
                       }`}
                     />
-                    {formErrors.name && <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>}
+                    {formErrors.tenDanhMuc && <p className="mt-1 text-sm text-red-600">{formErrors.tenDanhMuc}</p>}
                   </div>
 
                   <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="add-description" className="block text-sm font-medium text-gray-700">
                       Mô tả
                     </label>
                     <textarea
-                      id="description"
-                      name="description"
+                      id="add-description"
+                      name="moTa"
                       rows="3"
-                      value={newCategory.description}
-                      onChange={handleInputChange}
+                      value={newCategory.moTa || ""}
+                      onChange={handleAddInputChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     ></textarea>
                   </div>
 
                   <div>
-                    <label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                    <label htmlFor="add-status" className="block text-sm font-medium text-gray-700">
                       Trạng thái
                     </label>
                     <select
-                      id="status"
-                      name="status"
-                      value={newCategory.status}
-                      onChange={handleInputChange}
+                      id="add-status"
+                      name="trangThai"
+                      value={newCategory.trangThai || ""}
+                      onChange={handleAddInputChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     >
                       <option value="Hoạt động">Hoạt động</option>
@@ -771,65 +867,191 @@ const CategoriesManagementPage = () => {
                   </div>
 
                   <div>
-  <label htmlFor="image" className="block text-sm font-medium text-gray-700">
-    Hình ảnh
-  </label>
-  <div className="mt-1 flex items-center">
-    <span className="inline-block h-12 w-12 rounded-full overflow-hidden bg-gray-100">
-      {isEditCategoryModalOpen && categoryToEdit ? (
-        <img
-          src={newCategory.image || categoryToEdit.image || "/placeholder.svg"}
-          alt="Category"
-          className="h-full w-full object-cover"
-        />
-      ) : newCategory.image ? (
-        <img
-          src={newCategory.image}
-          alt="Selected Category"
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        <svg
-          className="h-full w-full text-gray-300"
-          fill="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      )}
-    </span>
-    <button
-      type="button"
-      className="ml-5 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-      onClick={handleChangeClick}
-    >
-      {isEditCategoryModalOpen ? "Sửa ảnh" : "Chọn ảnh"}
-    </button>
-    <input
-      type="file"
-      id="image"
-      ref={fileInputRef}
-      className="hidden"
-      onChange={handleImageChange}
-    />
-  </div>
-</div>
-
+                    <label htmlFor="add-image" className="block text-sm font-medium text-gray-700">
+                      Hình ảnh
+                    </label>
+                    <div className="mt-1 flex flex-col items-start">
+                      {newCategory.hinhAnh ? (
+                        <div className="mb-3 relative group">
+                          <img
+                            src={newCategory.hinhAnh || "/placeholder.svg"}
+                            alt="Selected Category"
+                            className="h-32 w-32 object-cover rounded-lg border border-gray-300"
+                            onClick={() => handleViewImage(newCategory.hinhAnh)}
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center transition-all rounded-lg">
+                            <span className="text-white opacity-0 group-hover:opacity-100 font-medium">Xem</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mb-3 h-32 w-32 flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300">
+                          <svg className="h-12 w-12 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                          </svg>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        className="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        onClick={handleAddImageClick}
+                      >
+                        {newCategory.hinhAnh ? "Thay đổi ảnh" : "Chọn ảnh"}
+                      </button>
+                      <input
+                        type="file"
+                        id="add-image"
+                        ref={addFileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleAddImageChange}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-6 flex justify-end space-x-3">
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsAddCategoryModalOpen(false)
-                      setIsEditCategoryModalOpen(false)
-                    }}
+                    onClick={handleCloseAddModal}
                     className="px-4 py-2 border rounded-md text-gray-700 bg-white hover:bg-gray-50"
                   >
                     Hủy
                   </button>
-                  <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                    {isEditCategoryModalOpen ? "Cập nhật" : "Thêm danh mục"}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Đang xử lý..." : "Thêm danh mục"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Category Modal */}
+      {isEditCategoryModalOpen && (
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black opacity-30" onClick={handleCloseEditModal}></div>
+
+            <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full p-6 z-20">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium">Chỉnh sửa danh mục</h3>
+                <button onClick={handleCloseEditModal} className="text-gray-400 hover:text-gray-500">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdateCategory}>
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700">
+                      Tên danh mục <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="edit-name"
+                      name="tenDanhMuc"
+                      value={editedCategory.tenDanhMuc || ""}
+                      onChange={handleEditInputChange}
+                      className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                        formErrors.tenDanhMuc ? "border-red-500" : ""
+                      }`}
+                    />
+                    {formErrors.tenDanhMuc && <p className="mt-1 text-sm text-red-600">{formErrors.tenDanhMuc}</p>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="edit-description" className="block text-sm font-medium text-gray-700">
+                      Mô tả
+                    </label>
+                    <textarea
+                      id="edit-description"
+                      name="moTa"
+                      rows="3"
+                      value={editedCategory.moTa || ""}
+                      onChange={handleEditInputChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    ></textarea>
+                  </div>
+
+                  <div>
+                    <label htmlFor="edit-status" className="block text-sm font-medium text-gray-700">
+                      Trạng thái
+                    </label>
+                    <select
+                      id="edit-status"
+                      name="trangThai"
+                      value={editedCategory.trangThai || ""}
+                      onChange={handleEditInputChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="Hoạt động">Hoạt động</option>
+                      <option value="Không hoạt động">Không hoạt động</option>
+                    </select>
+                  </div>
+
+               
+                  <div>
+                    <label htmlFor="edit-image" className="block text-sm font-medium text-gray-700">
+                      Hình ảnh
+                    </label>
+                    <div className="mt-1 flex flex-col items-start">
+                      {editedCategory.hinhAnh ? (
+                        <div className="mb-3 relative group">
+                          <img
+                            src={editedCategory.hinhAnh || "/placeholder.svg"}
+                            alt="Category"
+                            className="h-32 w-32 object-cover rounded-lg border border-gray-300"
+                            onClick={() => handleViewImage(editedCategory.hinhAnh)}
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 flex items-center justify-center transition-all rounded-lg">
+                            <span className="text-white opacity-0 group-hover:opacity-100 font-medium">Xem</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mb-3 h-32 w-32 flex items-center justify-center bg-gray-100 rounded-lg border border-gray-300">
+                          <svg className="h-12 w-12 text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
+                          </svg>
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        className="bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        onClick={handleEditImageClick}
+                      >
+                        {editedCategory.hinhAnh ? "Thay đổi ảnh" : "Chọn ảnh"}
+                      </button>
+                      <input
+                        type="file"
+                        id="edit-image"
+                        ref={editFileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleEditImageChange}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    type="button"
+                    onClick={handleCloseEditModal}
+                    className="px-4 py-2 border rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Đang xử lý..." : "Cập nhật"}
                   </button>
                 </div>
               </form>
@@ -854,7 +1076,8 @@ const CategoriesManagementPage = () => {
 
               <div className="mb-6">
                 <p className="text-gray-700">
-                  Bạn có chắc chắn muốn xóa danh mục <span className="font-medium">{categoryToDelete?.name}</span>? Hành
+                  Bạn có chắc chắn muốn xóa danh mục{" "}
+                  <span className="font-medium">{categoryToDelete?.tenDanhMuc || categoryToDelete?.name}</span>? Hành
                   động này không thể hoàn tác.
                 </p>
               </div>
@@ -877,8 +1100,32 @@ const CategoriesManagementPage = () => {
           </div>
         </div>
       )}
+      {/* Image View Modal */}
+      {isImageViewModalOpen && (
+        <div className="fixed inset-0 z-20 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black opacity-75" onClick={() => setIsImageViewModalOpen(false)}></div>
+
+            <div className="relative z-30 max-w-3xl w-full">
+              <div className="relative">
+                <button
+                  onClick={() => setIsImageViewModalOpen(false)}
+                  className="absolute top-2 right-2 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100"
+                >
+                  <X className="h-6 w-6 text-gray-800" />
+                </button>
+                <img
+                  src={imageToView || "/placeholder.svg"}
+                  alt="Xem chi tiết"
+                  className="max-h-[80vh] w-auto mx-auto rounded-lg shadow-2xl"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-export default CategoriesManagementPage
+export default CategoriesManagementPage;

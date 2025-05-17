@@ -46,11 +46,11 @@ namespace RestaurantQuangQuy.Controllers
 			}
 
 			// Chỉ cho phép các trạng thái đã xác định
-			var validTrangThaiOptions = new List<string> { "Hoạt động", "Ngừng hoạt động" };
+			var validTrangThaiOptions = new List<string> { "Hoạt động", "Không hoạt động" };
 
 			if (!validTrangThaiOptions.Contains(danhMucDto.TrangThai))
 			{
-				return BadRequest("Trạng thái không hợp lệ. Chỉ chấp nhận 'Hoạt động' hoặc 'Ngừng hoạt động'.");
+				return BadRequest("Trạng thái không hợp lệ. Chỉ chấp nhận 'Hoạt động' hoặc 'Không hoạt động'.");
 			}
 
 			// Tạo mã danh mục tự động
