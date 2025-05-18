@@ -5,7 +5,7 @@ import * as XLSX from "xlsx"
 import { saveAs } from "file-saver"
 import { useState, useEffect } from "react"
 import { Search, Plus, Edit, Trash2, Eye, Download, ChevronLeft, ChevronRight } from "lucide-react"
-import { getDishes, addDish, updateDish, deleteDish, getCategories } from "../api/dishApi"
+import { getDishes, addDish, updateDish, deleteDish, getCategories } from "../../api/dishApi.js"
 
 const DishesPage = () => {
   const [categories, setCategories] = useState([])
