@@ -145,24 +145,14 @@ namespace RestaurantQuangQuy.Controllers.Client
                 {
                     return BadRequest(new { message = "Đơn đặt món không hợp lệ" });
                 }
-                // Kiểm tra xem đơn đặt món đã tồn tại chưa
-                var existingDatMon = _context.Dondatmons
-                    .FirstOrDefault(d => d.MaDatMon == datMonAnDTO.MaDatMon);
-
-                //tạo mã đơn đặt món mới random 10 kí tự bắt đầu bằng DM 
-                if (existingDatMon != null)
-                {
-                    return BadRequest(new { message = "Đơn đặt món đã tồn tại" });
-                }
                 // Tạo mã đơn đặt món mới
                 var random = new Random();
                 var randomString = "DM" + new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 8)
-                    .Select(s => s[random.Next(s.Length)]).ToArray());
-                datMonAnDTO.MaDatMon = randomString;
+                    .Select(s => s[random.Next(s.Length)]).ToArray());;
                 // Mapping từ DTO sang Entity
                 var datMon = new Dondatmon
                 {
-                    MaDatMon = datMonAnDTO.MaDatMon,
+                    MaDatMon = randomString,
                     MaBanAn = datMonAnDTO.MaBanAn,
                     MaKhachHang = datMonAnDTO.MaKhachHang,
                     SoDienThoai = datMonAnDTO.SoDienThoai,
@@ -195,8 +185,8 @@ namespace RestaurantQuangQuy.Controllers.Client
                 return BadRequest(new { message = "Lỗi khi đặt món", error = ex.Message });
             }
         }
-        [HttpPut("UpdateDatMon")]
-        public IActionResult UpDateDatMon([FromBody] DatMonAnDTO datMonAnDTO)
+        [HttpPut("UpdateDatMon/{id}")]
+        public IActionResult UpDateDatMon(string id,[FromBody] DatMonAnDTO datMonAnDTO)
         {
             try
             {
@@ -207,7 +197,7 @@ namespace RestaurantQuangQuy.Controllers.Client
                 // Lấy đơn đặt món từ Database
                 var datMon = _context.Dondatmons
                     .Include(d => d.Chitietdondatmons)
-                    .FirstOrDefault(d => d.MaDatMon == datMonAnDTO.MaDatMon);
+                    .FirstOrDefault(d => d.MaDatMon == id);
                 // Lấy dữ liệu từ Database
                 if (datMon == null)
                 {

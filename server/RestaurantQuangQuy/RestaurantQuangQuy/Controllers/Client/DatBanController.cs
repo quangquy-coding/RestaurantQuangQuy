@@ -248,7 +248,7 @@ namespace RestaurantQuangQuy.Controllers.Client
                 existingDatBan.GhiChu = datBanDTO.GhiChu;
 
                 // **Bước 2:** Xóa hết liên kết cũ trong bảng DatBanBanAn
-                var existingLinks = _context.DatBanBanAns.Where(dba => dba.MaDatBan == id).ToList();
+                var existingLinks = _context.DatBanBanAns.Where(dba => dba.MaDatBan == datBanDTO.MaBanAn).ToList();
                 if (existingLinks.Any())
                 {
                     _context.DatBanBanAns.RemoveRange(existingLinks);
@@ -269,7 +269,7 @@ namespace RestaurantQuangQuy.Controllers.Client
                         // Thêm mới liên kết
                         var newDatBanBanAn = new DatBanBanAn
                         {
-                            MaDatBan = id,
+                            MaDatBan = datBanDTO.MaBanAn,
                             MaBanAn = maBan
                         };
                         _context.DatBanBanAns.Add(newDatBanBanAn);
