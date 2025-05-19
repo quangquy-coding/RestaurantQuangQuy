@@ -14,4 +14,26 @@ namespace RestaurantQuangQuy.DTO.DatBanDTO
         // Fully qualify the type to avoid ambiguity
         public List<RestaurantQuangQuy.DTO.BanAnDTO.BanAnDTO> Banans { get; set; } = new List<RestaurantQuangQuy.DTO.BanAnDTO.BanAnDTO>();
     }
+
+    public class DatBanCreateDTO
+    {
+        public string MaKhachHang { get; set; } = null!;
+        public List<string> MaBans { get; set; } = new List<string>();
+        public DateTime ThoiGianDat { get; set; }
+        public DateTime ThoiGianDen { get; set; }
+        public string TrangThai { get; set; } = null!;
+        public string? GhiChu { get; set; }
+    }
+
+    public class DatBanUpdateDTO
+    {
+        public string MaBanAn { get; set; } = null!;
+        public string MaKhachHang { get; set; } = null!;
+        public List<string> MaBans { get; set; } = new List<string>();
+        public DateTime ThoiGianDat { get; set; }
+        public DateTime ThoiGianDen { get; set; }
+        public string TrangThai { get; set; } = null!;
+        public string? GhiChu { get; set; }
+    }
+
 }

@@ -120,7 +120,7 @@ namespace RestaurantQuangQuy.Controllers.Client
 
         // POST: api/DatBan
         [HttpPost("Create")]
-        public IActionResult CreateDatBan([FromBody] DatBanDTO datBanDTO)
+        public IActionResult CreateDatBan([FromBody] DatBanCreateDTO datBanDTO)
         {
             try
             {
@@ -206,8 +206,8 @@ namespace RestaurantQuangQuy.Controllers.Client
         }
 
         // PUT: api/DatBan/Update/{id}
-        [HttpPut("Update/{id}")]
-        public IActionResult UpdateDatBan(string id, [FromBody] DatBanDTO datBanDTO)
+        [HttpPut("Update")]
+        public IActionResult UpdateDatBan([FromBody] DatBanUpdateDTO datBanDTO)
         {
             try
             {
@@ -217,7 +217,7 @@ namespace RestaurantQuangQuy.Controllers.Client
                 }
 
                 // Tìm đối tượng DatBan cần cập nhật
-                var existingDatBan = _context.Datbans.FirstOrDefault(db => db.MaBanAn == id);
+                var existingDatBan = _context.Datbans.FirstOrDefault(db => db.MaBanAn == datBanDTO.MaBanAn);
                 if (existingDatBan == null)
                 {
                     return NotFound("DatBan not found.");
