@@ -35,7 +35,7 @@ namespace RestaurantQuangQuy.Controllers.Client
                     return NotFound(new { message = "Không tìm thấy đơn đặt món" });
                 }
                 // Mapping sang DTO
-                var result = datMonList.Select(don => new DatMonAnDTO
+                var result = datMonList.Select(don => new DatMonAnResponsiveDTO
                 {
                     MaDatMon = don.MaDatMon,
                     MaBanAn = don.MaBanAn,
@@ -46,17 +46,24 @@ namespace RestaurantQuangQuy.Controllers.Client
                     SoLuong = don.SoLuong,
                     TongTien = don.TongTien,
                     GhiChu = don.GhiChu,
-                    ChiTietDatMonAns = don.Chitietdondatmons.Select(ct => new ChiTietDonDatMonDTO
+                    ChiTietDatMonAns = don.Chitietdondatmons.Select(ct => new ChiTietDonDatMonResponsiveDTO
                     {
                         MaDatMon = ct.MaDatMon,
                         MaMon = ct.MaMon,
                         SoLuong = ct.SoLuong,
                         Gia = ct.Gia,
                         TongTien = ct.TongTien,
-                        MonAn = new MonAnRequestDTO
+                        MonAn = new MonAnResponsiveDTO
                         {
-                            TenMon = ct.MaMonNavigation.MaMon,
-                            HinhAnh = ct.MaMonNavigation.HinhAnh
+                            TenMon = ct.MaMonNavigation.TenMon,
+                            HinhAnh = ct.MaMonNavigation.HinhAnh,
+                            MoTa = ct.MaMonNavigation.MoTa,
+                            Gia = ct.MaMonNavigation.Gia,
+                            ThoiGianMon = ct.MaMonNavigation.ThoiGianMon,
+                            TinhTrang = ct.MaMonNavigation.TinhTrang,
+                            DinhDuong = ct.MaMonNavigation.DinhDuong,
+                            ThanhPhan = ct.MaMonNavigation.ThanhPhan,
+                            DiUng = ct.MaMonNavigation.DiUng,
                         }
                     }).ToList()
                 }).ToList();
@@ -89,7 +96,7 @@ namespace RestaurantQuangQuy.Controllers.Client
                     return NotFound(new { message = "Không tìm thấy đơn đặt món" });
                 }
                 // Mapping sang DTO
-                var result = new DatMonAnDTO
+                var result = new DatMonAnResponsiveDTO
                 {
                     MaDatMon = datMon.MaDatMon,
                     MaBanAn = datMon.MaBanAn,
@@ -100,17 +107,24 @@ namespace RestaurantQuangQuy.Controllers.Client
                     SoLuong = datMon.SoLuong,
                     TongTien = datMon.TongTien,
                     GhiChu = datMon.GhiChu,
-                    ChiTietDatMonAns = datMon.Chitietdondatmons.Select(ct => new ChiTietDonDatMonDTO
+                    ChiTietDatMonAns = datMon.Chitietdondatmons.Select(ct => new ChiTietDonDatMonResponsiveDTO
                     {
                         MaDatMon = ct.MaDatMon,
                         MaMon = ct.MaMon,
                         SoLuong = ct.SoLuong,
                         Gia = ct.Gia,
                         TongTien = ct.TongTien,
-                        MonAn = new MonAnRequestDTO
+                        MonAn = new MonAnResponsiveDTO
                         {
-                            TenMon = ct.MaMonNavigation.MaMon,
-                            HinhAnh = ct.MaMonNavigation.HinhAnh
+                            TenMon = ct.MaMonNavigation.TenMon,
+                            HinhAnh = ct.MaMonNavigation.HinhAnh,
+                            MoTa = ct.MaMonNavigation.MoTa,
+                            Gia = ct.MaMonNavigation.Gia,
+                            ThoiGianMon = ct.MaMonNavigation.ThoiGianMon,
+                            TinhTrang = ct.MaMonNavigation.TinhTrang,
+                            DinhDuong = ct.MaMonNavigation.DinhDuong,
+                            ThanhPhan = ct.MaMonNavigation.ThanhPhan,
+                            DiUng = ct.MaMonNavigation.DiUng,
                         }
                     }).ToList()
                 };

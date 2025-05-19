@@ -26,7 +26,6 @@ namespace RestaurantQuangQuy.DTO.DatMonAnDTO
 
         public List<ChiTietDonDatMonDTO> ChiTietDatMonAns { get; set; } = new List<ChiTietDonDatMonDTO>();
     }
-
     public class ChiTietDonDatMonDTO
     {
         public string MaDatMon { get; set; } = null!;
@@ -38,11 +37,41 @@ namespace RestaurantQuangQuy.DTO.DatMonAnDTO
         public decimal Gia { get; set; }
 
         public decimal? TongTien { get; set; }
-
-        public MonAnRequestDTO MonAn { get; set; } = null!;
     }
 
-    public class MonAnRequestDTO
+    public class DatMonAnResponsiveDTO
+    {
+        public string MaDatMon { get; set; } = null!;
+
+        public string? MaBanAn { get; set; }
+
+        public string? MaKhachHang { get; set; }
+
+        public string? SoDienThoai { get; set; }
+
+        public DateTime ThoiGianDat { get; set; }
+
+        public string? TrangThai { get; set; }
+
+        public int? SoLuong { get; set; }
+
+        public decimal? TongTien { get; set; }
+
+        public string? GhiChu { get; set; }
+
+        public List<ChiTietDonDatMonResponsiveDTO> ChiTietDatMonAns { get; set; } = new List<ChiTietDonDatMonResponsiveDTO>();
+    }
+
+    public class ChiTietDonDatMonResponsiveDTO {
+        public string MaDatMon { get; set; } = null!;
+        public string MaMon { get; set; } = null!;
+        public int SoLuong { get; set; }
+        public decimal Gia { get; set; }
+        public decimal? TongTien { get; set; }
+        public MonAnResponsiveDTO MonAn { get; set; } = new MonAnResponsiveDTO();
+    }
+
+    public class MonAnResponsiveDTO
     {
         public string? MaMon { get; set; } // MaMon chỉ cần khi sửa
 
