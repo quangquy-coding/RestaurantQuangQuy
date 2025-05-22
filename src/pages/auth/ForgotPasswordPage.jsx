@@ -1,82 +1,138 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { toast } from "react-hot-toast";
-import { Mail, ArrowLeft, Key, RefreshCw } from "lucide-react";
+"use client"
+import React from "react"
+import { useState } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import { toast } from "react-hot-toast"
+import { Mail, ArrowLeft, Key, RefreshCw } from "lucide-react"
 
 const ForgotPasswordPage = () => {
-  const [email, setEmail] = useState("");
-  const [method, setMethod] = useState("code");
-  const [step, setStep] = useState(1);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate()
+  const [email, setEmail] = useState("")
+  const [method, setMethod] = useState("code")
+  const [step, setStep] = useState(1)
+  const [verificationCode, setVerificationCode] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [token, setToken] = useState("")
 
   const handleSubmitEmail = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!email) {
-      toast.error("Vui lòng nhập địa chỉ email");
-      return;
+      toast.error("Vui lòng nhập địa chỉ email")
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      if (method === "code") {
-        toast.success("Mã xác nhận đã được gửi đến email của bạn");
-        setStep(2);
+      // Gọi API dựa trên phương thức đã chọn
+      const endpoint =
+        method === "code"
+          ? "http://localhost:5080/api/NguoiDung/forgot-password/send-code"
+          : "http://localhost:5080/api/NguoiDung/forgot-password/send-link"
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(email),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success(data.message || "Yêu cầu đặt lại mật khẩu đã được gửi")
+        if (method === "code") {
+          setStep(2)
+        } else {
+          setStep(3)
+        }
       } else {
-        toast.success("Liên kết đặt lại mật khẩu đã được gửi đến email của bạn");
-        setStep(3);
+        toast.error(data.message || "Có lỗi xảy ra. Vui lòng thử lại sau")
       }
     } catch (error) {
-      toast.error("Có lỗi xảy ra. Vui lòng thử lại sau");
+      console.error("Error sending reset request:", error)
+      toast.error("Có lỗi xảy ra khi kết nối đến máy chủ")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleVerifyCode = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!verificationCode) {
-      toast.error("Vui lòng nhập mã xác nhận");
-      return;
+      toast.error("Vui lòng nhập mã xác nhận")
+      return
     }
 
-    setLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      toast.success("Mã xác nhận hợp lệ");
-      setStep(4);
-    } catch (error) {
-      toast.error("Mã xác nhận không hợp lệ");
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Không gọi API ở bước này, chỉ chuyển sang bước nhập mật khẩu mới
+    // Mã xác nhận sẽ được gửi cùng với mật khẩu mới ở bước tiếp theo
+    setToken(verificationCode)
+    setStep(4)
+  }
 
   const handleResetPassword = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!newPassword) {
-      toast.error("Vui lòng nhập mật khẩu mới");
-      return;
+      toast.error("Vui lòng nhập mật khẩu mới")
+      return
     }
     if (newPassword !== confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp");
-      return;
+      toast.error("Mật khẩu xác nhận không khớp")
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      toast.success("Đặt lại mật khẩu thành công");
-      setStep(5);
+      // Gọi API đặt lại mật khẩu dựa trên phương thức đã chọn
+      const endpoint =
+        method === "code"
+          ? "http://localhost:5080/api/NguoiDung/reset-password/code"
+          : "http://localhost:5080/api/NguoiDung/reset-password/link"
+
+      const payload = method === "code" ? { Code: token, MatKhau: newPassword } : { Token: token, MatKhau: newPassword }
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success(data.message || "Đặt lại mật khẩu thành công")
+        setStep(5)
+      } else {
+        toast.error(data.message || "Có lỗi xảy ra. Vui lòng thử lại sau")
+      }
     } catch (error) {
-      toast.error("Có lỗi xảy ra. Vui lòng thử lại sau");
+      console.error("Error resetting password:", error)
+      toast.error("Có lỗi xảy ra khi kết nối đến máy chủ")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  // Xử lý token từ URL (cho phương thức link)
+  const handleTokenFromUrl = () => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const tokenFromUrl = urlParams.get("token")
+
+    if (tokenFromUrl) {
+      setToken(tokenFromUrl)
+      setMethod("link")
+      setStep(4)
+    }
+  }
+
+  // Kiểm tra token trong URL khi component được tải
+  useState(() => {
+    handleTokenFromUrl()
+  }, [])
 
   const renderEmailForm = () => (
     <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-8">
@@ -152,7 +208,7 @@ const ForgotPasswordPage = () => {
         </Link>
       </div>
     </div>
-  );
+  )
 
   const renderVerificationForm = () => (
     <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-8">
@@ -200,7 +256,7 @@ const ForgotPasswordPage = () => {
         </div>
       </form>
     </div>
-  );
+  )
 
   const renderNewPasswordForm = () => (
     <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-8">
@@ -215,7 +271,9 @@ const ForgotPasswordPage = () => {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
+            minLength={6}
           />
+          <p className="mt-1 text-xs text-gray-500">Mật khẩu phải có ít nhất 6 ký tự</p>
         </div>
 
         <div className="mb-6">
@@ -246,7 +304,7 @@ const ForgotPasswordPage = () => {
         </button>
       </form>
     </div>
-  );
+  )
 
   const renderLinkSentSuccess = () => (
     <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-8 text-center">
@@ -255,7 +313,8 @@ const ForgotPasswordPage = () => {
       </div>
       <h2 className="text-3xl font-bold text-green-600 mb-2">Kiểm tra email của bạn</h2>
       <p className="text-gray-600 mb-6">
-        Chúng tôi đã gửi một liên kết đặt lại mật khẩu đến {email}. Vui lòng kiểm tra hộp thư đến của bạn và làm theo hướng dẫn.
+        Chúng tôi đã gửi một liên kết đặt lại mật khẩu đến {email}. Vui lòng kiểm tra hộp thư đến của bạn và làm theo
+        hướng dẫn.
       </p>
       <Link
         to="/login"
@@ -264,7 +323,7 @@ const ForgotPasswordPage = () => {
         Quay lại đăng nhập
       </Link>
     </div>
-  );
+  )
 
   const renderResetSuccess = () => (
     <div className="w-full max-w-md bg-white shadow-lg rounded-lg p-8 text-center">
@@ -284,7 +343,7 @@ const ForgotPasswordPage = () => {
         Đăng nhập
       </Link>
     </div>
-  );
+  )
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
@@ -294,7 +353,7 @@ const ForgotPasswordPage = () => {
       {step === 4 && renderNewPasswordForm()}
       {step === 5 && renderResetSuccess()}
     </div>
-  );
-};
+  )
+}
 
-export default ForgotPasswordPage;
+export default ForgotPasswordPage

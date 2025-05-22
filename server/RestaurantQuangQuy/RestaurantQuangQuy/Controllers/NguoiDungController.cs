@@ -197,7 +197,7 @@ namespace RestaurantQuangQuy.Controllers
 			user.OtpExpiry = DateTime.Now.AddMinutes(10);
 			await _context.SaveChangesAsync();
 
-			string resetLink = $"https://your-app/reset-password?token={token}";
+			string resetLink = $"http://localhost:3000/reset-password?token={token}";
 			string emailBody = $"Nhấn vào liên kết sau để đặt lại mật khẩu: <a href='{resetLink}'>Đặt lại mật khẩu</a> (hết hạn sau 10 phút)";
 			await _emailService.SendEmailAsync(email, "Quên mật khẩu - Đặt lại qua liên kết", emailBody);
 

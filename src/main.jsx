@@ -1,3 +1,5 @@
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
 import React from "react"
 import ReactDOM from "react-dom/client"
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
@@ -8,7 +10,7 @@ import AdminLayout from "./layouts/AdminLayout"
 
 // User Pages
 import HomePage from "./pages/home/HomePage"
-
+import VerifyOTPPage from "./pages/VerifyOTPPage"
 
 import ShoppingCart from "./components/cart/ShoppingCart"
 import CheckoutPage from "./components/cart/CheckoutPage"
@@ -140,6 +142,10 @@ const router = createBrowserRouter([
         path: "login",
         element: <LoginPage />,
       },
+         {
+        path: "verify",
+        element: <VerifyOTPPage />,
+      },
       {
         path: "register",
         element: <RegisterPage />,
@@ -238,19 +244,14 @@ const router = createBrowserRouter([
     ],
   },
 
-  // Staff route (also no header/footer)
-  // {
-  //   path: "/staff",
-  //   element: (
-  //     <PrivateRoute>
-  //       <StaffOrdersPage />
-  //     </PrivateRoute>
-  //   ),
-  // },
 ])
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <RouterProvider router={router} />
-  </React.StrictMode>,
-)
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <GoogleOAuthProvider clientId="87695933712-4368bbf54fpluhmqm4detrvro03ok39f.apps.googleusercontent.com">
+    <React.StrictMode>
+      <RouterProvider router={router} />
+    </React.StrictMode>
+  </GoogleOAuthProvider>
+);
+

@@ -35,6 +35,11 @@
 		public string MatKhau { get; set; } = null!;
 	}
 
+	public class GoogleLoginDTO
+	{
+		public string IdToken { get; set; } = string.Empty;
+	}
+
 
 
 
