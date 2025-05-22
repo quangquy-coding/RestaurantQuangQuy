@@ -171,8 +171,13 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				monAn.Gia = monAnDto.Gia;
 				monAn.HinhAnh = monAnDto.HinhAnh;
 				monAn.ThoiGianMon = monAnDto.ThoiGianMon;
+				monAn.ThanhPhan = monAnDto.ThanhPhan;
+				monAn.DinhDuong = monAnDto.DinhDuong;
+				monAn.DiUng = monAnDto.DiUng;
+
 				monAn.TinhTrang = monAnDto.TinhTrang;
 				monAn.MaDanhMuc = monAnDto.MaDanhMuc;
+
 				// Cập nhật số lượng món ăn trong danh mục
 				var danhMucCu = await _context.Danhmucs
 					.SingleOrDefaultAsync(dm => dm.MaDanhMuc == monAn.MaDanhMuc);

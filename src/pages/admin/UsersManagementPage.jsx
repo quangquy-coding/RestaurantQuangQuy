@@ -508,7 +508,7 @@ const UsersManagementPage = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-bold">Quản lý người dùng</h1>
+        <h1 className="text-sl font-bold">Quản lý người dùng</h1>
 
         <button
           onClick={() => setIsAddUserModalOpen(true)}
@@ -1578,7 +1578,7 @@ const UsersManagementPage = () => {
 
                 {/* User details */}
                 <div className="flex-1">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <h5 className="text-sm font-medium text-gray-500">Thông tin tài khoản</h5>
                       <div className="mt-2 space-y-3">

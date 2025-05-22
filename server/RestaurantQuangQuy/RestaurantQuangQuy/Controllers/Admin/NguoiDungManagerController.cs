@@ -74,7 +74,7 @@ namespace RestaurantQuangQuy.Controllers
 			{
 				MaTaiKhoan = maTaiKhoan,
 				TenTaiKhoan = dto.TenTaiKhoan,
-				MatKhau = dto.MatKhau,
+				MatKhau = BCrypt.Net.BCrypt.HashPassword(dto.MatKhau),
 				Email = dto.Email,
 				SoDienThoai = dto.SoDienThoai,
 				DiaChi = dto.DiaChi,
@@ -194,7 +194,7 @@ namespace RestaurantQuangQuy.Controllers
 			// Cập nhật thông tin tài khoản chung
 			taiKhoan.TenTaiKhoan = dto.TenTaiKhoan;
 			taiKhoan.Email = dto.Email;
-			taiKhoan.MatKhau = dto.MatKhau;
+			taiKhoan.MatKhau = BCrypt.Net.BCrypt.HashPassword(dto.MatKhau);
 			taiKhoan.SoDienThoai = dto.SoDienThoai;
 			taiKhoan.DiaChi = dto.DiaChi;
 			taiKhoan.NgaySinh = dto.NgaySinh;

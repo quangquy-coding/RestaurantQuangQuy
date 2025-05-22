@@ -29,4 +29,6 @@ public partial class Taikhoan
 
     public virtual Nhanvien? Nhanvien { get; set; }
 	public string? HinhAnh { get; internal set; }
+	public string? OtpCode { get; set; }
+	public DateTime? OtpExpiry { get; set; }
 }

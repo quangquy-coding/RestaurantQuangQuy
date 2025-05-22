@@ -8,6 +8,7 @@ public partial class RestaurantManagementContext : DbContext
 {
     public RestaurantManagementContext()
     {
+
     }
 
     public RestaurantManagementContext(DbContextOptions<RestaurantManagementContext> options)
@@ -15,15 +16,15 @@ public partial class RestaurantManagementContext : DbContext
     {
     }
 
-    public virtual DbSet<Banan> Banans { get; set; }
+	public virtual DbSet<Banan> Banans { get; set; }
 	
 	public virtual DbSet<Baocaodoanhthu> Baocaodoanhthus { get; set; }
 
     public virtual DbSet<Chitietdondatmon> Chitietdondatmons { get; set; }
 
     public virtual DbSet<Danhgium> Danhgia { get; set; }
-
-    public virtual DbSet<Danhmuc> Danhmucs { get; set; }
+	
+	public virtual DbSet<Danhmuc> Danhmucs { get; set; }
 	public object DanhMucs { get; internal set; }
 	public virtual DbSet<Datban> Datbans { get; set; }
 
@@ -320,7 +321,6 @@ public partial class RestaurantManagementContext : DbContext
             entity.Property(e => e.PhuongThucThanhToan)
                 .HasMaxLength(50)
                 .HasColumnName("phuongThucThanhToan");
-            entity.Property(e => e.SoLuongKhach).HasColumnName("soLuongKhach");
             entity.Property(e => e.ThoiGianDat)
                 .HasColumnType("datetime")
                 .HasColumnName("thoiGianDat");

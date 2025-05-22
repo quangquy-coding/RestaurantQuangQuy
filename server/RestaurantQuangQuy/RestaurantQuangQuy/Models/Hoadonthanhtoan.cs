@@ -13,8 +13,6 @@ public partial class Hoadonthanhtoan
 
     public string? MaKhachHang { get; set; }
 
-    public int? SoLuongKhach { get; set; }
-
     public DateTime ThoiGianDat { get; set; }
 
     public DateTime? ThoiGianThanhToan { get; set; }

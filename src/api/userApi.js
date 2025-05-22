@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // API URL configuration
-const API_URL = "https://localhost:44321/api/NguoiDungManager";
+const API_URL = "http://localhost:5080/api/NguoiDungManager";
 
 // API functions
 const getUsers = () => axios.get(API_URL);

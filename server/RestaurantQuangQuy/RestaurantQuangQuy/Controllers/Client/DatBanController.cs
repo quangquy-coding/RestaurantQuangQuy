@@ -19,7 +19,7 @@ namespace RestaurantQuangQuy.Controllers.Client
         }
         // GET: api/DatBan
         [HttpGet("GetAll")]
-        public IActionResult GetDatBan()
+        public  IActionResult GetDatBan()
         {
             try
             {
@@ -40,6 +40,7 @@ namespace RestaurantQuangQuy.Controllers.Client
                 {
                     MaBanAn = db.MaBanAn,
                     MaKhachHang = db.MaKhachHang,
+                    SoLuongKhach = db.SoLuongKhach,
                     ThoiGianDat = db.ThoiGianDat,
                     ThoiGianDen = db.ThoiGianDen,
                     TrangThai = db.TrangThai,
@@ -91,7 +92,8 @@ namespace RestaurantQuangQuy.Controllers.Client
                 {
                     MaBanAn = db.MaBanAn,
                     MaKhachHang = db.MaKhachHang,
-                    ThoiGianDat = db.ThoiGianDat,
+					SoLuongKhach = db.SoLuongKhach,
+					ThoiGianDat = db.ThoiGianDat,
                     ThoiGianDen = db.ThoiGianDen,
                     TrangThai = db.TrangThai,
                     GhiChu = db.GhiChu,
@@ -163,7 +165,8 @@ namespace RestaurantQuangQuy.Controllers.Client
                 {
                     MaBanAn = maBanAn,
                     MaKhachHang = datBanDTO.MaKhachHang,
-                    ThoiGianDat = datBanDTO.ThoiGianDat,
+					SoLuongKhach = datBanDTO.SoLuongKhach,
+					ThoiGianDat = datBanDTO.ThoiGianDat,
                     ThoiGianDen = datBanDTO.ThoiGianDen,
                     TrangThai = datBanDTO.TrangThai,
                     GhiChu = datBanDTO.GhiChu
@@ -172,25 +175,25 @@ namespace RestaurantQuangQuy.Controllers.Client
                 // Thêm vào bảng Datban
                 _context.Datbans.Add(datBan);
 
-                // Thêm vào bảng DatBanBanAn nếu có danh sách bàn
-                if (datBanDTO.MaBans != null && datBanDTO.MaBans.Any())
-                {
-                    foreach (var maBan in datBanDTO.MaBans)
-                    {
-                        var existingBan = _context.Banans.FirstOrDefault(b => b.MaBan == maBan);
-                        if (existingBan == null)
-                        {
-                            return NotFound($"MaBan '{maBan}' not found.");
-                        }
+                //// Thêm vào bảng DatBanBanAn nếu có danh sách bàn
+                //if (datBanDTO.MaBans != null && datBanDTO.MaBans.Any())
+                //{
+                //    foreach (var maBan in datBanDTO.MaBans)
+                //    {
+                //        var existingBan = _context.Banans.FirstOrDefault(b => b.MaBan == maBan);
+                //        if (existingBan == null)
+                //        {
+                //            return NotFound($"MaBan '{maBan}' not found.");
+                //        }
 
-                        var datBanBanAn = new DatBanBanAn
-                        {
-                            MaDatBan = maBanAn,
-                            MaBanAn = maBan
-                        };
-                        _context.DatBanBanAns.Add(datBanBanAn);
-                    }
-                }
+                //        var datBanBanAn = new DatBanBanAn
+                //        {
+                //            MaDatBan = maBanAn,
+                //            MaBanAn = maBan
+                //        };
+                //        _context.DatBanBanAns.Add(datBanBanAn);
+                //    }
+                //}
 
                 // Lưu tất cả vào database
                 _context.SaveChanges();
@@ -242,7 +245,8 @@ namespace RestaurantQuangQuy.Controllers.Client
 
                 // **Bước 1:** Cập nhật thông tin chính của DatBan
                 existingDatBan.MaKhachHang = datBanDTO.MaKhachHang;
-                existingDatBan.ThoiGianDat = datBanDTO.ThoiGianDat;
+				existingDatBan.SoLuongKhach = datBanDTO.SoLuongKhach;
+				existingDatBan.ThoiGianDat = datBanDTO.ThoiGianDat;
                 existingDatBan.ThoiGianDen = datBanDTO.ThoiGianDen;
                 existingDatBan.TrangThai = datBanDTO.TrangThai;
                 existingDatBan.GhiChu = datBanDTO.GhiChu;

@@ -6,7 +6,7 @@ import { Plus, Edit, Trash2, Search, Users, CheckCircle, XCircle, Clock, Downloa
 import axios from "axios";
 
 // API URL
-const API_URL = "https://localhost:44321/api/BanAnManager";
+const API_URL = "http://localhost:5080/api/BanAnManager";
 
 // Danh sách vị trí hợp lệ theo API controller
 const locations = ["Tầng 1", "Tầng 2", "Tầng 3", "Ngoài trời"];
