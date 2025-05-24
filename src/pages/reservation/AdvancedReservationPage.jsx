@@ -115,12 +115,12 @@ const AdvancedReservationPage = () => {
     setError("")
 
     try {
-      console.log("🔄 Đang tải thông tin người dùng với ID:", uid)
+      // console.log("🔄 Đang tải thông tin người dùng với ID:", uid)
 
       const response = await api.getUserById(uid)
       const userData = response.data
 
-      console.log("✅ Dữ liệu người dùng nhận được:", userData)
+      // console.log("✅ Dữ liệu người dùng nhận được:", userData)
 
       // Xử lý dữ liệu từ NguoiDungManagerController
       const customerCode = userData.maKhachHang || userData.maTaiKhoan || uid
@@ -136,11 +136,11 @@ const AdvancedReservationPage = () => {
         maKhachHang: customerCode,
       })
 
-      console.log("✅ Thông tin khách hàng đã được cập nhật:")
-      console.log("- Tên:", userName)
-      console.log("- Email:", userEmail)
-      console.log("- SĐT:", userPhone)
-      console.log("- Mã KH:", customerCode)
+      // console.log("✅ Thông tin khách hàng đã được cập nhật:")
+      // console.log("- Tên:", userName)
+      // console.log("- Email:", userEmail)
+      // console.log("- SĐT:", userPhone)
+      // console.log("- Mã KH:", customerCode)
     } catch (err) {
       console.error("❌ Lỗi lấy thông tin người dùng:", err)
 
@@ -177,7 +177,7 @@ const AdvancedReservationPage = () => {
       setTimeout(() => {
         const times = generateAvailableTimes(selectedDate, partySize)
         setAvailableTimes(times)
-        console.log("✅ Đã tạo khung giờ cho", selectedDate.toDateString(), ":", times)
+        // console.log("✅ Đã tạo khung giờ cho", selectedDate.toDateString(), ":", times)
         setLoading(false)
       }, 500)
     }
@@ -266,15 +266,15 @@ const AdvancedReservationPage = () => {
     }
 
     try {
-      console.log("🔄 Đang đặt bàn với payload:", payload)
-      console.log("📅 Thời gian đặt (hiện tại):", now.toLocaleString("vi-VN"))
-      console.log("📅 Thời gian đến:", thoiGianDen.toLocaleString("vi-VN"))
+      // console.log("🔄 Đang đặt bàn với payload:", payload)
+      // console.log("📅 Thời gian đặt (hiện tại):", now.toLocaleString("vi-VN"))
+      // console.log("📅 Thời gian đến:", thoiGianDen.toLocaleString("vi-VN"))
 
       const response = await api.createOrderTable(payload)
 
       if (response.data) {
         const result = response.data
-        console.log("✅ Response từ server:", result)
+        // console.log("✅ Response từ server:", result)
 
         // Extract maBanAn properly from different possible response formats
         let code = ""
@@ -306,7 +306,7 @@ const AdvancedReservationPage = () => {
 
         setReservationCode(code)
         setReservationComplete(true)
-        console.log("✅ Đặt bàn thành công với mã:", code)
+        // console.log("✅ Đặt bàn thành công với mã:", code)
       } else {
         throw new Error("Invalid response from server")
       }
@@ -549,7 +549,7 @@ const AdvancedReservationPage = () => {
 
       {!userLoading && customerInfo.name && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
-          <p className="text-green-800">✅ Đã tải thông tin người dùng thành công!</p>
+          {/* <p className="text-green-800">✅ Đã tải thông tin người dùng thành công!</p> */}
         </div>
       )}
 
