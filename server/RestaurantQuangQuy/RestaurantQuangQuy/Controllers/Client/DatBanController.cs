@@ -131,86 +131,51 @@ namespace RestaurantQuangQuy.Controllers.Client
                     return BadRequest("Invalid DatBan data.");
                 }
 
-                // Randomly generate MaBanAn start with "BA" with 10 characters
                 var maBanAn = "BA" + Guid.NewGuid().ToString("N").Substring(0, 8).ToUpper();
 
-                // Check if the MaBanAn already exists
                 var existingDatBan = _context.Datbans.FirstOrDefault(db => db.MaBanAn == maBanAn);
                 if (existingDatBan != null)
                 {
                     return Conflict("MaBanAn already exists.");
                 }
 
-                // Check if the MaKhachHang exists
                 var existingKhachHang = _context.Khachhangs.FirstOrDefault(kh => kh.MaKhachHang == datBanDTO.MaKhachHang);
                 if (existingKhachHang == null)
                 {
                     return NotFound("MaKhachHang not found.");
                 }
 
-                // Check if the ThoiGianDen is in the future
-                if (datBanDTO.ThoiGianDen <= DateTime.Now)
-                {
-                    return BadRequest("ThoiGianDen must be in the future.");
-                }
-
-                // Check if the ThoiGianDen is after ThoiGianDat
                 if (datBanDTO.ThoiGianDen <= datBanDTO.ThoiGianDat)
                 {
                     return BadRequest("ThoiGianDen must be after ThoiGianDat.");
                 }
 
-                // Map DTO to DatBan entity
                 var datBan = new Datban
                 {
                     MaBanAn = maBanAn,
                     MaKhachHang = datBanDTO.MaKhachHang,
-					SoLuongKhach = datBanDTO.SoLuongKhach,
-					ThoiGianDat = datBanDTO.ThoiGianDat,
+                    SoLuongKhach = datBanDTO.SoLuongKhach,
+                    ThoiGianDat = datBanDTO.ThoiGianDat,
                     ThoiGianDen = datBanDTO.ThoiGianDen,
                     TrangThai = datBanDTO.TrangThai,
                     GhiChu = datBanDTO.GhiChu
                 };
 
-                // Thêm vào bảng Datban
                 _context.Datbans.Add(datBan);
-
-                //// Thêm vào bảng DatBanBanAn nếu có danh sách bàn
-                //if (datBanDTO.MaBans != null && datBanDTO.MaBans.Any())
-                //{
-                //    foreach (var maBan in datBanDTO.MaBans)
-                //    {
-                //        var existingBan = _context.Banans.FirstOrDefault(b => b.MaBan == maBan);
-                //        if (existingBan == null)
-                //        {
-                //            return NotFound($"MaBan '{maBan}' not found.");
-                //        }
-
-                //        var datBanBanAn = new DatBanBanAn
-                //        {
-                //            MaDatBan = maBanAn,
-                //            MaBanAn = maBan
-                //        };
-                //        _context.DatBanBanAns.Add(datBanBanAn);
-                //    }
-                //}
-
-                // Lưu tất cả vào database
                 _context.SaveChanges();
 
-                // Trả về thông tin DatBan mới tạo
-                return CreatedAtAction(nameof(GetDatBan), new { id = datBan.MaBanAn }, datBan);
+                return Ok(maBanAn);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                return StatusCode(StatusCodes.Status500InternalServerError, "Internal server error");
+                Console.WriteLine("❌ Lỗi trong CreateDatBan: " + ex.Message);
+                return StatusCode(500, "Đã xảy ra lỗi nội bộ server.");
             }
         }
 
         // PUT: api/DatBan/Update/{id}
-        [HttpPut("Update")]
-        public IActionResult UpdateDatBan([FromBody] DatBanUpdateDTO datBanDTO)
+        [HttpPut("Update/{id}")]
+        public IActionResult UpdateDatBan(string id,[FromBody] DatBanUpdateDTO datBanDTO)
         {
             try
             {
@@ -220,7 +185,7 @@ namespace RestaurantQuangQuy.Controllers.Client
                 }
 
                 // Tìm đối tượng DatBan cần cập nhật
-                var existingDatBan = _context.Datbans.FirstOrDefault(db => db.MaBanAn == datBanDTO.MaBanAn);
+                var existingDatBan = _context.Datbans.FirstOrDefault(db => db.MaBanAn == id);
                 if (existingDatBan == null)
                 {
                     return NotFound("DatBan not found.");

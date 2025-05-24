@@ -141,30 +141,7 @@ namespace RestaurantQuangQuy.Controllers.Client
 				_context.Datbans.Add(datBan);
 
 				// Nếu MaBans null hoặc rỗng thì không làm gì
-				if (datBanDTO.MaBans != null && datBanDTO.MaBans.Any())
-				{
-					var validMaBans = datBanDTO.MaBans.Where(mb => !string.IsNullOrWhiteSpace(mb)).ToList();
-
-					foreach (var maBan in validMaBans)
-					{
-						var existingBan = _context.Banans.FirstOrDefault(b => b.MaBan == maBan);
-						if (existingBan == null)
-						{
-							return NotFound($"MaBan '{maBan}' not found.");
-						}
-
-						var datBanBanAn = new DatBanBanAn
-						{
-							MaDatBan = maDatBan,
-							MaBanAn = maBan
-						};
-						_context.DatBanBanAns.Add(datBanBanAn);
-					}
-				}
-				// Nếu rỗng hoặc null => không gán bàn nào, đặt bàn chỉ tạo đơn thuần.
-
-
-
+		
 				_context.SaveChanges();
 				return CreatedAtAction(nameof(GetDatBan), new { id = datBan.MaBanAn }, datBan);
 			}
