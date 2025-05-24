@@ -532,7 +532,7 @@ const AdvancedReservationPage = () => {
     <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
       <div className="mb-6">
         <h3 className="text-xl font-semibold mb-2">Thông tin liên hệ</h3>
-        <p className="text-gray-600">Nhập thông tin để hoàn tất đặt bàn</p>
+        {/* <p className="text-gray-600">Nhập thông tin để hoàn tất đặt bàn</p> */}
       </div>
 
       {error && (
@@ -547,11 +547,7 @@ const AdvancedReservationPage = () => {
         </div>
       )}
 
-      {!userLoading && customerInfo.name && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
-          {/* <p className="text-green-800">✅ Đã tải thông tin người dùng thành công!</p> */}
-        </div>
-      )}
+    
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="space-y-4">
@@ -565,7 +561,7 @@ const AdvancedReservationPage = () => {
               type="text"
               value={customerInfo.name}
               onChange={handleInputChange}
-              required
+              readOnly
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Nhập họ và tên"
             />
@@ -581,7 +577,7 @@ const AdvancedReservationPage = () => {
               type="email"
               value={customerInfo.email}
               onChange={handleInputChange}
-              required
+             readOnly
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Nhập email"
             />
@@ -597,7 +593,7 @@ const AdvancedReservationPage = () => {
               type="tel"
               value={customerInfo.phone}
               onChange={handleInputChange}
-              required
+              readOnly
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Nhập số điện thoại"
             />
