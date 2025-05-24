@@ -42,7 +42,7 @@ const CategoriesManagementPage = () => {
     tenDanhMuc: "",
     moTa: "",
     trangThai: "Hoạt động",
-    hinhAnh: null,
+    hinhAnh: "",
   })
 
   // State cho form chỉnh sửa
@@ -50,7 +50,7 @@ const CategoriesManagementPage = () => {
     tenDanhMuc: "",
     moTa: "",
     trangThai: "Hoạt động",
-    hinhAnh: null,
+    hinhAnh: "",
   })
 
   const [sortConfig, setSortConfig] = useState({
@@ -192,7 +192,7 @@ const CategoriesManagementPage = () => {
       tenDanhMuc: "",
       moTa: "",
       trangThai: "Hoạt động",
-      hinhAnh: null,
+      hinhAnh: "",
     })
     setFormErrors({})
     setIsAddCategoryModalOpen(true)
@@ -205,7 +205,7 @@ const CategoriesManagementPage = () => {
       tenDanhMuc: "",
       moTa: "",
       trangThai: "Hoạt động",
-      hinhAnh: null,
+      hinhAnh: "",
     })
     setFormErrors({})
   }
@@ -218,7 +218,7 @@ const CategoriesManagementPage = () => {
       tenDanhMuc: "",
       moTa: "",
       trangThai: "Hoạt động",
-      hinhAnh: null,
+      hinhAnh: "",
     })
     setFormErrors({})
   }
@@ -268,38 +268,63 @@ const CategoriesManagementPage = () => {
   }
 
   // Thêm hàm xử lý xem ảnh
-  const handleViewImage = (imageUrl) => {
-    setImageToView(imageUrl)
-    setIsImageViewModalOpen(true)
-  }
+ const handleViewImage = (imageUrl) => {
+  setImageToView(imageUrl || "/placeholder.svg");
+  setIsImageViewModalOpen(true);
+};
 
   // Xử lý thay đổi ảnh cho form thêm mới
-  const handleAddImageChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      // Tạo URL tạm thời cho ảnh để hiển thị preview
-      const imageUrl = URL.createObjectURL(file)
+ const handleAddImageChange = async (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "demo_preset"); // Thay bằng preset của bạn
+
+    try {
+      const res = await fetch("https://api.cloudinary.com/v1_1/dlozjvjhf/image/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      console.log("Cloudinary upload result:", data);
       setNewCategory((prev) => ({
         ...prev,
-        hinhAnh: imageUrl,
-        imageFile: file, // Lưu file để upload sau
-      }))
+        hinhAnh: data.secure_url, // Lưu URL Cloudinary
+        imageFile: null, // Không cần gửi file lên backend nữa
+      }));
+    } catch (err) {
+      alert("Lỗi upload ảnh Cloudinary");
     }
   }
+};
 
   // Xử lý thay đổi ảnh cho form chỉnh sửa
-  const handleEditImageChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      // Tạo URL tạm thời cho ảnh để hiển thị preview
-      const imageUrl = URL.createObjectURL(file)
+const handleEditImageChange = async (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "demo_preset");
+
+
+    try {
+      const res = await fetch("https://api.cloudinary.com/v1_1/dlozjvjhf/image/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      console.log("Cloudinary upload result:", data);
       setEditedCategory((prev) => ({
         ...prev,
-        hinhAnh: imageUrl,
-        imageFile: file, // Lưu file để upload sau
-      }))
+        hinhAnh: data.secure_url,
+        imageFile: null,
+      }));
+    } catch (err) {
+      alert("Lỗi upload ảnh Cloudinary");
     }
   }
+};
 
   // Tối ưu hóa việc tải lại dữ liệu sau khi thêm/sửa/xóa
   // Cập nhật hàm handleAddCategory
@@ -336,7 +361,7 @@ const CategoriesManagementPage = () => {
         maDanhMuc: "",
         tenDanhMuc: newCategory.tenDanhMuc,
         moTa: newCategory.moTa,
-        hinhAnh: imageUrl || "",
+        hinhAnh: newCategory.hinhAnh,
         trangThai: newCategory.trangThai,
       }
 
@@ -396,7 +421,7 @@ const CategoriesManagementPage = () => {
         maDanhMuc: id,
         tenDanhMuc: editedCategory.tenDanhMuc,
         moTa: editedCategory.moTa,
-        hinhAnh: imageUrl || "",
+        hinhAnh: editedCategory.hinhAnh,
         trangThai: editedCategory.trangThai,
       }
 
@@ -645,11 +670,11 @@ const CategoriesManagementPage = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10 cursor-pointer" onClick={() => handleViewImage(category.hinhAnh || "/placeholder.svg")}>
-                        <img
-                          className="h-10 w-10 rounded-full object-cover hover:opacity-80 transition-opacity"
-                          src={category.hinhAnh || "/placeholder.svg"}
-                          alt=""
-                        />
+                      <img
+  className="h-10 w-10 rounded-full object-cover hover:opacity-80 transition-opacity"
+  src={category.hinhAnh || "/placeholder.svg"}
+  alt={category.tenDanhMuc || category.name}
+/>
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">{category.tenDanhMuc || category.name}</div>

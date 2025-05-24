@@ -39,43 +39,57 @@ namespace RestaurantQuangQuy.Controllers
 		[HttpPost("create")]
 		public async Task<IActionResult> CreateDanhMuc([FromBody] DanhMucDTO danhMucDto)
 		{
-			// Kiểm tra các tham số quan trọng
 			if (string.IsNullOrEmpty(danhMucDto.TenDanhMuc) || string.IsNullOrEmpty(danhMucDto.TrangThai))
 			{
 				return BadRequest("Thiếu thông tin bắt buộc.");
 			}
 
 			// Chỉ cho phép các trạng thái đã xác định
-			var validTrangThaiOptions = new List<string> { "Hoạt động", "Không hoạt động" };
-
+			var validTrangThaiOptions = new List<string> { "Hoạt động", "Không hoạt động", "Ngừng hoạt động" };
 			if (!validTrangThaiOptions.Contains(danhMucDto.TrangThai))
 			{
-				return BadRequest("Trạng thái không hợp lệ. Chỉ chấp nhận 'Hoạt động' hoặc 'Không hoạt động'.");
+				return BadRequest("Trạng thái không hợp lệ. Chỉ chấp nhận 'Hoạt động', 'Không hoạt động' hoặc 'Ngừng hoạt động'.");
 			}
 
-			// Tạo mã danh mục tự động
-			var maDanhMuc = GenerateMaDanhMuc();
+			// Tạo mã danh mục mới, đảm bảo không trùng
+			var lastMa = await _context.Danhmucs
+				.OrderByDescending(dm => dm.MaDanhMuc)
+				.Select(dm => dm.MaDanhMuc)
+				.FirstOrDefaultAsync();
 
+			int nextNumber = 1;
+			if (!string.IsNullOrEmpty(lastMa) && lastMa.StartsWith("DM") && lastMa.Length >= 5)
+			{
+				var numberPart = lastMa.Substring(2);
+				if (int.TryParse(numberPart, out int parsedNumber))
+				{
+					nextNumber = parsedNumber + 1;
+				}
+			}
+
+			string newMaDanhMuc = $"DM{nextNumber:D3}";
+
+			// Kiểm tra lại nếu vẫn trùng mã do concurrent insert (hiếm nhưng an toàn)
+			while (await _context.Danhmucs.AnyAsync(dm => dm.MaDanhMuc == newMaDanhMuc))
+			{
+				nextNumber++;
+				newMaDanhMuc = $"DM{nextNumber:D3}";
+			}
+
+			// Tạo đối tượng danh mục
 			var danhMuc = new Danhmuc
 			{
-				MaDanhMuc = maDanhMuc,
+				MaDanhMuc = newMaDanhMuc,
 				TenDanhMuc = danhMucDto.TenDanhMuc,
 				MoTa = danhMucDto.MoTa,
 				HinhAnh = danhMucDto.HinhAnh,
-				TinhTrang = danhMucDto.TrangThai // Trạng thái đã được chọn từ client
+				TinhTrang = danhMucDto.TrangThai
 			};
 
 			_context.Danhmucs.Add(danhMuc);
 			await _context.SaveChangesAsync();
 
 			return CreatedAtAction(nameof(GetAllDanhMuc), new { id = danhMuc.MaDanhMuc }, danhMuc);
-		}
-
-		private string GenerateMaDanhMuc()
-		{
-			// Tạo mã danh mục theo định dạng "DM001", "DM002", v.v.
-			int count = _context.Danhmucs.Count() + 1;
-			return $"DM{count:D3}"; // Ví dụ: DM001, DM002
 		}
 
 

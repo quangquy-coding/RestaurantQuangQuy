@@ -130,7 +130,7 @@ const DishesPage = () => {
 
     try {
       const response = await axios.post(
-        "https://api.cloudinary.com/v1_1/dpgnekfsz/image/upload",
+        "https://api.cloudinary.com/v1_1/dlozjvjhf/image/upload",
         formData
       );
 
@@ -370,7 +370,7 @@ const DishesPage = () => {
 
     try {
       const response = await axios.post(
-        "https://api.cloudinary.com/v1_1/dpgnekfsz/image/upload",
+        "https://api.cloudinary.com/v1_1/dlozjvjhf/image/upload",
         formData
       );
 
