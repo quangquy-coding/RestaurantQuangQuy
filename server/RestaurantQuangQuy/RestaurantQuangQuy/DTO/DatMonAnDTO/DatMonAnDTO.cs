@@ -6,8 +6,6 @@ namespace RestaurantQuangQuy.DTO.DatMonAnDTO
 {
     public class DatMonAnDTO
     {
-        public string MaDatMon { get; set; } = null!;
-
         public string? MaBanAn { get; set; }
 
         public string? MaKhachHang { get; set; }
@@ -28,8 +26,6 @@ namespace RestaurantQuangQuy.DTO.DatMonAnDTO
     }
     public class ChiTietDonDatMonDTO
     {
-        public string MaDatMon { get; set; } = null!;
-
         public string MaMon { get; set; } = null!;
 
         public int SoLuong { get; set; }

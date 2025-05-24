@@ -1,12 +1,15 @@
 import React, { useState } from "react";
+
 import { useNavigate, Link } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import Email from "../assets/email.png";
 
 const LoginPage = () => {
   const [credentials, setCredentials] = useState({
-    email: "",
-    password: "",
+    tenTaiKhoan: "",
+    matKhau: "",
   });
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -17,14 +20,58 @@ const LoginPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    localStorage.setItem("token", "mock-token");
-    navigate("/admin");
+    setError(null);
+
+    try {
+      const response = await fetch("http://localhost:5080/api/login/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          TenTaiKhoan: credentials.tenTaiKhoan,
+          MatKhau: credentials.matKhau,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || "Đăng nhập thất bại");
+      }
+
+      const data = await response.json();
+      localStorage.setItem("token", data.user.Token);
+      navigate("/admin");
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    alert("Đăng nhập bằng Gmail");
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const response = await fetch("http://localhost:5080/api/login/google-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idToken: credentialResponse.credential,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || "Đăng nhập Google thất bại");
+      }
+
+      const data = await response.json();
+      localStorage.setItem("token", data.user.Token);
+      navigate("/admin");
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
@@ -34,21 +81,27 @@ const LoginPage = () => {
           Đăng nhập tài khoản
         </h1>
 
+        {error && (
+          <div className="mb-4 text-red-600 font-semibold text-center">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label
-              htmlFor="email"
+              htmlFor="tenTaiKhoan"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              Nhập bằng tài khoản hoặc email
+              Tên tài khoản hoặc email
             </label>
             <input
-              type="email"
-              name="email"
-              id="email"
+              type="text"
+              name="tenTaiKhoan"
+              id="tenTaiKhoan"
               required
-              placeholder="Email"
-              value={credentials.email}
+              placeholder="Tên tài khoản hoặc email"
+              value={credentials.tenTaiKhoan}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
             />
@@ -56,18 +109,18 @@ const LoginPage = () => {
 
           <div>
             <label
-              htmlFor="password"
+              htmlFor="matKhau"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
               Mật khẩu
             </label>
             <input
               type="password"
-              name="password"
-              id="password"
+              name="matKhau"
+              id="matKhau"
               required
               placeholder="Mật khẩu"
-              value={credentials.password}
+              value={credentials.matKhau}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
             />
@@ -81,18 +134,13 @@ const LoginPage = () => {
           </button>
         </form>
 
-        {/* Đăng nhập bằng Gmail */}
         <div className="mt-6">
-          <button
-            onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center bg-white border border-red-500 text-red-600 hover:bg-red-50 font-semibold py-3 rounded-lg transition duration-300 shadow-md"
-          >
-            <img src={Email} alt="Gmail Logo" className="w-5 h-5 mr-3" />
-            Đăng nhập bằng Gmail
-          </button>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError("Đăng nhập Google thất bại")}
+          />
         </div>
 
-        {/* Quên mật khẩu / Đăng ký */}
         <div className="mt-6 flex justify-between text-sm text-gray-600">
           <Link
             to="/forgot-password"

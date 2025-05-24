@@ -79,7 +79,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 
 			// Danh sách hợp lệ cho TrangThai
-			var validTrangThaiValues = new List<string> { "Trống", "Đã đặt", "Đang phục vu "};
+			var validTrangThaiValues = new List<string> { "Trống", "Đã đặt", "Đang sử dụng"};
 			if (!validTrangThaiValues.Contains(bananDTO.TrangThai))
 			{
 				return BadRequest("Giá trị 'TrangThai' không hợp lệ. Chỉ chấp nhận: Trống, Đã đặt, Đang sử dụng.");

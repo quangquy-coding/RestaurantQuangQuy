@@ -5,7 +5,7 @@ import * as XLSX from "xlsx"
 import { saveAs } from "file-saver"
 import { useState, useEffect } from "react"
 import { Search, Plus, Edit, Trash2, Eye, Download, ChevronLeft, ChevronRight } from "lucide-react"
-import { getDishes, addDish, updateDish, deleteDish, getCategories } from "../api/dishApi"
+import { getDishes, addDish, updateDish, deleteDish, getCategories } from "../../api/dishApi.js"
 
 const DishesPage = () => {
   const [categories, setCategories] = useState([])
@@ -133,7 +133,7 @@ const DishesPage = () => {
         const res = await getCategories()
         setCategories(res.data)
       } catch (err) {
-        alert("Lỗi khi lấy danh mục món ăn")
+        // alert("Lỗi khi lấy danh mục món ăn")
         console.error(err)
       } finally {
         setIsLoading(false)
@@ -151,7 +151,7 @@ const DishesPage = () => {
         setDishes(res.data)
         applyFiltersAndPagination(res.data, searchTerm, selectedCategory)
       } catch (err) {
-        alert("Lỗi khi lấy danh sách món ăn")
+        // alert("Lỗi khi lấy danh sách món ăn")
         console.error(err)
       } finally {
         setIsLoading(false)
@@ -1086,106 +1086,122 @@ const DishesPage = () => {
       )}
 
       {/* View Dish Modal */}
-      {isViewModalOpen && currentDish && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold">Chi tiết món ăn</h2>
-            </div>
+{isViewModalOpen && currentDish && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col relative">
+      {/* Nút đóng (X) */}
+      <button
+        onClick={() => {
+          setCurrentDish(null)
+          setIsViewModalOpen(false)
+        }}
+        className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
 
-            <div className="p-6">
-              <div className="flex flex-col md:flex-row gap-6">
-                <div className="md:w-1/3">
-                  <img
-                    src={getSafeImageSrc(currentDish.hinhAnh) || "/placeholder.svg"}
-                    alt={currentDish.tenMon}
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                </div>
+      {/* Header */}
+      <div className="px-6 pt-6 pb-2 border-b">
+        <h2 className="text-lg font-semibold">Chi tiết món ăn</h2>
+      </div>
 
-                <div className="md:w-2/3">
-                  <h3 className="text-xl font-bold mb-2">{currentDish.tenMon}</h3>
+      {/* Nội dung có thể cuộn */}
+      <div className="px-6 py-4 overflow-y-auto flex-1">
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="md:w-1/3">
+            <img
+              src={getSafeImageSrc(currentDish.hinhAnh) || "/placeholder.svg"}
+              alt={currentDish.tenMon}
+              className="w-full h-48 object-cover rounded-lg"
+            />
+          </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Danh mục</p>
-                      <p className="font-medium">{currentDish.tenDanhMuc}</p>
-                    </div>
+          <div className="md:w-2/3">
+            <h3 className="text-xl font-bold mb-2">{currentDish.tenMon}</h3>
 
-                    <div>
-                      <p className="text-sm text-gray-500">Giá</p>
-                      <p className="font-medium">
-                        {typeof currentDish.gia === "number" ? currentDish.gia.toLocaleString("vi-VN") + " ₫" : "0 ₫"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-sm text-gray-500">Thời gian món</p>
-                      <p className="font-medium">{currentDish.thoiGianMon}</p>
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500">Mô tả</p>
-                    <p>{currentDish.moTa}</p>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500">Thành phần</p>
-                    <p>{currentDish.thanhPhan}</p>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500">Dinh dưỡng</p>
-                    <p>{currentDish.dinhDuong}</p>
-                  </div>
-
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500">Dị ứng</p>
-                    <p>{currentDish.diUng}</p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {{
-                      "Còn hàng": (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                          Còn hàng
-                        </span>
-                      ),
-                      "Món đặc biệt": (
-                        <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
-                          Món đặc biệt
-                        </span>
-                      ),
-                      "Món mới": (
-                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
-                          Món mới
-                        </span>
-                      ),
-                    }[currentDish.tinhTrang] || (
-                      <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
-                        Hết hàng
-                      </span>
-                    )}
-                  </div>
-                </div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p className="text-sm text-gray-500">Danh mục</p>
+                <p className="font-medium">{currentDish.tenDanhMuc}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Giá</p>
+                <p className="font-medium">
+                  {typeof currentDish.gia === "number" ? currentDish.gia.toLocaleString("vi-VN") + " ₫" : "0 ₫"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Thời gian món</p>
+                <p className="font-medium">{currentDish.thoiGianMon}</p>
               </div>
             </div>
 
-            <div className="p-6 border-t bg-gray-50 flex justify-end">
-              <button
-                onClick={() => {
-                  setCurrentDish(null)
-                  setIsViewModalOpen(false)
-                }}
-                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-              >
-                Đóng
-              </button>
+            <div className="mb-2">
+              <p className="text-sm text-gray-500">Mô tả</p>
+              <p>{currentDish.moTa}</p>
+            </div>
+
+            <div className="mb-2">
+              <p className="text-sm text-gray-500">Thành phần</p>
+              <p>{currentDish.thanhPhan}</p>
+            </div>
+
+            <div className="mb-2">
+              <p className="text-sm text-gray-500">Dinh dưỡng</p>
+              <p>{currentDish.dinhDuong}</p>
+            </div>
+
+            <div className="mb-2">
+              <p className="text-sm text-gray-500">Dị ứng</p>
+              <p>{currentDish.diUng}</p>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mt-3">
+              {{
+                "Còn hàng": (
+                  <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                    Còn hàng
+                  </span>
+                ),
+                "Món đặc biệt": (
+                  <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium">
+                    Món đặc biệt
+                  </span>
+                ),
+                "Món mới": (
+                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">
+                    Món mới
+                  </span>
+                ),
+              }[currentDish.tinhTrang] || (
+                <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                  Hết hàng
+                </span>
+              )}
             </div>
           </div>
         </div>
-      )}
+      </div>
+
+      {/* Footer (nút Đóng) */}
+      <div className="px-6 py-3 border-t bg-gray-50 flex justify-end">
+        <button
+          onClick={() => {
+            setCurrentDish(null)
+            setIsViewModalOpen(false)
+          }}
+          className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+        >
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
 
       {/* Delete Dish Modal */}
       {isDeleteModalOpen && currentDish && (

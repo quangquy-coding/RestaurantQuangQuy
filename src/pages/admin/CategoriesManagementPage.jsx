@@ -1,7 +1,7 @@
 import React from "react"
 import * as XLSX from "xlsx"
 import { saveAs } from "file-saver"
-import { getAllCategories, createCategory, updateCategory, deleteCategory } from "../api/categoryApi"
+import { getAllCategories, createCategory, updateCategory, deleteCategory } from "../../api/categoryApi"
 import { useState, useEffect, useRef } from "react"
 import {
   Search,

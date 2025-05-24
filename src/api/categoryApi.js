@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "https://localhost:44321/api/DanhMucManager";
+const API_URL = "http://localhost:5080/api/DanhMucManager";
 
 // Lấy tất cả danh mục (GET /api/DanhMucManager)
 export const getAllCategories = () => axios.get(API_URL);

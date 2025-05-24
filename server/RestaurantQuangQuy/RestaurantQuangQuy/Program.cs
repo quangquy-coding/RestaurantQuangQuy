@@ -3,108 +3,124 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RestaurantQuangQuy.Models;
+using RestaurantQuangQuy.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-builder.Services.AddControllers();
+// 1. Cấu hình DbContext
 builder.Services.AddDbContext<RestaurantManagementContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-// Cấu hình Swagger
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    // Thêm JWT Bearer Authentication vào Swagger UI
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Description = "Please enter a valid JWT token",
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey
-    });
+// 2. Cấu hình Email Service
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddTransient<IEmailService, EmailService>();
 
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] { }
-        }
-    });
-
-    // Định nghĩa Swagger Doc với thông tin phiên bản
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Restaurant API",
-        Version = "v1",
-        Description = "API for managing restaurant orders"
-    });
-});
-
-// Cấu hình JWT Authentication
+// 3. Cấu hình JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+string jwtKey = jwtSettings["Key"] ?? throw new Exception("JWT Key missing in configuration");
+string jwtIssuer = jwtSettings["Issuer"];
+string jwtAudience = jwtSettings["Audience"];
+
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+	options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+	options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]))
-    };
+	options.TokenValidationParameters = new TokenValidationParameters
+	{
+		ValidateIssuer = true,
+		ValidateAudience = true,
+		ValidateLifetime = true,
+		ValidateIssuerSigningKey = true,
+		ValidIssuer = jwtIssuer,
+		ValidAudience = jwtAudience,
+		IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+	};
 });
 
+
+
+// 4. Cấu hình Authorization
 builder.Services.AddAuthorization();
 
-// Configure CORS (nếu cần)
+// 5. Cấu hình Swagger (bao gồm Bearer Token support)
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+	options.SwaggerDoc("v1", new OpenApiInfo
+	{
+		Title = "Restaurant API",
+		Version = "v1",
+		Description = "API for managing restaurant orders"
+	});
+
+	options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+	{
+		In = ParameterLocation.Header,
+		Description = "Nhập JWT token vào đây (Bearer <token>)",
+		Name = "Authorization",
+		Type = SecuritySchemeType.ApiKey,
+		Scheme = "Bearer"
+	});
+
+	options.AddSecurityRequirement(new OpenApiSecurityRequirement
+	{
+		{
+			new OpenApiSecurityScheme
+			{
+				Reference = new OpenApiReference
+				{
+					Type = ReferenceType.SecurityScheme,
+					Id = "Bearer"
+				}
+			},
+			Array.Empty<string>()
+		}
+	});
+
+	// Thêm dòng này để tránh trùng tên schema
+	options.CustomSchemaIds(type => type.FullName);
+});
+
+
+// 6. CORS (cho phép tất cả - tùy chỉnh lại nếu cần)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
-    {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
-    });
+	options.AddPolicy("AllowAll", builder =>
+	{
+		builder.AllowAnyOrigin()
+			   .AllowAnyMethod()
+			   .AllowAnyHeader();
+	});
 });
+
+builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
+
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// 7. Middleware pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Restaurant API v1");
-    });
+	app.UseSwagger();
+	app.UseSwaggerUI(options =>
+	{
+		options.SwaggerEndpoint("/swagger/v1/swagger.json", "Restaurant API v1");
+	});
 }
-
-// Cấu hình CORS nếu cần
-app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 
-// Sử dụng Authentication và Authorization
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseStaticFiles();
 
 app.MapControllers();
 

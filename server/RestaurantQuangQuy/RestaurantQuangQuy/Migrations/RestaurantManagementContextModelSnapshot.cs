@@ -292,6 +292,9 @@ namespace RestaurantQuangQuy.Migrations
                         .HasColumnType("varchar(10)")
                         .HasColumnName("maKhachHang");
 
+                    b.Property<int>("SoLuongKhach")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("ThoiGianDat")
                         .HasColumnType("datetime")
                         .HasColumnName("thoiGianDat");
@@ -425,10 +428,6 @@ namespace RestaurantQuangQuy.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("phuongThucThanhToan");
-
-                    b.Property<int?>("SoLuongKhach")
-                        .HasColumnType("int")
-                        .HasColumnName("soLuongKhach");
 
                     b.Property<DateTime>("ThoiGianDat")
                         .HasColumnType("datetime")
@@ -657,7 +656,7 @@ namespace RestaurantQuangQuy.Migrations
                         .HasColumnType("varchar(10)")
                         .HasColumnName("maTaiKhoan");
 
-                    b.Property<DateOnly>("NgayTuyenDung")
+                    b.Property<DateOnly?>("NgayTuyenDung")
                         .HasColumnType("date")
                         .HasColumnName("ngayTuyenDung");
 
@@ -725,6 +724,9 @@ namespace RestaurantQuangQuy.Migrations
                         .HasColumnType("varchar(100)")
                         .HasColumnName("email");
 
+                    b.Property<string>("HinhAnh")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("MaQuyen")
                         .HasMaxLength(10)
                         .IsUnicode(false)
@@ -738,13 +740,19 @@ namespace RestaurantQuangQuy.Migrations
                         .HasColumnType("varchar(100)")
                         .HasColumnName("matKhau");
 
-                    b.Property<DateOnly>("NgayDangKy")
+                    b.Property<DateOnly?>("NgayDangKy")
                         .HasColumnType("date")
                         .HasColumnName("ngayDangKy");
 
                     b.Property<DateOnly?>("NgaySinh")
                         .HasColumnType("date")
                         .HasColumnName("ngaySinh");
+
+                    b.Property<string>("OtpCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("OtpExpiry")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("SoDienThoai")
                         .HasMaxLength(10)

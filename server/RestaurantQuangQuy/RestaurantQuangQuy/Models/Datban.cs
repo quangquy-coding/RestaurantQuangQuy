@@ -9,7 +9,8 @@ public partial class Datban
 
     public string MaKhachHang { get; set; } = null!;
 
-    public DateTime ThoiGianDat { get; set; }
+    public int SoLuongKhach { get; set; } = 0;
+	public DateTime ThoiGianDat { get; set; }
 
     public DateTime ThoiGianDen { get; set; }
 

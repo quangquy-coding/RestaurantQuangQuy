@@ -17,7 +17,7 @@ public partial class Taikhoan
 
     public string? DiaChi { get; set; }
 
-    public DateOnly NgayDangKy { get; set; }
+    public DateOnly? NgayDangKy { get; set; }
 
     public DateOnly? NgaySinh { get; set; }
 
@@ -28,4 +28,7 @@ public partial class Taikhoan
     public virtual Quyentruycap? MaQuyenNavigation { get; set; }
 
     public virtual Nhanvien? Nhanvien { get; set; }
+	public string? HinhAnh { get; internal set; }
+	public string? OtpCode { get; set; }
+	public DateTime? OtpExpiry { get; set; }
 }

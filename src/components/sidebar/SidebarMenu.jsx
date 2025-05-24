@@ -129,7 +129,7 @@ const SidebarMenu = () => {
           />
         </svg>
       ),
-      to: "/admin/staff",
+      to: "/admin/orders",
     },
     {
       title: "Báo cáo",
