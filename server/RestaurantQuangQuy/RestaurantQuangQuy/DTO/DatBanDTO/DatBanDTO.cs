@@ -20,7 +20,6 @@ namespace RestaurantQuangQuy.DTO.DatBanDTO
     {
         public string MaKhachHang { get; set; } = null!;
         public int SoLuongKhach { get; set; } = 0;
-        public List<string> MaBans { get; set; } = new List<string>();
         public DateTime ThoiGianDat { get; set; }
         public DateTime ThoiGianDen { get; set; }
         public string TrangThai { get; set; } = null!;

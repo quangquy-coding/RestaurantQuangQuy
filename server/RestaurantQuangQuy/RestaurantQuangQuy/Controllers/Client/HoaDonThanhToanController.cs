@@ -28,7 +28,6 @@ namespace RestaurantQuangQuy.Controllers.Client
                         h.MaDatMon,
                         h.MaBanAn,
                         h.MaKhachHang,
-                        h.SoLuongKhach,
                         h.ThoiGianDat,
                         h.ThoiGianThanhToan,
                         h.MaKhuyenMai,
@@ -68,7 +67,6 @@ namespace RestaurantQuangQuy.Controllers.Client
                         h.MaDatMon,
                         h.MaBanAn,
                         h.MaKhachHang,
-                        h.SoLuongKhach,
                         h.ThoiGianDat,
                         h.ThoiGianThanhToan,
                         h.MaKhuyenMai,
@@ -112,7 +110,6 @@ namespace RestaurantQuangQuy.Controllers.Client
                     MaDatMon = hoadondto.MaDatMon,
                     MaBanAn = hoadondto.MaBanAn,
                     MaKhachHang = hoadondto.MaKhachHang,
-                    SoLuongKhach = hoadondto.SoLuongKhach,
                     ThoiGianDat = hoadondto.ThoiGianDat,
                     ThoiGianThanhToan = hoadondto.ThoiGianThanhToan,
                     MaKhuyenMai = hoadondto.MaKhuyenMai,
@@ -159,7 +156,6 @@ namespace RestaurantQuangQuy.Controllers.Client
                 hoadon.MaDatMon = hoadondto.MaDatMon;
                 hoadon.MaBanAn = hoadondto.MaBanAn;
                 hoadon.MaKhachHang = hoadondto.MaKhachHang;
-                hoadon.SoLuongKhach = hoadondto.SoLuongKhach;
                 hoadon.ThoiGianDat = hoadondto.ThoiGianDat;
                 hoadon.ThoiGianThanhToan = hoadondto.ThoiGianThanhToan;
                 hoadon.MaKhuyenMai = hoadondto.MaKhuyenMai;

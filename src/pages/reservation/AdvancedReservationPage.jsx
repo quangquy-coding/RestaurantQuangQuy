@@ -3,6 +3,8 @@ import React from "react"
 import { useState, useEffect } from "react"
 import { Calendar, Clock, Users, ChevronLeft, ChevronRight, Info } from "lucide-react"
 import { Link } from "react-router-dom"
+import { createOrderTable } from "../../api/orderTableApi"
+import { getUserById } from "../../api/userApi"
 
 const AdvancedReservationPage = () => {
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -14,35 +16,46 @@ const AdvancedReservationPage = () => {
   const [selectedTable, setSelectedTable] = useState(null)
   const [step, setStep] = useState(1)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  
+  const [userId, setUserId] = useState(null)
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+
+    // Lấy userId từ cookie
+    const uid = localStorage.getItem("usersId");
+    if (uid) {
+      setUserId(uid);
+
+      // Gọi API lấy thông tin người dùng
+      getUserById(uid)
+        .then((res) => {
+          const user = res.data;
+          setCustomerInfo({
+            name: user.hoTen || "",
+            email: user.email || "",
+            phone: user.soDienThoai || "",
+            specialRequests: "",
+            maKhachHang: user.maKhachHang || ""
+          });
+        })
+        .catch((err) => {
+          console.error("❌ Lỗi lấy thông tin người dùng:", err);
+        });
+    }
+  }, []);
+
   const [customerInfo, setCustomerInfo] = useState({
     name: "",
     email: "",
     phone: "",
     specialRequests: "",
+    maKhachHang: ""
   })
-
-
 
   const [loading, setLoading] = useState(false)
   const [reservationComplete, setReservationComplete] = useState(false)
   const [reservationCode, setReservationCode] = useState("")
-
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem("token")
-    setIsLoggedIn(!!token)
-
-    if (token) {
-      // In a real app, fetch user data from API
-      setCustomerInfo({
-        name: "Nguyễn Văn A",
-        email: "nguyenvana@example.com",
-        phone: "0901234567",
-        specialRequests: "",
-      })
-    }
-  }, [])
 
   useEffect(() => {
     // Reset selected time and tables when date changes
@@ -158,7 +171,7 @@ const AdvancedReservationPage = () => {
     } else if (step === 2) {
       completeReservation()
 
-      
+
     }
   }
 
@@ -168,17 +181,43 @@ const AdvancedReservationPage = () => {
     }
   }
 
-  const completeReservation = () => {
-    setLoading(true)
-    // Simulate API call to create reservation
-    setTimeout(() => {
-      // Generate a random reservation code
-      const code = Math.random().toString(36).substring(2, 8).toUpperCase()
-      setReservationCode(code)
-      setReservationComplete(true)
-      setLoading(false)
-    }, 1000)
-  }
+  const completeReservation = async () => {
+    setLoading(true);
+
+    const now = new Date();
+    const thoiGianDen = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate(),
+      parseInt(selectedTime.split(":")[0]),
+      parseInt(selectedTime.split(":")[1])
+    );
+
+    const payload = {
+      maKhachHang: customerInfo.maKhachHang,
+      soLuongKhach: partySize,
+      thoiGianDat: now.toISOString(),
+      thoiGianDen: thoiGianDen.toISOString(),
+      trangThai: "Đã đặt",
+      ghiChu: customerInfo.specialRequests || "",
+    };
+
+    try {
+      const res = await createOrderTable(payload);
+
+      const code = res.data || "RES" + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+      // Nếu muốn lưu vào state để hiển thị chi tiết:
+      setReservationCode(code);
+      setReservationComplete(true);
+    } catch (err) {
+      console.error("❌ Đặt bàn thất bại:", err);
+      alert("Đặt bàn thất bại. Vui lòng thử lại sau.");
+    } finally {
+      setLoading(false);
+    }
+
+  };
 
   const generateCalendar = () => {
     const today = new Date()
@@ -270,15 +309,14 @@ const AdvancedReservationPage = () => {
                 <button
                   onClick={() => !day.isPast && handleDateSelect(day.date)}
                   disabled={day.isPast}
-                  className={`w-full h-full flex items-center justify-center rounded-full text-sm ${
-                    day.isSelected
-                      ? "bg-blue-600 text-white"
-                      : day.isToday
-                        ? "bg-blue-100 text-blue-800"
-                        : day.isPast
-                          ? "text-gray-300 cursor-not-allowed"
-                          : "hover:bg-gray-100"
-                  }`}
+                  className={`w-full h-full flex items-center justify-center rounded-full text-sm ${day.isSelected
+                    ? "bg-blue-600 text-white"
+                    : day.isToday
+                      ? "bg-blue-100 text-blue-800"
+                      : day.isPast
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "hover:bg-gray-100"
+                    }`}
                 >
                   {day.day}
                 </button>
@@ -317,9 +355,8 @@ const AdvancedReservationPage = () => {
             <button
               key={time}
               onClick={() => handleTimeSelect(time)}
-              className={`py-2 px-3 rounded-md text-sm font-medium ${
-                selectedTime === time ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-800"
-              }`}
+              className={`py-2 px-3 rounded-md text-sm font-medium ${selectedTime === time ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-800"
+                }`}
             >
               {time}
             </button>
@@ -333,7 +370,7 @@ const AdvancedReservationPage = () => {
     if (!selectedDate || !selectedTime) {
       return <div className="text-center py-8 text-gray-500">Vui lòng chọn ngày và giờ để xem các bàn có sẵn</div>;
     }
-  
+
     if (loading) {
       return (
         <div className="text-center py-8">
@@ -341,11 +378,11 @@ const AdvancedReservationPage = () => {
         </div>
       );
     }
-  
+
     if (availableTables.length === 0) {
       return <div className="text-center py-8 text-gray-500">Không có bàn nào khả dụng cho thời gian đã chọn</div>;
     }
-  
+
     return (
       <div className="max-w-2xl mx-auto px-4">
         <h3 className="text-xl font-semibold mb-4">Chọn bàn</h3>
@@ -354,9 +391,8 @@ const AdvancedReservationPage = () => {
             <div
               key={table.id}
               onClick={() => handleTableSelect(table)}
-              className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                selectedTable?.id === table.id ? "border-blue-600 bg-blue-50" : "hover:border-blue-300"
-              }`}
+              className={`border rounded-lg p-4 cursor-pointer transition-all ${selectedTable?.id === table.id ? "border-blue-600 bg-blue-50" : "hover:border-blue-300"
+                }`}
             >
               <div className="flex justify-between items-center mb-2">
                 <h4 className="font-medium">Bàn {table.number}</h4>
@@ -378,12 +414,12 @@ const AdvancedReservationPage = () => {
       </div>
     );
   };
-  
+
 
   const renderStep1 = () => (
     <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8 ">
       <h3 className="text-xl font-semibold mb-6 ">Thông tin đặt bàn</h3>
-  
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="w-full">
           <div className="mb-4">
@@ -403,191 +439,189 @@ const AdvancedReservationPage = () => {
               ))}
             </select>
           </div>
-  
+
           {renderCalendar()}
         </div>
-  
+
         <div className="w-full">
           {renderTimeSlots()}
           {renderTableSelection()}
         </div>
       </div>
-  
+
       <div className="flex justify-between">
         <div></div>
         <button
           onClick={handleNextStep}
           disabled={!selectedDate || !selectedTime || !selectedTable}
-          className={`px-6 py-3 rounded-md font-medium ${
-            selectedDate && selectedTime && selectedTable
-              ? "bg-blue-600 text-white hover:bg-blue-700"
-              : "bg-gray-200 text-gray-500 cursor-not-allowed"
-          }`}
+          className={`px-6 py-3 rounded-md font-medium ${selectedDate && selectedTime && selectedTable
+            ? "bg-blue-600 text-white hover:bg-blue-700"
+            : "bg-gray-200 text-gray-500 cursor-not-allowed"
+            }`}
         >
           Tiếp tục
         </button>
       </div>
     </div>
   );
-  
+
 
   const renderStep2 = () => (
-  <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
-    <h3 className="text-xl font-semibold mb-6">Thông tin đặt bàn</h3>
+    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
+      <h3 className="text-xl font-semibold mb-6">Thông tin đặt bàn</h3>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      <div>
-        <div className="mb-4">
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-            Họ và tên
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={customerInfo.name}
-            onChange={handleInputChange}
-            required
-            className="w-full p-3 text-sm border border-gray-300 rounded-md"
-            placeholder="Nhập họ và tên"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={customerInfo.email}
-            onChange={handleInputChange}
-            required
-            className="w-full p-3 text-sm border border-gray-300 rounded-md"
-            placeholder="Nhập email"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-            Số điện thoại
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            value={customerInfo.phone}
-            onChange={handleInputChange}
-            required
-            className="w-full p-3 text-sm border border-gray-300 rounded-md"
-            placeholder="Nhập số điện thoại"
-          />
-        </div>
-      </div>
-
-      <div>
-        <div className="mb-4">
-          <label htmlFor="specialRequests" className="block text-sm font-medium text-gray-700 mb-2">
-            Yêu cầu đặc biệt (không bắt buộc)
-          </label>
-          <textarea
-            id="specialRequests"
-            name="specialRequests"
-            value={customerInfo.specialRequests}
-            onChange={handleInputChange}
-            rows="4"
-            className="w-full p-3 text-sm border border-gray-300 rounded-md"
-            placeholder="Nhập yêu cầu đặc biệt nếu có"
-          ></textarea>
-        </div>
-      </div>
-    </div>
-
-    <div className="bg-gray-50 p-4 rounded-md mb-6">
-      <h4 className="font-medium mb-2">Chi tiết đặt bàn</h4>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-        <div className="flex items-center">
-          <Calendar className="h-4 w-4 text-blue-600 mr-2" />
-          <div>
-            <p className="text-gray-500">Ngày</p>
-            <p className="font-medium">{selectedDate.toLocaleDateString("vi-VN")}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center">
-          <Clock className="h-4 w-4 text-blue-600 mr-2" />
-          <div>
-            <p className="text-gray-500">Giờ</p>
-            <p className="font-medium">{selectedTime}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center">
-          <Users className="h-4 w-4 text-blue-600 mr-2" />
-          <div>
-            <p className="text-gray-500">Số người</p>
-            <p className="font-medium">{partySize} người</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* Bàn thông tin */}
-    <div className="bg-blue-50 p-4 rounded-md border border-blue-100 mb-6">
-      <div className="flex items-start">
-        <Info className="h-4 w-4 text-blue-600 mr-2 mt-0.5" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div>
-          <p className="font-medium text-blue-800">Chính sách đặt bàn</p>
-          <ul className="text-sm text-blue-700 mt-1 list-disc list-inside space-y-1">
-            <li>Vui lòng đến đúng giờ. Bàn sẽ được giữ trong vòng 15 phút.</li>
-            <li>Hủy đặt bàn miễn phí trước 2 giờ.</li>
-            <li>Đặt cọc có thể được yêu cầu cho nhóm từ 6 người trở lên.</li>
-          </ul>
+          <div className="mb-4">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              Họ và tên
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={customerInfo.name}
+              onChange={handleInputChange}
+              required
+              className="w-full p-3 text-sm border border-gray-300 rounded-md"
+              placeholder="Nhập họ và tên"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={customerInfo.email}
+              onChange={handleInputChange}
+              required
+              className="w-full p-3 text-sm border border-gray-300 rounded-md"
+              placeholder="Nhập email"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+              Số điện thoại
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={customerInfo.phone}
+              onChange={handleInputChange}
+              required
+              className="w-full p-3 text-sm border border-gray-300 rounded-md"
+              placeholder="Nhập số điện thoại"
+            />
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-4">
+            <label htmlFor="specialRequests" className="block text-sm font-medium text-gray-700 mb-2">
+              Yêu cầu đặc biệt (không bắt buộc)
+            </label>
+            <textarea
+              id="specialRequests"
+              name="specialRequests"
+              value={customerInfo.specialRequests}
+              onChange={handleInputChange}
+              rows="4"
+              className="w-full p-3 text-sm border border-gray-300 rounded-md"
+              placeholder="Nhập yêu cầu đặc biệt nếu có"
+            ></textarea>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div className="flex justify-between max-w-xl mx-auto">
-      <button
-        onClick={handlePrevStep}
-        className="px-4 py-2 border border-gray-300 rounded-md font-medium hover:bg-gray-50"
-      >
-        Quay lại
-      </button>
-      <button
-        onClick={handleNextStep}
-        disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone}
-        className={`px-5 py-2 rounded-md font-medium ${
-          customerInfo.name && customerInfo.email && customerInfo.phone
+      <div className="bg-gray-50 p-4 rounded-md mb-6">
+        <h4 className="font-medium mb-2">Chi tiết đặt bàn</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="flex items-center">
+            <Calendar className="h-4 w-4 text-blue-600 mr-2" />
+            <div>
+              <p className="text-gray-500">Ngày</p>
+              <p className="font-medium">{selectedDate.toLocaleDateString("vi-VN")}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center">
+            <Clock className="h-4 w-4 text-blue-600 mr-2" />
+            <div>
+              <p className="text-gray-500">Giờ</p>
+              <p className="font-medium">{selectedTime}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center">
+            <Users className="h-4 w-4 text-blue-600 mr-2" />
+            <div>
+              <p className="text-gray-500">Số người</p>
+              <p className="font-medium">{partySize} người</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bàn thông tin */}
+      <div className="bg-blue-50 p-4 rounded-md border border-blue-100 mb-6">
+        <div className="flex items-start">
+          <Info className="h-4 w-4 text-blue-600 mr-2 mt-0.5" />
+          <div>
+            <p className="font-medium text-blue-800">Chính sách đặt bàn</p>
+            <ul className="text-sm text-blue-700 mt-1 list-disc list-inside space-y-1">
+              <li>Vui lòng đến đúng giờ. Bàn sẽ được giữ trong vòng 15 phút.</li>
+              <li>Hủy đặt bàn miễn phí trước 2 giờ.</li>
+              <li>Đặt cọc có thể được yêu cầu cho nhóm từ 6 người trở lên.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-between max-w-xl mx-auto">
+        <button
+          onClick={handlePrevStep}
+          className="px-4 py-2 border border-gray-300 rounded-md font-medium hover:bg-gray-50"
+        >
+          Quay lại
+        </button>
+        <button
+          onClick={handleNextStep}
+          disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone}
+          className={`px-5 py-2 rounded-md font-medium ${customerInfo.name && customerInfo.email && customerInfo.phone
             ? "bg-blue-600 text-white hover:bg-blue-700"
             : "bg-gray-200 text-gray-500 cursor-not-allowed"
-        }`}
-      >
-        {loading ? (
-          <span className="flex items-center">
-            <svg
-              className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
-            </svg>
-            Đang xử lý
-          </span>
-        ) : (
-          "Xác nhận đặt bàn"
-        )}
-      </button>
+            }`}
+        >
+          {loading ? (
+            <span className="flex items-center">
+              <svg
+                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              Đang xử lý
+            </span>
+          ) : (
+            "Xác nhận đặt bàn"
+          )}
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
 
 
   const renderConfirmation = () => (
@@ -659,17 +693,15 @@ const AdvancedReservationPage = () => {
           <div className="mb-8">
             <div className="flex items-center">
               <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                  step >= 1 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
-                }`}
+                className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 1 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+                  }`}
               >
                 1
               </div>
               <div className={`flex-1 h-1 mx-2 ${step >= 2 ? "bg-blue-600" : "bg-gray-200"}`}></div>
               <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                  step >= 2 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
-                }`}
+                className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 2 ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
+                  }`}
               >
                 2
               </div>

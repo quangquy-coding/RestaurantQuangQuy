@@ -43,7 +43,8 @@ const LoginPage = () => {
 
       const data = await response.json();
       localStorage.setItem("token", data.user.Token);
-      navigate("/admin");
+      localStorage.setItem("usersId", data.user.maTaiKhoan);
+      navigate("/");
     } catch (err) {
       setError(err.message);
     }
@@ -68,6 +69,7 @@ const LoginPage = () => {
 
       const data = await response.json();
       localStorage.setItem("token", data.user.Token);
+      localStorage.setItem("usersId", data.user.maTaiKhoan);
       navigate("/admin");
     } catch (err) {
       setError(err.message);
