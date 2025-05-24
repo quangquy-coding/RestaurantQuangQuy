@@ -127,45 +127,45 @@ namespace RestaurantQuangQuy.Controllers
 
 		private async Task<string> GenerateNextMaTaiKhoanAsync()
 		{
-			var lastTK = await _context.Taikhoans
-				.Where(t => t.MaTaiKhoan.StartsWith("TK"))
-				.OrderByDescending(t => t.MaTaiKhoan)
-				.Select(t => t.MaTaiKhoan)
-				.FirstOrDefaultAsync();
-
-			int nextTK = 1;
-			if (!string.IsNullOrEmpty(lastTK) && lastTK.Length > 2 && int.TryParse(lastTK.Substring(2), out int so))
-				nextTK = so + 1;
-			return $"TK{nextTK:D3}";
+			int suffix = 1;
+			while (true)
+			{
+				string newMa = $"TK{suffix:D3}";
+				bool exists = await _context.Taikhoans.AnyAsync(t => t.MaTaiKhoan == newMa);
+				if (!exists)
+					return newMa;
+				suffix++;
+			}
 		}
+
 
 		private async Task<string> GenerateNextMaKhachHangAsync()
 		{
-			var lastKH = await _context.Khachhangs
-				.Where(k => k.MaKhachHang.StartsWith("KH"))
-				.OrderByDescending(k => k.MaKhachHang)
-				.Select(k => k.MaKhachHang)
-				.FirstOrDefaultAsync();
-
-			int nextKH = 1;
-			if (!string.IsNullOrEmpty(lastKH) && lastKH.Length > 2 && int.TryParse(lastKH.Substring(2), out int so))
-				nextKH = so + 1;
-			return $"KH{nextKH:D3}";
+			int suffix = 1;
+			while (true)
+			{
+				string newMa = $"KH{suffix:D3}";
+				bool exists = await _context.Khachhangs.AnyAsync(k => k.MaKhachHang == newMa);
+				if (!exists)
+					return newMa;
+				suffix++;
+			}
 		}
+
 
 		private async Task<string> GenerateNextMaNhanVienAsync()
 		{
-			var lastNV = await _context.Nhanviens
-				.Where(n => n.MaNhanVien.StartsWith("NV"))
-				.OrderByDescending(n => n.MaNhanVien)
-				.Select(n => n.MaNhanVien)
-				.FirstOrDefaultAsync();
-
-			int nextNV = 1;
-			if (!string.IsNullOrEmpty(lastNV) && lastNV.Length > 2 && int.TryParse(lastNV.Substring(2), out int so))
-				nextNV = so + 1;
-			return $"NV{nextNV:D3}";
+			int suffix = 1;
+			while (true)
+			{
+				string newMa = $"NV{suffix:D3}";
+				bool exists = await _context.Nhanviens.AnyAsync(n => n.MaNhanVien == newMa);
+				if (!exists)
+					return newMa;
+				suffix++;
+			}
 		}
+
 
 		private string GetTenQuyenFromMaQuyen(string? maQuyen)
 		{
