@@ -1,5 +1,6 @@
 "use client"
 import React from "react"
+import {toast} from "react-hot-toast"
 import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
 import { ArrowLeft, Star, Plus, Minus, ShoppingCart } from "lucide-react"
@@ -32,7 +33,17 @@ const DishDetailPage = () => {
         }
       } catch (error) {
         console.error("Error fetching dish detail:", error)
-        alert("Lỗi khi tải thông tin món ăn")
+        toast.error("Lỗi khi tải thông tin món ăn", {
+  duration: 3000,
+  position: "top-right",
+  style: {
+    backgroundColor: "#f44336", // đỏ
+    color: "#fff",
+    fontSize: "16px",
+    padding: "12px 16px",
+    borderRadius: "8px",
+  },
+});
       } finally {
         setLoading(false)
       }
@@ -79,7 +90,17 @@ const DishDetailPage = () => {
     window.dispatchEvent(new CustomEvent("cartUpdated", { detail: { cart } }))
 
     // Show success message
-    alert(`Đã thêm ${quantity} ${dish.tenMon} vào giỏ hàng!`)
+    toast.success(`Đã thêm ${quantity} ${dish.tenMon} vào giỏ hàng!`, {
+  duration: 2000,
+  position: "top-right",
+  style: {
+    backgroundColor: "#4CAF50",
+    color: "#fff",
+    fontSize: "16px",
+    padding: "12px 16px",
+    borderRadius: "8px",
+  },
+});
   }
 
   const parseIngredients = (ingredientsString) => {

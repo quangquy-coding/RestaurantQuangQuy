@@ -2,13 +2,14 @@ import React from "react"
 import { NavLink } from "react-router-dom"
 import { useSidebar } from "../../hooks/useSidebar"
 
-const SidebarMenuItem = ({ icon, title, to, onClick }) => {
+const SidebarMenuItem = ({ icon, title, to, onClick ,end }) => {
   const { isOpen } = useSidebar()
 
   return (
     <NavLink
       to={to}
       onClick={onClick}
+       end={end}
       className={({ isActive }) =>
         `flex items-center py-3 px-4 rounded-lg transition-colors duration-200 ${
           isActive ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"

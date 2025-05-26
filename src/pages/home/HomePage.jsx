@@ -1,49 +1,12 @@
 import React, { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { ArrowRight, Star, Clock, MapPin,ShoppingCart} from "lucide-react"
-
+import { toast } from "react-hot-toast";
 import Quy from "../../assets/quy.jpg"
-import Phobotai from "../../assets/phobotai.png"
-import Tomthit from "../../assets/tomthit.jpg"
-import Buncha from "../../assets/buncha.jpg"
-import Comrang from "../../assets/comrang.jpg"
 import Nhahang1 from "../../assets/nhahang2025.jpg"
 
-// Dữ liệu món ăn nổi bật
-const featuredDishes = [
-  {
-    id: 1,
-    name: "Phở bò tái",
-    description: "Phở bò truyền thống với thịt bò tái",
-    price: 85000,
-    image: Phobotai,
-    category: "Món chính",
-  },
-  {
-    id: 2,
-    name: "Gỏi cuốn tôm thịt",
-    description: "Gỏi cuốn tươi với tôm và thịt heo",
-    price: 65000,
-    image: Tomthit,
-    category: "Món khai vị",
-  },
-  {
-    id: 3,
-    name: "Cơm rang hải sản",
-    description: "Cơm rang với các loại hải sản tươi ngon",
-    price: 95000,
-    image: Comrang,
-    category: "Món chính",
-  },
-  {
-    id: 4,
-    name: "Bún chả Hà Nội",
-    description: "Bún chả truyền thống kiểu Hà Nội",
-    price: 75000,
-    image: Buncha,
-    category: "Món chính",
-  },
-]
+
+
 
 // Dữ liệu đánh giá
 const testimonials = [
@@ -74,6 +37,9 @@ const testimonials = [
 ]
 
 const HomePage = () => {
+  const [featuredDishes, setFeaturedDishes] = useState([]);
+const [loadingFeatured, setLoadingFeatured] = useState(false);
+const [errorFeatured, setErrorFeatured] = useState(null);
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
 
   useEffect(() => {
@@ -83,20 +49,48 @@ const HomePage = () => {
     return () => clearInterval(interval)
   }, [])
 
-  const addToCart = (dish) => {
-    const savedCart = localStorage.getItem("cart")
-    const cart = savedCart ? JSON.parse(savedCart) : []
-    const existingIndex = cart.findIndex((item) => item.id === dish.id)
-
-    if (existingIndex !== -1) {
-      cart[existingIndex].quantity += 1
-    } else {
-      cart.push({ ...dish, quantity: 1 })
+  useEffect(() => {
+  const fetchFeatured = async () => {
+    setLoadingFeatured(true);
+    setErrorFeatured(null);
+    try {
+      const res = await fetch("http://localhost:5080/api/MonAnManager/NoiBat");
+      if (!res.ok) throw new Error("Lỗi khi lấy món ăn nổi bật");
+      const data = await res.json();
+      setFeaturedDishes(data);
+    } catch (err) {
+      setErrorFeatured("Không thể tải món ăn nổi bật.");
+      setFeaturedDishes([]);
+    } finally {
+      setLoadingFeatured(false);
     }
+  };
+  fetchFeatured();
+}, []);
+const addToCart = (dish) => {
+  const savedCart = localStorage.getItem("cart")
+  const cart = savedCart ? JSON.parse(savedCart) : []
+  const existingIndex = cart.findIndex((item) => item.id === dish.id)
 
-    localStorage.setItem("cart", JSON.stringify(cart))
-    window.dispatchEvent(new Event("storage"))
+  if (existingIndex !== -1) {
+    cart[existingIndex].quantity += 1
+  } else {
+    cart.push({ ...dish, quantity: 1 })
   }
+
+  localStorage.setItem("cart", JSON.stringify(cart))
+  window.dispatchEvent(new Event("storage"))
+  toast.success("Đã thêm món " + dish.name + " vào giỏ hàng!", {
+  duration: 2000,
+  position: "top-right",
+  style: {
+    backgroundColor: "#4CAF50",
+    color: "#fff",
+    fontSize: "16px",
+  },
+});
+
+}
 
   return (
     <div className="bg-white-50">
@@ -188,27 +182,54 @@ const HomePage = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
-  {featuredDishes.map((dish) => (
-    <div key={dish.id} className="flex flex-col bg-white rounded-lg shadow-md overflow-hidden h-full">
-      <img src={dish.image} className="w-full aspect-[4/3] object-cover" />
-      <div className="flex flex-col flex-grow p-4">
-        <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">
-          {dish.category}
-        </div>
-        <h3 className="text-lg font-bold mb-2">{dish.name}</h3>
-        <p className="text-gray-600 text-sm mb-4 flex-grow">{dish.description}</p>
-        <div className="flex justify-between items-center mt-auto">
-          <span className="font-bold text-lg">{dish.price.toLocaleString("vi-VN")} ₫</span>
-          <button
-            onClick={() => addToCart(dish)}
-            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-blue-700 text-sm"
-          >
-            <ShoppingCart className="h-4 w-4 inline-block mr-1" />
-          </button>
-        </div>
+{loadingFeatured ? (
+  <div className="col-span-3 text-center py-10">Đang tải...</div>
+) : errorFeatured ? (
+  <div className="col-span-3 text-center text-red-500 py-10">{errorFeatured}</div>
+) : featuredDishes.length === 0 ? (
+  <div className="col-span-3 text-center py-10">Không có món ăn nổi bật</div>
+) : (
+  featuredDishes.map((dish) => (
+  <Link
+    key={dish.maMon}
+    to={`/menu/${dish.maMon}`}
+    className="flex flex-col bg-white rounded-lg shadow-md overflow-hidden h-full hover:shadow-lg transition-shadow"
+    style={{ textDecoration: "none", color: "inherit" }}
+  >
+    <img
+      src={dish.hinhAnh || "/placeholder-dish.jpg"}
+      alt={dish.tenMon}
+      className="w-full aspect-[4/3] object-cover"
+      onError={e => { e.target.src = "/placeholder-dish.jpg" }}
+    />
+    <div className="flex flex-col flex-grow p-4">
+      <div className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">
+        {dish.tenDanhMuc}
+      </div>
+      <h3 className="text-lg font-bold mb-2">{dish.tenMon}</h3>
+      <p className="text-gray-600 text-sm mb-4 flex-grow">{dish.moTa}</p>
+      <div className="flex justify-between items-center mt-auto">
+        <span className="font-bold text-lg">{(dish.gia ?? 0).toLocaleString("vi-VN")} ₫</span>
+        <button
+          onClick={e => {
+            e.preventDefault(); // Ngăn Link chuyển trang khi bấm giỏ hàng
+            addToCart({
+              id: dish.maMon,
+              name: dish.tenMon,
+              price: dish.gia,
+              image: dish.hinhAnh,
+              quantity: 1,
+            });
+          }}
+          className="px-3 py-1 bg-red-600 text-white rounded hover:bg-blue-700 text-sm"
+        >
+          <ShoppingCart className="h-4 w-4 inline-block mr-1" />
+        </button>
       </div>
     </div>
-  ))}
+  </Link>
+))
+)}
 </div>
 
 

@@ -1,6 +1,7 @@
 import React from "react"
 import * as XLSX from "xlsx"
 import { saveAs } from "file-saver"
+import { toast } from "react-hot-toast";
 import { getAllCategories, createCategory, updateCategory, deleteCategory } from "../../api/categoryApi"
 import { useState, useEffect, useRef } from "react"
 import {
@@ -173,10 +174,10 @@ const CategoriesManagementPage = () => {
       setCategories(categories.filter((category) => category.maDanhMuc !== categoryToDelete.maDanhMuc))
       setIsDeleteModalOpen(false)
       setCategoryToDelete(null)
-      alert("Xóa danh mục thành công!")
+      toast.success("Xóa danh mục "+categoryToDelete.tenDanhMuc+" thành công!")
     } catch (error) {
       console.error("Error deleting category:", error)
-      alert("Lỗi khi xóa danh mục. Vui lòng thử lại sau.")
+      toast.error("Lỗi khi xóa danh mục. Vui lòng thử lại sau.")
     }
   }
 
@@ -294,7 +295,7 @@ const CategoriesManagementPage = () => {
         imageFile: null, // Không cần gửi file lên backend nữa
       }));
     } catch (err) {
-      alert("Lỗi upload ảnh Cloudinary");
+      toast.error("Lỗi upload ảnh Cloudinary");
     }
   }
 };
@@ -321,7 +322,7 @@ const handleEditImageChange = async (e) => {
         imageFile: null,
       }));
     } catch (err) {
-      alert("Lỗi upload ảnh Cloudinary");
+      toast.error("Lỗi upload ảnh Cloudinary");
     }
   }
 };
@@ -377,9 +378,9 @@ const handleEditImageChange = async (e) => {
         hinhAnh: null,
       })
       setFormErrors({})
-      alert("Thêm danh mục thành công!")
+      toast.success("Thêm danh mục "+newCategory.tenDanhMuc+" thành công!")
     } catch (err) {
-      alert("Lỗi khi thêm danh mục. Vui lòng kiểm tra lại dữ liệu hoặc thử lại sau.")
+      toast.error("Lỗi khi thêm danh mục. Vui lòng kiểm tra lại dữ liệu hoặc thử lại sau.")
       console.error("Error creating category:", err)
     } finally {
       setIsSubmitting(false)
@@ -438,9 +439,9 @@ const handleEditImageChange = async (e) => {
         hinhAnh: null,
       })
       setFormErrors({})
-      alert("Cập nhật danh mục thành công!")
+      toast.success("Cập nhật danh mục "+editedCategory.tenDanhMuc+" thành công!")
     } catch (err) {
-      alert("Lỗi khi cập nhật danh mục. Vui lòng kiểm tra lại dữ liệu hoặc thử lại sau.")
+      toast.error("Lỗi khi cập nhật danh mục. Vui lòng kiểm tra lại dữ liệu hoặc thử lại sau.")
       console.error("Error updating category:", err)
     } finally {
       setIsSubmitting(false)
@@ -471,7 +472,7 @@ const handleEditImageChange = async (e) => {
       "Mô tả": e.description || e.moTa,
       "Số món": e.dishCount || e.soLuongMonAn,
       "Trạng thái": e.status || e.trangThai,
-      "Ngày tạo": e.createdAt || "",
+      // "Ngày tạo": e.createdAt || "",
     }))
 
     const worksheet = XLSX.utils.json_to_sheet(exportData)

@@ -1,4 +1,5 @@
 import React from "react"
+import { toast } from "react-hot-toast";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { useState, useEffect } from "react"
@@ -198,7 +199,7 @@ const TablesPage = () => {
   const handleAddTable = async () => {
     // Validate required fields
     if (!newTable.tenBan || !newTable.viTri) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc");
+      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
       return;
     }
 
@@ -230,11 +231,11 @@ const TablesPage = () => {
         ghiChu: "",
       });
       setIsAddModalOpen(false);
-      alert("Thêm bàn ăn thành công!");
+      toast.success("Thêm "+newTable.tenBan+" thành công!");
     } catch (err) {
       const errorMessage = handleApiError(err);
       setError(errorMessage);
-      alert(`Lỗi: ${errorMessage}`);
+      toast.error(`Lỗi: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -243,7 +244,7 @@ const TablesPage = () => {
   const handleEditTable = async () => {
     // Validate required fields
     if (!currentTable.name || !currentTable.location) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc");
+      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
       return;
     }
 
@@ -269,11 +270,11 @@ const TablesPage = () => {
       // Reset form and close modal
       setCurrentTable(null);
       setIsEditModalOpen(false);
-      alert("Cập nhật bàn ăn thành công!");
+      toast.success("Cập nhật "+currentTable.name+" thành công!");
     } catch (err) {
       const errorMessage = handleApiError(err);
       setError(errorMessage);
-      alert(`Lỗi: ${errorMessage}`);
+      toast.error(`Lỗi: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -294,11 +295,11 @@ const TablesPage = () => {
       // Reset and close modal
       setCurrentTable(null);
       setIsDeleteModalOpen(false);
-      alert("Xóa bàn ăn thành công!");
+      toast.success("Xóa "+currentTable.name+" thành công!");
     } catch (err) {
       const errorMessage = handleApiError(err);
       setError(errorMessage);
-      alert(`Lỗi: ${errorMessage}`);
+      toast.error(`Lỗi: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }

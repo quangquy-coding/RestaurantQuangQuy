@@ -5,7 +5,8 @@ import SidebarMenu from "./SidebarMenu"
 import { useSidebar } from "../../hooks/useSidebar"
 
 const Sidebar = () => {
-  const { isOpen, isMobile } = useSidebar()
+  const { isOpen, isMobile, toggleSidebar } = useSidebar()
+
 
   return (
     <>

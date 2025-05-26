@@ -34,7 +34,9 @@ const SidebarMenu = () => {
           />
         </svg>
       ),
+      end: true, // Use end to match exact path
       to: "/admin",
+      
     },
     {
       title: "Quản lý người dùng",
@@ -216,18 +218,18 @@ const SidebarMenu = () => {
   return (
     <div className="flex-1 overflow-y-auto py-4 px-3">
       <ul className="space-y-2">
-        {menuItems.map((item) => (
-          <li key={item.to}>
-            <SidebarMenuItem
-              title={item.title}
-              icon={item.icon}
-              to={item.to}
-              onClick={handleItemClick}
-              isActive={location.pathname.startsWith(item.to)} // Kiểm tra nếu đường dẫn bắt đầu với item.to
-            />
-          </li>
-        ))}
-      </ul>
+  {menuItems.map((item) => (
+    <li key={item.to}>
+      <SidebarMenuItem
+        title={item.title}
+        icon={item.icon}
+        to={item.to}
+        end={item.end || false}  // Lấy đúng end từ item
+        onClick={handleItemClick}
+      />
+    </li>
+  ))}
+</ul>
     </div>
   )
 }

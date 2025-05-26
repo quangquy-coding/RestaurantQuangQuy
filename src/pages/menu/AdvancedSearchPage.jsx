@@ -2,6 +2,7 @@
 import React from "react"
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
+import { toast } from "react-hot-toast";
 import { Search, Sliders, ShoppingCart } from "lucide-react"
 import { getAllDishes, searchDishes, getCategories, getStatusOptions } from "../../api/menuApi"
 
@@ -35,7 +36,7 @@ const AdvancedSearchPage = () => {
         setStatusOptions(["Tất cả", ...statusData])
       } catch (error) {
         console.error("Error fetching initial data:", error)
-        alert("Lỗi khi tải dữ liệu")
+        toast.error("Lỗi khi tải dữ liệu")
       } finally {
         setIsLoading(false)
       }
@@ -101,7 +102,15 @@ const AdvancedSearchPage = () => {
     localStorage.setItem("cart", JSON.stringify(cart))
     const cartUpdatedEvent = new CustomEvent("cartUpdated", { detail: { cart } })
     window.dispatchEvent(cartUpdatedEvent)
-    alert(`Đã thêm ${dish.tenMon} vào giỏ hàng!`)
+     toast.success("Đã thêm món " + dish.tenMon + " vào giỏ hàng!", {
+      duration: 2000,
+      position: "top-right",
+      style: {
+        backgroundColor: "#4CAF50",
+        color: "#fff",
+        fontSize: "16px",
+      },
+    });
   }
 
   const resetFilters = () => {
@@ -281,19 +290,33 @@ const AdvancedSearchPage = () => {
       e.target.src = "/placeholder.svg"
     }}
   />
+  {/* Trạng thái món ăn */}
+  {dish.tinhTrang === "Còn hàng" && (
+<div className="absolute top-1 left-1 bg-green-800 text-white text-[10px] px-2 py-0.5 rounded-full">
+  Còn hàng
+</div>
+                )}
 
   {dish.tinhTrang === "Món đặc biệt" && (
-    <div className="absolute top-1 left-1 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">
+    <div className="absolute top-1 left-1 bg-purple-800 text-white text-[10px] px-2 py-0.5 rounded-full">
       Đặc biệt
     </div>
   )}
 
   {dish.tinhTrang === "Món mới" && (
-    <div className="absolute top-1 left-1 bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full">
+    <div className="absolute top-1 left-1 bg-yellow-800 text-white text-[10px] px-2 py-0.5 rounded-full">
       Mới
     </div>
   )}
+  {dish.tinhTrang === "Hết hàng" && (
+    <div className="absolute top-1 left-1 bg-red-800 text-white text-[10px] px-2 py-0.5 rounded-full">
+      Hết hàng
+    </div>
+  )}
+
+
 </div>
+
 
                         {/* Nội dung card */}
                         <div className="p-3 flex flex-col flex-1 justify-between">

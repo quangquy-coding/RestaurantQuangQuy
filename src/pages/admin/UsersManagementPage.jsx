@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
+import { toast } from "react-hot-toast";
 import { saveAs } from "file-saver";
 import {getUsers, getUserById, addUser, updateUser, deleteUser, searchUsers } from "../../api/userApi";
 
@@ -150,7 +151,7 @@ const UsersManagementPage = () => {
       await fetchUsers();
       setIsAddUserModalOpen(false);
       resetNewUserForm();
-      alert("Thêm người dùng thành công!");
+      toast.success("Thêm người dùng " + newUser.tenTaiKhoan + " thành công!");
       // setTimeout(() => setSuccessMessage(""), 2000);
     } catch (error) {
       console.error("Error adding user:", error);
@@ -247,7 +248,7 @@ const UsersManagementPage = () => {
       await fetchUsers();
       setIsEditUserModalOpen(false);
       setEditingUser(null);
-      alert("Cập nhật người dùng thành công!");
+      toast.success("Cập nhật người dùng " + editingUser.tenTaiKhoan + " thành công!");
       //  setTimeout(() => setSuccessMessage(""), 2000);
     } catch (error) {
       console.error("Error updating user:", error);
@@ -271,6 +272,7 @@ const UsersManagementPage = () => {
       await fetchUsers();
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
+      toast.success("Đã xóa người dùng " + userToDelete.tenTaiKhoan + " thành công!");
     } catch (error) {
       console.error("Error deleting user:", error);
       // Show error message
@@ -289,6 +291,7 @@ const UsersManagementPage = () => {
         await deleteUser(userId);
       }
       await fetchUsers();
+      toast.success("Đã xóa " + selectedUsers.length + " người dùng thành công!");
       setSelectedUsers([]);
     } catch (error) {
       console.error("Error deleting selected users:", error);
@@ -476,6 +479,17 @@ const UsersManagementPage = () => {
       "Vai trò": user.tenQuyen,
       "Trạng thái": user.trangThai || "Hoạt động",
       "Ngày đăng ký": user.ngayDangKy,
+      "Ngày sinh": user.ngaySinh ? new Date(user.ngaySinh).toLocaleDateString("vi-VN") : "-",
+      "Hình ảnh": user.hinhAnh || "",
+      "Địa chỉ": user.diaChi || "",
+      "Mật khẩu": user.matKhau || "",
+      "Mã quyền": user.maQuyen,
+      "Tên khách hàng": user.tenKhachHang || "",
+      "Họ tên nhân viên": user.hoTenNhanVien || "",
+      "Chức vụ": user.chucVu || "",
+      "Lương": user.luong || "",
+      "Ngày tuyển dụng": user.ngayTuyenDung ? new Date(user.ngayTuyenDung).toLocaleDateString("vi-VN") : "-",
+      "Số CCCD": user.soCccd || "",
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -504,7 +518,41 @@ const UsersManagementPage = () => {
       return dateString;
     }
   };
+const handleImageChange = async (e, mode) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "demo_preset"); // Thay bằng preset Cloudinary của bạn
 
+  try {
+    const res = await fetch("https://api.cloudinary.com/v1_1/dlozjvjhf/image/upload", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    if (data.secure_url) {
+      if (mode === "add") {
+        setNewUser(prev => ({
+          ...prev,
+          hinhAnh: data.secure_url, // Lưu URL Cloudinary
+          preview: data.secure_url,
+        }));
+      } else if (mode === "edit") {
+        setEditingUser(prev => ({
+          ...prev,
+          hinhAnh: data.secure_url,
+          preview: data.secure_url,
+        }));
+      }
+    } else {
+      toast.error("Lỗi upload ảnh Cloudinary");
+    }
+  } catch (err) {
+    toast.error("Lỗi upload ảnh Cloudinary");
+    console.error(err);
+  }
+};
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -562,8 +610,8 @@ const UsersManagementPage = () => {
           
           </div>
 
-          {/* <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* <div className="relative">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -620,7 +668,7 @@ const UsersManagementPage = () => {
                   d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
                 />
               </svg>
-            </div>
+            </div> */}
 
             <button
               className="flex items-center px-4 py-2 text-gray-700 bg-white border rounded-lg hover:bg-gray-50"
@@ -643,7 +691,7 @@ const UsersManagementPage = () => {
               </svg>
               Xuất Excel
             </button>
-          </div> */}
+          </div>
         </div>
       </div>
 
@@ -795,14 +843,14 @@ const UsersManagementPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.maTaiKhoan}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {/* <div className="flex items-center"> */}
-                        {/* <div className="flex-shrink-0 h-10 w-10">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10">
                           <img
                             className="h-10 w-10 rounded-full object-cover"
                             src={user.hinhAnh || "/placeholder.svg?height=40&width=40"}
                             alt=""
                           />
-                        </div> */}
+                        </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
                             {user.tenKhachHang || user.hoTenNhanVien || user.tenTaiKhoan}
@@ -810,7 +858,7 @@ const UsersManagementPage = () => {
                           <div className="text-sm text-gray-500">{user.email}</div>
                           <div className="text-sm text-gray-500">{user.soDienThoai}</div>
                           {user.soCccd && <div className="text-sm text-gray-500">{user.soCccd}</div>}
-                        {/* </div> */}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -1033,7 +1081,7 @@ const UsersManagementPage = () => {
                 </button>
               </div>
               <form onSubmit={handleAddUser}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-6">
                   {/* Vai trò */}
                   <div className="col-span-1 md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700">
@@ -1233,9 +1281,24 @@ const UsersManagementPage = () => {
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
                       </div>
+                      
                     </>
+                    
                   )}
+                    <div>
+  <label className="block text-sm font-medium text-gray-700">Ảnh đại diện</label>
+  <input
+    type="file"
+    accept="image/*"
+    onChange={e => handleImageChange(e, "add")}
+    className="mt-1 block w-full text-sm text-gray-500"
+  />
+  {newUser.preview && (
+    <img src={newUser.preview} alt="Preview" className="mt-2 w-20 h-20 object-cover rounded-full" />
+  )}
+</div>
                 </div>
+              
                 {formErrors.api && <div className="mt-4 p-2 bg-red-50 text-red-600 rounded-md">{formErrors.api}</div>}
                 <div className="mt-6 flex justify-end space-x-3">
                   <button
@@ -1285,7 +1348,7 @@ const UsersManagementPage = () => {
               </div>
 
               <form onSubmit={handleUpdateUser}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-6">
                   {/* Tên tài khoản */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
@@ -1446,7 +1509,20 @@ const UsersManagementPage = () => {
                       </div>
                     </>
                   )}
+                                  <div>
+  <label className="block text-sm font-medium text-gray-700">Ảnh đại diện</label>
+  <input
+    type="file"
+    accept="image/*"
+    onChange={e => handleImageChange(e, "edit")}
+    className="mt-1 block w-full text-sm text-gray-500"
+  />
+  {editingUser?.preview && (
+    <img src={editingUser.preview} alt="Preview" className="mt-2 w-20 h-20 object-cover rounded-full" />
+  )}
+</div>
                 </div>
+
                 {formErrors.api && <div className="mt-4 p-2 bg-red-50 text-red-600 rounded-md">{formErrors.api}</div>}
                 <div className="mt-6 flex justify-end space-x-3">
                   <button
@@ -1552,13 +1628,13 @@ const UsersManagementPage = () => {
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Avatar and basic info */}
                 <div className="flex flex-col items-center">
-                  {/* <div className="w-32 h-32 rounded-full overflow-hidden mb-4">
+                  <div className="w-32 h-32 rounded-full overflow-hidden mb-4">
                     <img
                       src={userDetail.hinhAnh || "/placeholder.svg?height=128&width=128"}
                       alt={userDetail.tenTaiKhoan}
                       className="w-full h-full object-cover"
                     />
-                  </div> */}
+                  </div>
                   <h4 className="text-lg font-medium text-center">
                     {userDetail.tenKhachHang || userDetail.hoTenNhanVien || userDetail.tenTaiKhoan}
                   </h4>

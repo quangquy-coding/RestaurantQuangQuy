@@ -328,6 +328,32 @@ namespace RestaurantQuangQuy.Controllers.Admin
 		}
 
 
+		// get ra 4 món ăn nổi bật
+		[HttpGet("NoiBat")]
+		public async Task<List<MonAnDTO>> GetNoiBat()
+		{
+			var monans = await _context.Monans
+				.Include(m => m.MaDanhMucNavigation)
+				.Where(m => m.TinhTrang == "Món đặc biệt")
+				.Take(6) // Lấy 4 món ăn nổi bật
+				.ToListAsync();
+			var result = monans.Select(m => new MonAnDTO
+			{
+				MaMon = m.MaMon,
+				TenMon = m.TenMon,
+				MoTa = m.MoTa,
+				Gia = m.Gia,
+				HinhAnh = m.HinhAnh,
+				ThoiGianMon = m.ThoiGianMon,
+				ThanhPhan = m.ThanhPhan,
+				DinhDuong = m.DinhDuong,
+				DiUng = m.DiUng,
+				TinhTrang = m.TinhTrang,
+				MaDanhMuc = m.MaDanhMuc ?? "",
+				TenDanhMuc = m.MaDanhMucNavigation?.TenDanhMuc ?? ""
+			}).ToList();
+			return result;
+		}
 
 	}
 }

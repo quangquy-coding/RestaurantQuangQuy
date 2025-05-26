@@ -1,5 +1,5 @@
 "use client"
-
+import { toast } from "react-hot-toast";
 import axios from "axios";
 import { saveAs } from "file-saver";
 import { ChevronLeft, ChevronRight, Download, Edit, Eye, Plus, Search, Trash2 } from "lucide-react";
@@ -57,7 +57,17 @@ const DishesPage = () => {
 
   const handleAddDish = async () => {
     if (!newDish.tenMon || !newDish.maDanhMuc || !newDish.gia || !newDish.moTa || !newDish.hinhAnh) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc")
+     toast("Vui lòng điền đầy đủ thông tin bắt buộc", {
+  duration: 3000,
+  position: "top-right",
+  style: {
+    backgroundColor: "#f44336", // đỏ cảnh báo
+    color: "#fff",
+    fontSize: "16px",
+    fontWeight: "bold",
+  },
+});
+
       return
     }
 
@@ -87,7 +97,7 @@ const DishesPage = () => {
       const res = await getDishes()
       setDishes(res.data)
       applyFiltersAndPagination(res.data, searchTerm, selectedCategory)
-      alert("Thêm món ăn thành công!")
+      toast.success("Thêm món ăn "+newDish.tenMon+" thành công!")
 
       setNewDish({
         tenMon: "",
@@ -106,7 +116,7 @@ const DishesPage = () => {
 
       setIsAddModalOpen(false)
     } catch (err) {
-      alert("Lỗi khi thêm món ăn: " + JSON.stringify(err.response?.data?.errors || err.response?.data || err.message))
+      toast.error("Lỗi khi thêm món ăn: " + JSON.stringify(err.response?.data?.errors || err.response?.data || err.message))
       console.error(err)
     } finally {
       setIsLoading(false)
@@ -142,7 +152,7 @@ const DishesPage = () => {
       }));
     } catch (error) {
       console.error("Lỗi upload ảnh:", error);
-      alert("Tải ảnh thất bại.");
+      toast.error("Tải ảnh thất bại.");
     }
   };
 
@@ -225,7 +235,17 @@ const DishesPage = () => {
       !currentDish.moTa ||
       !currentDish.hinhAnh
     ) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc")
+      
+toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
+  duration: 3000,
+  position: "top-right",
+  style: {
+    backgroundColor: "#f44336", // màu đỏ cảnh báo
+    color: "#fff",
+    fontSize: "16px",
+    fontWeight: "bold",
+  },
+});
       return
     }
 
@@ -250,9 +270,9 @@ const DishesPage = () => {
 
       setCurrentDish(null)
       setIsEditModalOpen(false)
-      alert("Cập nhật món ăn thành công!")
+      toast.success("Cập nhật món ăn "+currentDish.tenMon+" thành công!")
     } catch (err) {
-      alert("Lỗi khi cập nhật món ăn")
+      toast.error("Lỗi khi cập nhật món ăn")
       console.error(err)
     } finally {
       setIsLoading(false)
@@ -272,9 +292,9 @@ const DishesPage = () => {
       setDishes(res.data)
       applyFiltersAndPagination(res.data, searchTerm, selectedCategory)
 
-      alert("Xóa món ăn thành công!")
+      toast.success("Xóa món ăn "+currentDish.tenMon+" thành công!")
     } catch (err) {
-      alert("Lỗi khi xóa món ăn")
+      toast.error("Lỗi khi xóa món ăn")
       console.error(err)
     } finally {
       setIsLoading(false)
@@ -299,9 +319,9 @@ const DishesPage = () => {
 
       setSelectedDishes([])
       setIsBulkDeleteModalOpen(false)
-      alert(`Đã xóa ${selectedDishes.length} món ăn thành công!`)
+      toast.success(`Đã xóa ${selectedDishes.length} món ăn thành công!`)
     } catch (err) {
-      alert("Lỗi khi xóa món ăn hàng loạt")
+      toast.error("Lỗi khi xóa món ăn hàng loạt")
       console.error(err)
     } finally {
       setIsLoading(false)
@@ -383,7 +403,7 @@ const DishesPage = () => {
       }));
     } catch (error) {
       console.error("❌ Lỗi upload ảnh:", error);
-      alert("Tải ảnh thất bại.");
+      toast.error("Tải ảnh thất bại.");
     }
   };
 

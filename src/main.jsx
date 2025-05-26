@@ -1,9 +1,13 @@
+import React from "react"
+import { Toaster } from "react-hot-toast";
+import ReactDOM from "react-dom/client";
+
+
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
-import React from "react"
-import ReactDOM from "react-dom/client"
+
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
-import { Toaster } from "react-hot-toast"
+
 // Layouts
 import UserLayout from "./components/layout/UserLayout"
 import AdminLayout from "./layouts/AdminLayout"
@@ -250,6 +254,7 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <GoogleOAuthProvider clientId="87695933712-4368bbf54fpluhmqm4detrvro03ok39f.apps.googleusercontent.com">
     <React.StrictMode>
+    <Toaster position="top-right" />
       <RouterProvider router={router} />
     </React.StrictMode>
   </GoogleOAuthProvider>
