@@ -43,7 +43,10 @@ const LoginPage = () => {
 
       const data = await response.json();
       localStorage.setItem("token", data.user.Token);
+      
       localStorage.setItem("usersId", data.user.maTaiKhoan);
+
+      window.dispatchEvent(new Event("loginSuccess"))
       navigate("/");
     } catch (err) {
       setError(err.message);

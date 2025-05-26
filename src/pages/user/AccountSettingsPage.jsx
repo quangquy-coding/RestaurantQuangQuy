@@ -1,155 +1,348 @@
-"use client"
-import React from "react"
-import { useState } from "react"
-import { User, Lock, Bell, CreditCard, AlertCircle, Edit, X, Check } from "lucide-react"
+"use client";
+import React, { useState, useEffect } from "react";
+import { User, Lock, Bell, CreditCard, AlertCircle, Edit, X, Check, Loader2 } from "lucide-react";
+import axios from "axios";
 
 const AccountSettingsPage = () => {
-  const [activeTab, setActiveTab] = useState("profile")
+  const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState({
     profile: false,
     password: false,
     notifications: false,
     payment: false,
-  })
+  });
 
   const [formData, setFormData] = useState({
-    // Profile
-    fullName: "Nguyễn Văn A",
-    email: "nguyenvana@example.com",
-    phone: "0912345678",
-    dateOfBirth: "1990-01-15",
-    address: "123 Đường Lê Lợi, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh",
-    avatar: "/placeholder.svg?height=200&width=200",
-
-    // Password
+    maTaiKhoan: "",
+    tenTaiKhoan: "",
+    email: "",
+    soDienThoai: "",
+    ngaySinh: "",
+    diaChi: "",
+    hinhAnh: null,
+    maQuyen: "",
+    tenKhachHang: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
-
-    // Notifications
     emailNotifications: true,
     smsNotifications: false,
     promotionalEmails: true,
-
-    // Payment
     cards: [
-      {
-        id: 1,
-        type: "visa",
-        number: "**** **** **** 4242",
-        expiry: "12/25",
-        isDefault: true,
-      },
-      {
-        id: 2,
-        type: "mastercard",
-        number: "**** **** **** 5555",
-        expiry: "08/24",
-        isDefault: false,
-      },
+      { id: 1, type: "visa", number: "**** **** **** 4242", expiry: "12/25", isDefault: true },
+      { id: 2, type: "mastercard", number: "**** **** **** 5555", expiry: "08/24", isDefault: false },
     ],
-  })
+  });
 
-  const [originalData, setOriginalData] = useState({ ...formData })
-  const [successMessage, setSuccessMessage] = useState("")
-  const [errorMessage, setErrorMessage] = useState("")
+  const [originalData, setOriginalData] = useState({ ...formData });
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState(null);
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      const imageUrl = URL.createObjectURL(file)
+  // API Configuration
+  const API_BASE_URL = "http://localhost:5080/api";
+  const USER_API_URL = `${API_BASE_URL}/NguoiDungManager`;
+  const DEFAULT_AVATAR = "/placeholder.svg?height=200&width=200";
+
+  // API Functions with Authorization Header
+  const api = {
+    getUserById: (userId, token) =>
+      axios.get(`${USER_API_URL}/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    updateUser: (userId, data, token) =>
+      axios.put(`${USER_API_URL}/${userId}`, data, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+    uploadAvatar: (file, token) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return axios.post(`${API_BASE_URL}/upload/avatar`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+    },
+    updateNotifications: (userId, notifications, token) =>
+      axios.put(
+        `${USER_API_URL}/${userId}/notifications`,
+        notifications,
+        { headers: { Authorization: `Bearer ${token}` } }
+      ),
+  };
+
+  // Initialize user data
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const uid = localStorage.getItem("usersId");
+
+    console.log("🔍 Checking authentication...");
+    console.log("Token:", token ? "✅ Found" : "❌ Not found");
+    console.log("User ID:", uid || "❌ Not found");
+
+    setIsLoggedIn(!!token);
+
+    if (uid && token) {
+      setUserId(uid);
+      fetchUserData(uid, token);
+    } else {
+      setErrorMessage("Vui lòng đăng nhập để xem thông tin tài khoản");
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch user data
+  const fetchUserData = async (uid, token) => {
+    setLoading(true);
+    setErrorMessage("");
+
+    try {
+      console.log("🔄 Đang tải thông tin người dùng với ID:", uid);
+      const response = await api.getUserById(uid, token);
+      const userData = response.data;
+
+      console.log("✅ Dữ liệu người dùng nhận được:", userData);
+
+      const mappedData = {
+        maTaiKhoan: userData.maTaiKhoan || "",
+        tenTaiKhoan: userData.tenTaiKhoan || "",
+        email: userData.email || "",
+        soDienThoai: userData.soDienThoai || "",
+        ngaySinh: userData.ngaySinh ? userData.ngaySinh.split("T")[0] : "",
+        diaChi: userData.diaChi || "",
+        hinhAnh: userData.hinhAnh || null,
+        maQuyen: userData.maQuyen || "",
+        tenKhachHang: userData.tenKhachHang || "",
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+        emailNotifications: userData.emailNotifications ?? true,
+        smsNotifications: userData.smsNotifications ?? false,
+        promotionalEmails: userData.promotionalEmails ?? true,
+        cards: formData.cards,
+      };
+
+      setFormData(mappedData);
+      setOriginalData(mappedData);
+      setErrorMessage("");
+
+      console.log("✅ Thông tin đã được cập nhật:");
+      console.log("- Tên:", mappedData.tenTaiKhoan);
+      console.log("- Email:", mappedData.email);
+    } catch (err) {
+      console.error("❌ Lỗi lấy thông tin người dùng:", err);
+      handleApiError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle API errors
+  const handleApiError = (err) => {
+    if (err.response) {
+      const status = err.response.status;
+      const errorData = err.response.data;
+
+      if (status === 404) {
+        setErrorMessage("Không tìm thấy thông tin người dùng. Vui lòng kiểm tra ID tài khoản hoặc đăng nhập lại.");
+      } else if (status === 401) {
+        setErrorMessage("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        localStorage.removeItem("token");
+        localStorage.removeItem("usersId");
+      } else if (status === 400 && errorData.errors) {
+        const errorMessages = Object.entries(errorData.errors)
+          .map(([field, messages]) => `${field}: ${messages.join(", ")}`)
+          .join("; ");
+        setErrorMessage(`Lỗi cập nhật: ${errorMessages}`);
+      } else if (status === 405) {
+        setErrorMessage("Yêu cầu không được hỗ trợ bởi server. Vui lòng kiểm tra cấu hình API.");
+      } else {
+        setErrorMessage(
+          errorData.message || "Lỗi xử lý yêu cầu: " + JSON.stringify(errorData)
+        );
+      }
+    } else {
+      setErrorMessage("Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.");
+    }
+  };
+
+  // Handle avatar upload
+  const handleAvatarChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formDataUpload = new FormData();
+  formDataUpload.append("file", file);
+  formDataUpload.append("upload_preset", "demo_preset"); // Thay bằng preset Cloudinary của bạn
+
+  try {
+    const res = await fetch("https://api.cloudinary.com/v1_1/dlozjvjhf/image/upload", {
+      method: "POST",
+      body: formDataUpload,
+    });
+    const data = await res.json();
+    if (data.secure_url) {
       setFormData((prev) => ({
         ...prev,
-        avatar: imageUrl,
-      }))
+        hinhAnh: data.secure_url,
+      }));
+      setSuccessMessage("Tải ảnh thành công!");
+    } else {
+      setErrorMessage("Lỗi upload ảnh Cloudinary");
     }
+  } catch (err) {
+    setErrorMessage("Lỗi upload ảnh Cloudinary");
+    console.error(err);
   }
+};
 
+  // Handle input changes
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-    }))
-  }
+    }));
+  };
 
+  // Start editing
   const handleEdit = (section) => {
     setIsEditing((prev) => ({
       ...prev,
       [section]: true,
-    }))
-    setOriginalData({ ...formData })
-    setErrorMessage("")
-    setSuccessMessage("")
-  }
+    }));
+    setOriginalData({ ...formData });
+    setErrorMessage("");
+    setSuccessMessage("");
+  };
 
+  // Cancel editing
   const handleCancel = (section) => {
-    setFormData({ ...originalData })
+    setFormData({ ...originalData });
     setIsEditing((prev) => ({
       ...prev,
       [section]: false,
-    }))
-    setErrorMessage("")
-  }
+    }));
+    setErrorMessage("");
+  };
 
-  const handleSave = (section) => {
+  // Save changes
+  const handleSave = async (section) => {
+    if (saving) return; // Prevent multiple submissions
+    const token = localStorage.getItem("token");
+
     // Validation
     if (section === "password") {
       if (!formData.currentPassword) {
-        setErrorMessage("Vui lòng nhập mật khẩu hiện tại")
-        return
+        setErrorMessage("Vui lòng nhập mật khẩu hiện tại");
+        return;
       }
       if (formData.newPassword !== formData.confirmPassword) {
-        setErrorMessage("Mật khẩu mới không khớp")
-        return
+        setErrorMessage("Mật khẩu mới không khớp");
+        return;
       }
       if (formData.newPassword.length < 8) {
-        setErrorMessage("Mật khẩu phải có ít nhất 8 ký tự")
-        return
+        setErrorMessage("Mật khẩu phải có ít nhất 8 ký tự");
+        return;
       }
     }
 
     if (section === "profile") {
-      if (!formData.fullName.trim()) {
-        setErrorMessage("Vui lòng nhập họ và tên")
-        return
+      if (!formData.tenTaiKhoan.trim()) {
+        setErrorMessage("Vui lòng nhập tên tài khoản");
+        return;
       }
       if (!formData.email.trim()) {
-        setErrorMessage("Vui lòng nhập email")
-        return
+        setErrorMessage("Vui lòng nhập email");
+        return;
       }
-      if (!formData.phone.trim()) {
-        setErrorMessage("Vui lòng nhập số điện thoại")
-        return
+      if (!formData.soDienThoai.trim()) {
+        setErrorMessage("Vui lòng nhập số điện thoại");
+        return;
+      }
+      if (!formData.currentPassword) {
+        setErrorMessage("Vui lòng nhập mật khẩu hiện tại để cập nhật thông tin cá nhân");
+        return;
       }
     }
 
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      setSaving(true);
+
+      if (section === "notifications") {
+        const notificationData = {
+          emailNotifications: formData.emailNotifications,
+          smsNotifications: formData.smsNotifications,
+          promotionalEmails: formData.promotionalEmails,
+        };
+        await api.updateNotifications(formData.maTaiKhoan, notificationData, token);
+      } else {
+        const updateData = {
+          maTaiKhoan: formData.maTaiKhoan,
+          tenTaiKhoan: formData.tenTaiKhoan,
+          email: formData.email,
+          soDienThoai: formData.soDienThoai,
+          diaChi: formData.diaChi,
+          ngaySinh: formData.ngaySinh,
+          hinhAnh: formData.hinhAnh || null,
+          maQuyen: formData.maQuyen,
+          tenKhachHang: formData.tenKhachHang,
+          matKhau: section === "password" ? formData.newPassword : formData.currentPassword,
+        };
+
+        console.log("🔄 Đang cập nhật với payload:", updateData);
+        await api.updateUser(formData.maTaiKhoan, updateData, token);
+      }
+
+      console.log("✅ Cập nhật thành công");
       setIsEditing((prev) => ({
         ...prev,
         [section]: false,
-      }))
-      setSuccessMessage("Cập nhật thành công!")
-      setErrorMessage("")
+      }));
+      setSuccessMessage("Cập nhật thành công!");
+      setErrorMessage("");
 
-      // Clear password fields after successful save
-      if (section === "password") {
+      setOriginalData({ ...formData });
+
+      if (section === "password" || section === "profile") {
         setFormData((prev) => ({
           ...prev,
           currentPassword: "",
           newPassword: "",
           confirmPassword: "",
-        }))
+        }));
+        setOriginalData((prev) => ({
+          ...prev,
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        }));
       }
 
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccessMessage("")
-      }, 3000)
-    }, 500)
-  }
+      if (userId && token) {
+        await fetchUserData(userId, token);
+      }
 
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
+    } catch (error) {
+      console.error("❌ Lỗi cập nhật:", error);
+      if (error.response?.status === 400 && error.response.data.errors?.MatKhau) {
+        setErrorMessage("Mật khẩu hiện tại không đúng");
+      } else {
+        handleApiError(error);
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Set default card
   const handleSetDefaultCard = (cardId) => {
     setFormData((prev) => ({
       ...prev,
@@ -157,17 +350,35 @@ const AccountSettingsPage = () => {
         ...card,
         isDefault: card.id === cardId,
       })),
-    }))
-    setSuccessMessage("Đã cập nhật thẻ mặc định!")
-    setTimeout(() => setSuccessMessage(""), 3000)
-  }
+    }));
+    setSuccessMessage("Đã cập nhật thẻ mặc định!");
+    setTimeout(() => setSuccessMessage(""), 3000);
+  };
 
+  // Add new card (placeholder)
   const handleAddCard = () => {
-    // In a real app, this would open a modal or navigate to add card page
-    alert("Chức năng thêm thẻ mới sẽ được triển khai")
-  }
+    alert("Chức năng thêm thẻ mới sẽ được triển khai");
+  };
 
+  // Get display name
+  const getDisplayName = () => {
+    if (formData.maQuyen === "Q006" && formData.tenKhachHang) {
+      return formData.tenKhachHang;
+    }
+    return formData.tenTaiKhoan;
+  };
+
+  // Render tab content
   const renderTabContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <span className="ml-2 text-gray-600">Đang tải thông tin...</span>
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case "profile":
         return (
@@ -187,16 +398,18 @@ const AccountSettingsPage = () => {
                   <button
                     onClick={() => handleCancel("profile")}
                     className="flex items-center px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-md"
+                    disabled={saving}
                   >
                     <X className="w-4 h-4 mr-2" />
                     Hủy
                   </button>
                   <button
                     onClick={() => handleSave("profile")}
-                    className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    disabled={saving}
                   >
-                    <Check className="w-4 h-4 mr-2" />
-                    Lưu
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+                    {saving ? "Đang lưu..." : "Lưu"}
                   </button>
                 </div>
               )}
@@ -204,7 +417,11 @@ const AccountSettingsPage = () => {
 
             <div className="flex flex-row gap-6 items-start">
               <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                <img src={formData.avatar || "/placeholder.svg"} alt="Profile" className="w-full h-full object-cover" />
+                {formData.hinhAnh ? (
+                  <img src={formData.hinhAnh} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <img src={DEFAULT_AVATAR} alt="Profile" className="w-full h-full object-cover" />
+                )}
                 {isEditing.profile && (
                   <label
                     htmlFor="avatarUpload"
@@ -223,17 +440,41 @@ const AccountSettingsPage = () => {
               </div>
 
               <div className="flex-1 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+                {/* <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Mã tài khoản</label>
                   <input
                     type="text"
-                    name="fullName"
-                    value={formData.fullName}
+                    value={formData.maTaiKhoan}
+                    disabled
+                    className="w-full px-4 py-2 border rounded-md bg-gray-100 text-gray-500"
+                  />
+                </div> */}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên tài khoản</label>
+                  <input
+                    type="text"
+                    name="tenTaiKhoan"
+                    value={formData.tenTaiKhoan}
                     onChange={handleInputChange}
                     disabled={!isEditing.profile}
                     className="w-full px-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   />
                 </div>
+
+                {formData.maQuyen === "Q006" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tên khách hàng</label>
+                    <input
+                      type="text"
+                      name="tenKhachHang"
+                      value={formData.tenKhachHang}
+                      onChange={handleInputChange}
+                      disabled={!isEditing.profile}
+                      className="w-full px-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -251,8 +492,8 @@ const AccountSettingsPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
                   <input
                     type="tel"
-                    name="phone"
-                    value={formData.phone}
+                    name="soDienThoai"
+                    value={formData.soDienThoai}
                     onChange={handleInputChange}
                     disabled={!isEditing.profile}
                     className="w-full px-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
@@ -263,8 +504,8 @@ const AccountSettingsPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Ngày sinh</label>
                   <input
                     type="date"
-                    name="dateOfBirth"
-                    value={formData.dateOfBirth}
+                    name="ngaySinh"
+                    value={formData.ngaySinh}
                     onChange={handleInputChange}
                     disabled={!isEditing.profile}
                     className="w-full px-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
@@ -274,18 +515,32 @@ const AccountSettingsPage = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
                   <textarea
-                    name="address"
-                    value={formData.address}
+                    name="diaChi"
+                    value={formData.diaChi}
                     onChange={handleInputChange}
                     disabled={!isEditing.profile}
                     rows={3}
                     className="w-full px-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                   />
                 </div>
+
+                {isEditing.profile && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu hiện tại</label>
+                    <input
+                      type="password"
+                      name="currentPassword"
+                      value={formData.currentPassword}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Nhập mật khẩu hiện tại để xác nhận"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        )
+        );
 
       case "password":
         return (
@@ -305,16 +560,18 @@ const AccountSettingsPage = () => {
                   <button
                     onClick={() => handleCancel("password")}
                     className="flex items-center px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-md"
+                    disabled={saving}
                   >
                     <X className="w-4 h-4 mr-2" />
                     Hủy
                   </button>
                   <button
                     onClick={() => handleSave("password")}
-                    className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    disabled={saving}
                   >
-                    <Check className="w-4 h-4 mr-2" />
-                    Lưu
+                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+                    {saving ? "Đang lưu..." : "Lưu"}
                   </button>
                 </div>
               )}
@@ -370,7 +627,7 @@ const AccountSettingsPage = () => {
               </div>
             )}
           </div>
-        )
+        );
 
       case "notifications":
         return (
@@ -390,13 +647,15 @@ const AccountSettingsPage = () => {
                   <button
                     onClick={() => handleCancel("notifications")}
                     className="flex items-center px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-md"
+                    disabled={saving}
                   >
                     <X className="w-4 h-4 mr-2" />
                     Hủy
                   </button>
                   <button
                     onClick={() => handleSave("notifications")}
-                    className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    disabled={saving}
                   >
                     <Check className="w-4 h-4 mr-2" />
                     Lưu
@@ -461,7 +720,7 @@ const AccountSettingsPage = () => {
               </div>
             </div>
           </div>
-        )
+        );
 
       case "payment":
         return (
@@ -472,19 +731,18 @@ const AccountSettingsPage = () => {
               {formData.cards.map((card) => (
                 <div key={card.id} className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center space-x-4">
-                    <div className="w-12 h-8 bg-gray-100 rounded flex items-center justify-center">
+                    <div className="w-12 h-8 rounded-md bg-gray-100 flex items-center justify-center">
                       {card.type === "visa" ? (
-                        <span className="font-bold text-blue-700">VISA</span>
+                        <span className="text-blue-600 font-bold">VISA</span>
                       ) : (
-                        <span className="font-bold text-red-500">MC</span>
+                        <span className="text-red-600 font-bold">MC</span>
                       )}
                     </div>
                     <div>
                       <p className="font-medium">{card.number}</p>
-                      <p className="text-sm text-gray-500">Hết hạn: {card.expiry}</p>
+                      <p className="text-sm text-gray-600">Hết hạn: {card.expiry}</p>
                     </div>
                   </div>
-
                   <div className="flex items-center space-x-4">
                     {card.isDefault ? (
                       <span className="text-sm font-medium text-green-600">Mặc định</span>
@@ -502,49 +760,78 @@ const AccountSettingsPage = () => {
               ))}
             </div>
 
-            <button onClick={handleAddCard} className="flex items-center text-blue-600 font-medium hover:text-blue-700">
+            <button
+              onClick={handleAddCard}
+              className="flex items-center text-blue-600 font-medium hover:text-blue-700"
+            >
               <CreditCard className="w-4 h-4 mr-2" />
               Thêm phương thức thanh toán mới
             </button>
           </div>
-        )
+        );
 
       default:
-        return null
+        return null;
     }
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="p-4 bg-red-100 text-red-800 rounded-md flex items-center">
+            <AlertCircle className="h-5 w-5 mr-3" />
+            <span>{errorMessage}</span>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-bold mb-8">Cài đặt tài khoản</h1>
 
         {successMessage && (
-          <div className="mb-6 p-4 bg-green-100 text-green-800 rounded-md flex items-center">
-            <div className="mr-3">
-              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            {successMessage}
+          <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-md flex items-center">
+            <svg className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span>{successMessage}</span>
           </div>
         )}
 
         {errorMessage && (
-          <div className="mb-6 p-4 bg-red-100 text-red-800 rounded-md flex items-center">
-            <AlertCircle className="h-5 w-5 mr-3" />
-            {errorMessage}
+          <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-md flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2" />
+            <span>{errorMessage}</span>
           </div>
         )}
 
-        <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="bg-white shadow-md rounded-lg overflow-hidden">
           <div className="md:flex">
-            {/* Sidebar */}
             <div className="md:w-80 bg-gray-50 p-6 border-r">
+              <div className="mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
+                    {formData.hinhAnh ? (
+                      <img src={formData.hinhAnh} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <img src={DEFAULT_AVATAR} alt="Avatar" className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{getDisplayName()}</h3>
+                    {/* <p className="text-sm text-gray-600">{formData.maQuyen || "Không xác định"}</p> */}
+                  </div>
+                </div>
+              </div>
+
               <nav className="space-y-2">
                 <button
                   onClick={() => setActiveTab("profile")}
@@ -554,7 +841,7 @@ const AccountSettingsPage = () => {
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  <User className="h-5 w-5 mr-3" />
+                  <User className="h-5 w-5 mr-2" />
                   Thông tin cá nhân
                 </button>
 
@@ -566,7 +853,7 @@ const AccountSettingsPage = () => {
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  <Lock className="h-5 w-5 mr-3" />
+                  <Lock className="h-5 w-5 mr-2" />
                   Đổi mật khẩu
                 </button>
 
@@ -578,7 +865,7 @@ const AccountSettingsPage = () => {
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  <Bell className="h-5 w-5 mr-3" />
+                  <Bell className="h-5 w-5 mr-2" />
                   Thông báo
                 </button>
 
@@ -590,19 +877,18 @@ const AccountSettingsPage = () => {
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  <CreditCard className="h-5 w-5 mr-3" />
+                  <CreditCard className="h-5 w-5 mr-2" />
                   Phương thức thanh toán
                 </button>
               </nav>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 p-8">{renderTabContent()}</div>
+            <div className="flex-1 p-6">{renderTabContent()}</div>
           </div>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AccountSettingsPage
+export default AccountSettingsPage;

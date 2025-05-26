@@ -23,24 +23,24 @@ const Header = () => {
   const dropdownRef = useRef(null)
   const location = useLocation()
 
-  useEffect(() => {
+useEffect(() => {
+  const checkLogin = () => {
     const token = localStorage.getItem("token")
     setIsLoggedIn(!!token)
+  }
 
-    const savedCart = localStorage.getItem("cart")
-    if (savedCart) {
-      const parsedCart = JSON.parse(savedCart)
-      const count = parsedCart.reduce((acc, item) => acc + item.quantity, 0)
-      setCartCount(count)
-    }
+  checkLogin()
+  window.addEventListener("storage", checkLogin)
+  window.addEventListener("loginSuccess", checkLogin) // 👈 THÊM dòng này
 
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10)
-    }
+  return () => {
+    window.removeEventListener("storage", checkLogin)
+    window.removeEventListener("loginSuccess", checkLogin) // 👈 THÊM dòng này
+  }
+}, [])
 
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+
+
 
   useEffect(() => {
     const updateCartCount = (cart) => {

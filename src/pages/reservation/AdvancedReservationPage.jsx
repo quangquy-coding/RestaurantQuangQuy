@@ -58,37 +58,27 @@ const AdvancedReservationPage = () => {
   const [error, setError] = useState("")
 
   // Generate available times based on business logic
-  const generateAvailableTimes = (date, partySize) => {
-    const times = []
-    const startHour = 10
-    const endHour = 21
-    const interval = 30
+ const generateAvailableTimes = (date, partySize) => {
+  const times = []
+  const startHour = 10
+  const endHour = 21
+  const interval = 30
 
-    // Get day of week (0 = Sunday, 6 = Saturday)
-    const dayOfWeek = date.getDay()
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
+  const dayOfWeek = date.getDay()
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6
 
-    for (let hour = startHour; hour <= endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += interval) {
-        // Skip lunch break (12:00-13:00) on weekdays
-        if (!isWeekend && hour === 12) continue
+  for (let hour = startHour; hour <= endHour; hour++) {
+    for (let minute = 0; minute < 60; minute += interval) {
+      // Skip lunch break (12:00-13:00) on weekdays
+      if (!isWeekend && hour === 12) continue
 
-        // Reduce availability for large groups
-        if (partySize > 10 && Math.random() > 0.6) continue
-
-        // Reduce availability on weekends
-        if (isWeekend && Math.random() > 0.7) continue
-
-        // Normal availability
-        if (Math.random() > 0.3) {
-          const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`
-          times.push(timeString)
-        }
-      }
+      // Không random nữa, chỉ kiểm tra điều kiện logic
+      times.push(`${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`)
     }
-
-    return times.sort()
   }
+
+  return times
+}
 
   // Initialize user data
   useEffect(() => {
