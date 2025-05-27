@@ -18,6 +18,18 @@ namespace RestaurantQuangQuy.Controllers.Client
             _context = context;
         }
 
+        [HttpGet("CheckMaBanAn/{maBanAn}")]
+        public IActionResult CheckMaBanAn(string maBanAn)
+        {
+            if (string.IsNullOrEmpty(maBanAn))
+            {
+                return BadRequest(new { message = "Mã bàn ăn không hợp lệ" });
+            }
+
+            var exists = _context.Datbans.Any(b => b.MaBanAn == maBanAn);
+            return Ok(new { exists });
+        }
+
         [HttpGet("GetAllDatMon")]
         public IActionResult GetAllDatMon()
         {
@@ -145,6 +157,13 @@ namespace RestaurantQuangQuy.Controllers.Client
                 {
                     return BadRequest(new { message = "Đơn đặt món không hợp lệ" });
                 }
+
+                var isBanAnExists = _context.Datbans.Any(b => b.MaBanAn == datMonAnDTO.MaBanAn);
+                if (!isBanAnExists)
+                {
+                    return NotFound(new { message = "Không tìm thấy bàn ăn với mã " + datMonAnDTO.MaBanAn });
+                }
+
                 // Tạo mã đơn đặt món mới
                 var random = new Random();
                 var randomString = "DM" + new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 8)
@@ -178,7 +197,11 @@ namespace RestaurantQuangQuy.Controllers.Client
                     _context.Chitietdondatmons.Add(chiTietEntity);
                 }
                 _context.SaveChanges();
-                return Ok(new { message = "Đặt món thành công" });
+                return Ok(new
+                {
+                    maDatMon = datMon.MaDatMon,
+                    maBanAn = datMon.MaBanAn
+                });
             }
             catch (Exception ex)
             {
