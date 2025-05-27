@@ -140,7 +140,7 @@ const AdvancedSearchPage = () => {
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <h1 className="text-xl font-bold">Danh mục món ăn</h1>
+            <h1 className="text-xl font-bold">Thực đơn</h1>
             <div className="flex items-center gap-2">
               <div className="relative w-full max-w-xs">
                 <input

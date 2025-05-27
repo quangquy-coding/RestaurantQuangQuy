@@ -57,18 +57,18 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/menu"
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                 Thực đơn
-                </Link>
-              </li>
-              <li>
-                <Link
                   to="/reservation"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Đặt bàn
+                </Link>
+              </li>
+               <li>
+                <Link
+                  to="/menu"
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                 Thực đơn
                 </Link>
               </li>
               <li>

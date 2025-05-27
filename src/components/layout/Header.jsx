@@ -96,8 +96,8 @@ const Header = () => {
 
   const navItems = [
     { name: "Trang chủ", path: "/", icon: <Home className="h-5 w-5" /> },
-    { name: "Danh mục", path: "/menu", icon: <Menu className="h-5 w-5" /> },
     { name: "Đặt bàn", path: "/reservation", icon: <Users className="h-5 w-5" /> },
+    { name: "Danh mục", path: "/menu", icon: <Menu className="h-5 w-5" /> },
     { name: "Giới thiệu", path: "/about", icon: <Info className="h-5 w-5" /> },
     { name: "Liên hệ", path: "/contact", icon: <Phone className="h-5 w-5" /> },
     { name: "Blog ẩm thực", path: "/blog", icon: <Newspaper className="h-5 w-5" /> },
