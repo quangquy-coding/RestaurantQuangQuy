@@ -10,8 +10,9 @@ import {
   LogOut,
   Newspaper,
   User,
-  Settings,Trophy 
-  ,History 
+  Settings,
+  Trophy,
+  History,
 } from "lucide-react"
 import Logo from "../../assets/logo.png"
 
@@ -23,25 +24,24 @@ const Header = () => {
   const dropdownRef = useRef(null)
   const location = useLocation()
 
-useEffect(() => {
-  const checkLogin = () => {
-    const token = localStorage.getItem("token")
-    setIsLoggedIn(!!token)
-  }
+  // Listen for login state (token in localStorage)
+  useEffect(() => {
+    const checkLogin = () => {
+      const token = localStorage.getItem("token")
+      setIsLoggedIn(!!token)
+    }
 
-  checkLogin()
-  window.addEventListener("storage", checkLogin)
-  window.addEventListener("loginSuccess", checkLogin) // 👈 THÊM dòng này
+    checkLogin()
+    window.addEventListener("storage", checkLogin)
+    window.addEventListener("loginSuccess", checkLogin) // listen for manual login event
 
-  return () => {
-    window.removeEventListener("storage", checkLogin)
-    window.removeEventListener("loginSuccess", checkLogin) // 👈 THÊM dòng này
-  }
-}, [])
+    return () => {
+      window.removeEventListener("storage", checkLogin)
+      window.removeEventListener("loginSuccess", checkLogin)
+    }
+  }, [])
 
-
-
-
+  // Listen for cart updates
   useEffect(() => {
     const updateCartCount = (cart) => {
       if (cart && Array.isArray(cart)) {
@@ -74,6 +74,7 @@ useEffect(() => {
     }
   }, [])
 
+  // Hide dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -86,6 +87,7 @@ useEffect(() => {
 
   const handleLogout = () => {
     localStorage.removeItem("token")
+    window.dispatchEvent(new Event("loginSuccess")) // trigger update
     setIsLoggedIn(false)
     window.location.href = "/login"
   }
@@ -126,7 +128,7 @@ useEffect(() => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full transition-all duration-200 hover:bg-gray-100 ${
+                className={`flex flex-col items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full transition-all duration-200 hover:text-rose-600 ${
                   location.pathname === item.path
                     ? "text-blue-600 bg-gray-100"
                     : "text-gray-600"
@@ -142,7 +144,7 @@ useEffect(() => {
             {/* Cart */}
             <Link
               to="/cart"
-              className="relative flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full hover:bg-gray-100 transition"
+              className="relative flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full hover:text-rose-600 transition"
             >
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
@@ -157,7 +159,7 @@ useEffect(() => {
               <div className="relative">
                 <button
                   onClick={toggleDropdown}
-                  className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full hover:bg-gray-100 transition"
+                  className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full hover:text-rose-600 transition"
                 >
                   <User className="h-5 w-5 text-blue-600" />
                 </button>
@@ -167,7 +169,7 @@ useEffect(() => {
                       <li>
                         <Link
                           to="/account-settings"
-                          className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
+                          className="flex items-center gap-2 px-4 py-2 hover:text-rose-600"
                         >
                           <Settings className="h-4 w-4" />
                           Quản lý tài khoản
@@ -176,25 +178,25 @@ useEffect(() => {
                       <li>
                         <Link
                           to="/orders"
-                          className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
+                          className="flex items-center gap-2 px-4 py-2 hover:text-rose-600"
                         >
-                          <History  className="h-4 w-4" />
+                          <History className="h-4 w-4" />
                           Đơn hàng
                         </Link>
                       </li>
                       <li>
                         <Link
                           to="/loyalty-program"
-                          className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100"
+                          className="flex items-center gap-2 px-4 py-2 hover:text-rose-600"
                         >
-                          <Trophy  className="h-4 w-4" />
-                        Ưu đãi
+                          <Trophy className="h-4 w-4" />
+                          Ưu đãi
                         </Link>
                       </li>
                       <li>
                         <button
                           onClick={handleLogout}
-                          className="flex items-center gap-2 w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+                          className="flex items-center gap-2 w-full text-left px-4 py-2 text-red-600 hover:text-orange-500"
                         >
                           <LogOut className="h-4 w-4" />
                           Đăng xuất

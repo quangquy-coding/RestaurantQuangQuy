@@ -8,7 +8,7 @@ import React from 'react'
 
 export default defineConfig({
   optimizeDeps: {
-    include: ['@react-oauth/google'],
+    include: ['@react-oauth/google','sweetalert2'],
   },
   plugins: [
     tailwindcss(),],

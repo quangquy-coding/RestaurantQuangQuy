@@ -151,9 +151,9 @@ namespace RestaurantQuangQuy.Controllers.Client
 				DiaChi = donDatMon.MaKhachHangNavigation?.DiaChi,
 
 				// ✅ bàn ăn
-				MaBan = donDatMon.MaBan,
-				TenBan = donDatMon.MaBanNavigation?.TenBan,
-				ViTri = donDatMon.MaBanNavigation?.ViTri,
+				//MaBan = donDatMon.MaBan,
+				//TenBan = donDatMon.MaBanNavigation?.TenBan,
+				//ViTri = donDatMon.MaBanNavigation?.ViTri,
 
 				ChiTietMon = donDatMon.Chitietdondatmons.Select(ct => new
 				{
