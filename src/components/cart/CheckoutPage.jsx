@@ -192,6 +192,8 @@ const CheckoutPage = () => {
       !cartItems.some(c => c.id === item.id)
     );
     localStorage.setItem("cart", JSON.stringify(remainingItems));
+      window.dispatchEvent(new CustomEvent("cartUpdated", { detail: { cart: remainingItems } }));
+    
   } catch (err) {
       console.error("❌ Lỗi khi gửi đơn hàng:", err);
 
