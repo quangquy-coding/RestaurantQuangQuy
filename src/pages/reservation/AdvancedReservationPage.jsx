@@ -296,7 +296,7 @@ const AdvancedReservationPage = () => {
 
         setReservationCode(code)
         setReservationComplete(true)
-        // console.log("✅ Đặt bàn thành công với mã:", code)
+        localStorage.setItem("maDatBan", result);
       } else {
         throw new Error("Invalid response from server")
       }

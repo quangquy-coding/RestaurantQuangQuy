@@ -92,7 +92,7 @@ namespace RestaurantQuangQuy.Controllers.Client
         }
 
         //thêm hóa đơn
-        [HttpPost]
+        [HttpPost("CreateHoaDon")]
         public IActionResult CreateHoaDon([FromBody] HoaDonCreateDTO hoadondto)
         {
             try
