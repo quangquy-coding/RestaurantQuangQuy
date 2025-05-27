@@ -381,7 +381,7 @@ const AdvancedReservationPage = () => {
           <div className="flex items-center">
             <button
               onClick={prevMonth}
-              className="p-2 rounded-full hover:bg-gray-100 border-none bg-transparent cursor-pointer"
+              className="p-2 rounded-full hover:bg-gray-100 border-none bg-transparent cursor-pointerbg-red-50 "
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -473,7 +473,7 @@ const AdvancedReservationPage = () => {
   }
 
   const renderStep1 = () => (
-    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
+    <div className="max-w-4xl mx-auto bg-gray-50 rounded-lg shadow-md p-6 mb-8">
       <div className="mb-6">
         <h3 className="text-xl font-semibold mb-2">Thông tin đặt bàn</h3>
         <p className="text-gray-600">Chọn ngày, giờ và số lượng khách</p>
@@ -731,7 +731,7 @@ const AdvancedReservationPage = () => {
   )
 
   return (
-    <div className="container mx-auto px-4 py-8 min-h-screen bg-gray-50">
+    <div className="container mx-auto px-4 py-8 min-h-screen bg-red-50">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">Đặt bàn trực tuyến</h1>
         <p className="text-gray-600">Đặt bàn trước để đảm bảo trải nghiệm ẩm thực tuyệt vời của bạn</p>
