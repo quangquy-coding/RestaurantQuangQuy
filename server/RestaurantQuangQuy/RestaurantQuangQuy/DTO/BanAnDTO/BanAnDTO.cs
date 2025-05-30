@@ -1,18 +1,11 @@
-﻿using RestaurantQuangQuy.Models;
-namespace RestaurantQuangQuy.DTO.BanAnDTO
+﻿namespace RestaurantQuangQuy.DTO.BanAnDTO
 {
-
 	public class BanAnDTO
 	{
-
-		// lấy thông tin từ bảng BanAn
-		public string MaBan { get; set; }
-		public string TenBan { get; set; }
-
-		public string ViTri  { get; set; }
-		public string TrangThai { get; set; }
+		public string MaBan { get; set; } = null!;
+		public string TenBan { get; set; } = null!;
+		public string ViTri { get; set; } = null!;
 		public int SoGhe { get; set; }
-		public string GhiChu { get; set; }
-
+		public string? GhiChu { get; set; }
 	}
 }

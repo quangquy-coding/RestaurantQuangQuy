@@ -1,23 +1,31 @@
-import axios from 'axios';
-import { BanknoteIcon, CheckCircle2, Clock, CreditCard, Users, Wallet } from 'lucide-react';
+import axios from "axios";
+import {
+  BanknoteIcon,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { orderService } from '../../api/orderApi';
-import React from 'react';
+import { orderService } from "../../api/orderApi";
+import React from "react";
 
-const USER_API_URL = "http://localhost:5080/api/NguoiDungManager"
+const USER_API_URL = "http://localhost:5080/api/NguoiDungManager";
 const api = {
   getUserById: (userId) => axios.get(`${USER_API_URL}/${userId}`),
-}
+};
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [total, setTotal] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState("cash"); // Mặc định là tiền mặt
+  const [paymentMethod, setPaymentMethod] = useState("Tiền mặt"); // Mặc định là tiền mặt
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userId, setUserId] = useState(null)
-  const [userLoading, setUserLoading] = useState(false)
+  const [userId, setUserId] = useState(null);
+  const [userLoading, setUserLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const [customerInfo, setCustomerInfo] = useState({
     maDatBan: "",
@@ -26,7 +34,7 @@ const CheckoutPage = () => {
     email: "",
     tableNumber: "",
     guestCount: 1,
-    note: ""
+    note: "",
   });
   const [loading, setLoading] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
@@ -34,36 +42,40 @@ const CheckoutPage = () => {
 
   // Initialize user data
   useEffect(() => {
-    const token = localStorage.getItem("token")
-    const uid = localStorage.getItem("usersId")
+    const token = localStorage.getItem("token");
+    const uid = localStorage.getItem("usersId");
 
-    setIsLoggedIn(!!token)
+    setIsLoggedIn(!!token);
 
     if (uid) {
-      setUserId(uid)
-      fetchUserData(uid)
+      setUserId(uid);
+      fetchUserData(uid);
     } else {
       setCustomerInfo((prev) => ({
         ...prev,
         maKhachHang: "GUEST_" + Date.now(),
-      }))
+      }));
     }
-  }, [])
+  }, []);
 
   const fetchUserData = async (uid) => {
-    setUserLoading(true)
+    setUserLoading(true);
 
     try {
-      const response = await api.getUserById(uid)
-      const userData = response.data
-      const customerCode = userData.maKhachHang || userData.maTaiKhoan || uid
-      const userName = userData.tenKhachHang || userData.hoTenNhanVien || userData.tenTaiKhoan || ""
-      const userPhone = userData.soDienThoai || ""
-      const userEmail = userData.email || ""
-      const maDatBan = localStorage.getItem("maDatBan") || ""
+      const response = await api.getUserById(uid);
+      const userData = response.data;
+      const customerCode = userData.maKhachHang || userData.maTaiKhoan || uid;
+      const userName =
+        userData.tenKhachHang ||
+        userData.hoTenNhanVien ||
+        userData.tenTaiKhoan ||
+        "";
+      const userPhone = userData.soDienThoai || "";
+      const userEmail = userData.email || "";
+      const maDatBan = localStorage.getItem("maDatBan") || "";
 
       if (maDatBan == "") {
-        return
+        return;
       }
 
       setCustomerInfo({
@@ -72,33 +84,38 @@ const CheckoutPage = () => {
         phone: userPhone,
         specialRequests: "",
         maKhachHang: customerCode,
-        tableNumber: maDatBan
-      })
+        tableNumber: maDatBan,
+      });
     } catch (err) {
-      console.error("❌ Lỗi lấy thông tin người dùng:", err)
+      console.error("❌ Lỗi lấy thông tin người dùng:", err);
 
       if (err.response) {
-        const status = err.response.status
+        const status = err.response.status;
         if (status === 404) {
-          setError("Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.")
+          setError(
+            "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại."
+          );
         } else {
-          setError("Lỗi tải thông tin người dùng: " + (err.response.data || "Unknown error"))
+          setError(
+            "Lỗi tải thông tin người dùng: " +
+              (err.response.data || "Unknown error")
+          );
         }
       } else {
-        setError("Không thể kết nối đến server để lấy thông tin người dùng.")
+        setError("Không thể kết nối đến server để lấy thông tin người dùng.");
       }
 
       // Fallback: sử dụng uid làm maKhachHang
       setCustomerInfo((prev) => ({
         ...prev,
         maKhachHang: uid,
-      }))
+      }));
 
-      console.log("🔄 Sử dụng fallback maKhachHang:", uid)
+      console.log("🔄 Sử dụng fallback maKhachHang:", uid);
     } finally {
-      setUserLoading(false)
+      setUserLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     // Load các món được chọn từ localStorage
@@ -108,7 +125,10 @@ const CheckoutPage = () => {
       setCartItems(parsedItems);
 
       // Tính tổng tiền
-      const sum = parsedItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+      const sum = parsedItems.reduce(
+        (acc, item) => acc + item.price * item.quantity,
+        0
+      );
       setTotal(sum);
     } else {
       // Nếu không có món nào, quay lại giỏ hàng
@@ -124,77 +144,78 @@ const CheckoutPage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setCustomerInfo(prev => ({
+    setCustomerInfo((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-  let maDatMon = null; // để rollback nếu lỗi
+    let maDatMon = null; // để rollback nếu lỗi
 
-  try {
-    // 1. Tạo DTO đặt món
-    const datMonDTO = {
-      MaBanAn: customerInfo.tableNumber,
-      MaKhachHang: customerInfo.maKhachHang,
-      SoDienThoai: customerInfo.phone,
-      ThoiGianDat: new Date().toISOString(),
-      TrangThai: "Chờ xác nhận",
-      SoLuong: cartItems.reduce((total, item) => total + item.quantity, 0),
-      TongTien: total,
-      GhiChu: customerInfo.note,
-      ChiTietDatMonAns: cartItems.map(item => ({
-        MaMon: item.id,
-        SoLuong: item.quantity,
-        Gia: item.price,
-        TongTien: item.quantity * item.price,
-      })),
-    };
+    try {
+      // 1. Tạo DTO đặt món
+      const datMonDTO = {
+        MaBanAn: customerInfo.tableNumber,
+        MaKhachHang: customerInfo.maKhachHang,
+        SoDienThoai: customerInfo.phone,
+        ThoiGianDat: new Date().toISOString(),
+        TrangThai: "Chờ xác nhận",
+        SoLuong: cartItems.reduce((total, item) => total + item.quantity, 0),
+        TongTien: total,
+        GhiChu: customerInfo.note,
+        ChiTietDatMonAns: cartItems.map((item) => ({
+          MaMon: item.id,
+          SoLuong: item.quantity,
+          Gia: item.price,
+          TongTien: item.quantity * item.price,
+        })),
+      };
 
-    // 2. Gửi đơn đặt món
-    const datMonRes = await orderService.createDatMon(datMonDTO);
-    maDatMon = datMonRes.data?.maDatMon;
-    const maBanAn = datMonRes.data?.maBanAn;
+      // 2. Gửi đơn đặt món
+      const datMonRes = await orderService.createDatMon(datMonDTO);
+      maDatMon = datMonRes.data?.maDatMon;
+      const maBanAn = datMonRes.data?.maBanAn;
 
-    // 3. Gửi hóa đơn
-    const hoaDonDTO = {
-      MaHoaDon: "",
-      MaDatMon: maDatMon,
-      MaBanAn: maBanAn,
-      MaKhachHang: customerInfo.maKhachHang,
-      ThoiGianDat: new Date().toISOString(),
-      ThoiGianThanhToan: new Date().toISOString(),
-      MaKhuyenMai: "KM001",
-      TongTien: total,
-      PhuongThucThanhToan: paymentMethod,
-      TrangThaiThanhToan: "Đã thanh toán",
-      MaNhanVien: "NV001",
-      GhiChu: customerInfo.note || ""
-    };
+      // 3. Gửi hóa đơn
+      const hoaDonDTO = {
+        MaHoaDon: "",
+        MaDatMon: maDatMon,
+        MaBanAn: maBanAn,
+        MaKhachHang: customerInfo.maKhachHang,
+        ThoiGianDat: new Date().toISOString(),
+        ThoiGianThanhToan: new Date().toISOString(),
+        MaKhuyenMai: "KM001",
+        TongTien: total,
+        PhuongThucThanhToan: paymentMethod,
+        TrangThaiThanhToan: "Đã thanh toán",
+        MaNhanVien: "NV001",
+        GhiChu: customerInfo.note || "",
+      };
 
-    const res = await orderService.createHoaDon(hoaDonDTO);
-    const maHoaDon = res.data?.data?.maHoaDon || "HD" + Date.now();
+      const res = await orderService.createHoaDon(hoaDonDTO);
+      const maHoaDon = res.data?.data?.maHoaDon || "HD" + Date.now();
 
-    // 4. Thành công
-    setOrderId(maHoaDon);
-    setOrderComplete(true);
+      // 4. Thành công
+      setOrderId(maHoaDon);
+      setOrderComplete(true);
 
-    // 5. Dọn dữ liệu localStorage
-    localStorage.removeItem("checkoutItems");
-    localStorage.removeItem("customerInfo");
+      // 5. Dọn dữ liệu localStorage
+      localStorage.removeItem("checkoutItems");
+      localStorage.removeItem("customerInfo");
 
-    const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
-    const remainingItems = savedCart.filter(item =>
-      !cartItems.some(c => c.id === item.id)
-    );
-    localStorage.setItem("cart", JSON.stringify(remainingItems));
-      window.dispatchEvent(new CustomEvent("cartUpdated", { detail: { cart: remainingItems } }));
-    
-  } catch (err) {
+      const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
+      const remainingItems = savedCart.filter(
+        (item) => !cartItems.some((c) => c.id === item.id)
+      );
+      localStorage.setItem("cart", JSON.stringify(remainingItems));
+      window.dispatchEvent(
+        new CustomEvent("cartUpdated", { detail: { cart: remainingItems } })
+      );
+    } catch (err) {
       console.error("❌ Lỗi khi gửi đơn hàng:", err);
 
       // Xử lý lỗi mã bàn không tồn tại từ server
@@ -226,10 +247,14 @@ const CheckoutPage = () => {
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
           <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
           <h1 className="text-2xl font-bold mb-2">Đặt hàng thành công!</h1>
-          <p className="text-gray-600 mb-4">Cảm ơn bạn đã đặt món tại nhà hàng chúng tôi</p>
+          <p className="text-gray-600 mb-4">
+            Cảm ơn bạn đã đặt món tại nhà hàng chúng tôi
+          </p>
           <div className="bg-gray-50 p-4 rounded-md mb-6">
             <p className="font-medium">Mã đơn hàng: {orderId}</p>
-            <p className="text-sm text-gray-500">Vui lòng lưu lại mã đơn hàng để tra cứu</p>
+            <p className="text-sm text-gray-500">
+              Vui lòng lưu lại mã đơn hàng để tra cứu
+            </p>
           </div>
           <button
             onClick={() => navigate("/")}
@@ -246,7 +271,11 @@ const CheckoutPage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-gray-600">
-          Không có món nào để thanh toán. Quay lại <Link to="/cart" className="text-blue-600">giỏ hàng</Link>.
+          Không có món nào để thanh toán. Quay lại{" "}
+          <Link to="/cart" className="text-blue-600">
+            giỏ hàng
+          </Link>
+          .
         </p>
       </div>
     );
@@ -265,7 +294,7 @@ const CheckoutPage = () => {
             </div>
 
             <ul className="divide-y divide-gray-200 max-h-64 overflow-y-auto">
-              {cartItems.map(item => (
+              {cartItems.map((item) => (
                 <li key={item.id} className="p-4 flex items-center">
                   <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
                     <img
@@ -277,11 +306,15 @@ const CheckoutPage = () => {
 
                   <div className="ml-4 flex-1">
                     <h3 className="font-medium text-sm">{item.name}</h3>
-                    <p className="text-gray-500 text-xs">{item.quantity} x {item.price.toLocaleString('vi-VN')} ₫</p>
+                    <p className="text-gray-500 text-xs">
+                      {item.quantity} x {item.price.toLocaleString("vi-VN")} ₫
+                    </p>
                   </div>
 
                   <div className="text-right">
-                    <p className="font-medium">{(item.price * item.quantity).toLocaleString('vi-VN')} ₫</p>
+                    <p className="font-medium">
+                      {(item.price * item.quantity).toLocaleString("vi-VN")} ₫
+                    </p>
                   </div>
                 </li>
               ))}
@@ -290,11 +323,11 @@ const CheckoutPage = () => {
             <div className="p-4 bg-gray-50">
               <div className="flex justify-between mb-2">
                 <span>Tạm tính:</span>
-                <span>{total.toLocaleString('vi-VN')} ₫</span>
+                <span>{total.toLocaleString("vi-VN")} ₫</span>
               </div>
               <div className="flex justify-between font-bold text-lg">
                 <span>Tổng cộng:</span>
-                <span>{total.toLocaleString('vi-VN')} ₫</span>
+                <span>{total.toLocaleString("vi-VN")} ₫</span>
               </div>
             </div>
           </div>
@@ -349,20 +382,20 @@ const CheckoutPage = () => {
                 </div>
 
                 {/* <div className="grid grid-cols-2 gap-4"> */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Số bàn
-                    </label>
-                    <input
-                      type="text"
-                      name="tableNumber"
-                      value={customerInfo.tableNumber}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số bàn
+                  </label>
+                  <input
+                    type="text"
+                    name="tableNumber"
+                    value={customerInfo.tableNumber}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
 
-                  {/* <div>
+                {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Số khách
                     </label>

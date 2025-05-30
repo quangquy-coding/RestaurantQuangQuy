@@ -70,9 +70,7 @@ public partial class RestaurantManagementContext : DbContext
             entity.Property(e => e.TenBan)
                 .HasMaxLength(50)
                 .HasColumnName("tenBan");
-            entity.Property(e => e.TrangThai)
-                .HasMaxLength(20)
-                .HasColumnName("trangThai");
+         
 
         });
 

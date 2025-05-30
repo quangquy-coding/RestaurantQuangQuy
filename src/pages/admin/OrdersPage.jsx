@@ -1,8 +1,8 @@
-"use client"
-import React from "react"
-import { useState, useEffect } from "react"
-import * as XLSX from "xlsx"
-import { saveAs } from "file-saver"
+"use client";
+import React from "react";
+import { useState, useEffect } from "react";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import {
   Search,
   Eye,
@@ -18,121 +18,33 @@ import {
   Edit,
   Trash2,
   Save,
-} from "lucide-react"
-
-// Mock data for tables
-const mockTables = [
-  { id: "T01", name: "Bàn 01", capacity: 4, status: "available" },
-  { id: "T02", name: "Bàn 02", capacity: 2, status: "available" },
-  { id: "T03", name: "Bàn 03", capacity: 6, status: "available" },
-  { id: "T04", name: "Bàn 04", capacity: 4, status: "available" },
-  { id: "T05", name: "Bàn 05", capacity: 8, status: "available" },
-  { id: "T06", name: "Bàn 06", capacity: 2, status: "available" },
-]
-
-// Mock data for orders
-const mockOrders = [
-  {
-    id: "OD123456",
-    customerName: "Nguyễn Văn A",
-    tableNumber: "Bàn 01",
-    tableId: "T01",
-    orderDate: "2023-06-15T18:30:00",
-    status: "completed", // pending, processing, completed, cancelled
-    total: 450000,
-    paymentMethod: "cash",
-    items: [
-      { id: 1, name: "Phở bò tái", quantity: 2, price: 85000 },
-      { id: 2, name: "Gỏi cuốn tôm thịt", quantity: 3, price: 65000 },
-      { id: 3, name: "Trà đào cam sả", quantity: 2, price: 35000 },
-    ],
-  },
-  {
-    id: "OD123457",
-    customerName: "Trần Thị B",
-    tableNumber: "Bàn 03",
-    tableId: "T03",
-    orderDate: "2023-06-15T19:15:00",
-    status: "processing",
-    total: 380000,
-    paymentMethod: "card",
-    items: [
-      { id: 1, name: "Cơm rang hải sản", quantity: 2, price: 95000 },
-      { id: 2, name: "Chè khúc bạch", quantity: 2, price: 45000 },
-      { id: 3, name: "Cà phê sữa đá", quantity: 2, price: 30000 },
-    ],
-  },
-  {
-    id: "OD123458",
-    customerName: "Lê Văn C",
-    tableNumber: "",
-    tableId: "",
-    orderDate: "2023-06-15T20:00:00",
-    status: "pending",
-    total: 520000,
-    paymentMethod: "ewallet",
-    items: [
-      { id: 1, name: "Bún chả Hà Nội", quantity: 3, price: 75000 },
-      { id: 2, name: "Bánh xèo", quantity: 1, price: 80000 },
-      { id: 3, name: "Trà đào cam sả", quantity: 4, price: 35000 },
-    ],
-  },
-  {
-    id: "OD123459",
-    customerName: "Phạm Thị D",
-    tableNumber: "Bàn 02",
-    tableId: "T02",
-    orderDate: "2023-06-15T17:45:00",
-    status: "cancelled",
-    total: 290000,
-    paymentMethod: "cash",
-    items: [
-      { id: 1, name: "Phở bò tái", quantity: 2, price: 85000 },
-      { id: 2, name: "Cà phê sữa đá", quantity: 4, price: 30000 },
-    ],
-  },
-  {
-    id: "OD123460",
-    customerName: "Hoàng Văn E",
-    tableNumber: "Bàn 04",
-    tableId: "T04",
-    orderDate: "2023-06-15T18:00:00",
-    status: "completed",
-    total: 675000,
-    paymentMethod: "card",
-    items: [
-      { id: 1, name: "Cơm rang hải sản", quantity: 3, price: 95000 },
-      { id: 2, name: "Gỏi cuốn tôm thịt", quantity: 4, price: 65000 },
-      { id: 3, name: "Chè khúc bạch", quantity: 2, price: 45000 },
-    ],
-  },
-]
-
-// Mock menu items for order creation/editing
-const mockMenuItems = [
-  { id: 1, name: "Phở bò tái", price: 85000, category: "Món chính" },
-  { id: 2, name: "Gỏi cuốn tôm thịt", price: 65000, category: "Khai vị" },
-  { id: 3, name: "Trà đào cam sả", price: 35000, category: "Đồ uống" },
-  { id: 4, name: "Cơm rang hải sản", price: 95000, category: "Món chính" },
-  { id: 5, name: "Chè khúc bạch", price: 45000, category: "Tráng miệng" },
-  { id: 6, name: "Cà phê sữa đá", price: 30000, category: "Đồ uống" },
-  { id: 7, name: "Bún chả Hà Nội", price: 75000, category: "Món chính" },
-  { id: 8, name: "Bánh xèo", price: 80000, category: "Món chính" },
-]
+  RefreshCw,
+} from "lucide-react";
+import {
+  getAllOrders,
+  getAvailableTables,
+  getMenuItems,
+  updateOrderStatus,
+  assignTableToOrder,
+  createOrder,
+  updateOrder,
+  deleteOrder,
+} from "../../api/orderApi";
 
 const OrdersPage = () => {
-  const [orders, setOrders] = useState([])
-  const [tables, setTables] = useState([])
-  const [filteredOrders, setFilteredOrders] = useState([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedStatus, setSelectedStatus] = useState("")
-  const [selectedDateRange, setSelectedDateRange] = useState("all")
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [currentOrder, setCurrentOrder] = useState(null)
-  const [editingOrder, setEditingOrder] = useState(null)
+  const [orders, setOrders] = useState([]);
+  const [tables, setTables] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedDateRange, setSelectedDateRange] = useState("all");
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [currentOrder, setCurrentOrder] = useState(null);
+  const [editingOrder, setEditingOrder] = useState(null);
   const [newOrder, setNewOrder] = useState({
     customerName: "",
     tableId: "",
@@ -142,73 +54,112 @@ const OrdersPage = () => {
     items: [],
     total: 0,
     orderDate: new Date().toISOString(),
-  })
-  const [selectedMenuItem, setSelectedMenuItem] = useState("")
-  const [selectedMenuItemQuantity, setSelectedMenuItemQuantity] = useState(1)
+  });
+  const [selectedMenuItem, setSelectedMenuItem] = useState("");
+  const [selectedMenuItemQuantity, setSelectedMenuItemQuantity] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [menuLoading, setMenuLoading] = useState(false);
 
   useEffect(() => {
-    // In a real app, you would fetch orders and tables from an API
-    setOrders(mockOrders)
-    setFilteredOrders(mockOrders)
-    setTables(mockTables)
-  }, [])
+    fetchData();
+  }, []);
 
   useEffect(() => {
-    // Filter orders based on search term, status, and date range
-    let filtered = orders
+    filterOrders();
+  }, [searchTerm, selectedStatus, selectedDateRange, orders]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [ordersData] = await Promise.all([getAllOrders()]);
+
+      setOrders(ordersData);
+      setFilteredOrders(ordersData);
+
+      // Load menu items separately
+      await fetchMenuItems();
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      alert("Lỗi khi tải dữ liệu");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMenuItems = async () => {
+    try {
+      setMenuLoading(true);
+      const menuData = await getMenuItems();
+      console.log("Menu items loaded:", menuData);
+      setMenuItems(menuData);
+    } catch (error) {
+      console.error("Error fetching menu items:", error);
+      alert("Lỗi khi tải menu");
+    } finally {
+      setMenuLoading(false);
+    }
+  };
+
+  const filterOrders = () => {
+    let filtered = orders;
 
     if (searchTerm) {
       filtered = filtered.filter(
         (order) =>
           order.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (order.tableNumber && order.tableNumber.toLowerCase().includes(searchTerm.toLowerCase())),
-      )
+          (order.tableNumber &&
+            order.tableNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
     }
 
     if (selectedStatus) {
-      filtered = filtered.filter((order) => order.status === selectedStatus)
+      filtered = filtered.filter((order) => order.status === selectedStatus);
     }
 
     if (selectedDateRange !== "all") {
-      const now = new Date()
-      let startDate
+      const now = new Date();
+      let startDate;
 
       switch (selectedDateRange) {
         case "today":
-          startDate = new Date(now.setHours(0, 0, 0, 0))
-          break
+          startDate = new Date(now.setHours(0, 0, 0, 0));
+          break;
         case "yesterday":
-          startDate = new Date(now.setDate(now.getDate() - 1))
-          startDate.setHours(0, 0, 0, 0)
-          break
+          startDate = new Date(now.setDate(now.getDate() - 1));
+          startDate.setHours(0, 0, 0, 0);
+          break;
         case "week":
-          startDate = new Date(now.setDate(now.getDate() - 7))
-          break
+          startDate = new Date(now.setDate(now.getDate() - 7));
+          break;
         case "month":
-          startDate = new Date(now.setMonth(now.getMonth() - 1))
-          break
+          startDate = new Date(now.setMonth(now.getMonth() - 1));
+          break;
         default:
-          startDate = null
+          startDate = null;
       }
 
       if (startDate) {
-        filtered = filtered.filter((order) => new Date(order.orderDate) >= startDate)
+        filtered = filtered.filter(
+          (order) => new Date(order.orderDate) >= startDate
+        );
       }
     }
 
-    setFilteredOrders(filtered)
-  }, [searchTerm, selectedStatus, selectedDateRange, orders])
+    setFilteredOrders(filtered);
+  };
 
   const openViewModal = (order) => {
-    setCurrentOrder(order)
-    setIsViewModalOpen(true)
-  }
+    setCurrentOrder(order);
+    fetchAvailableTables(order.orderDate);
+    setIsViewModalOpen(true);
+  };
 
   const openEditModal = (order) => {
-    setEditingOrder({ ...order })
-    setIsEditModalOpen(true)
-  }
+    setEditingOrder({ ...order });
+    fetchAvailableTables(order.orderDate);
+    setIsEditModalOpen(true);
+  };
 
   const openCreateModal = () => {
     setNewOrder({
@@ -220,14 +171,15 @@ const OrdersPage = () => {
       items: [],
       total: 0,
       orderDate: new Date().toISOString(),
-    })
-    setIsCreateModalOpen(true)
-  }
+    });
+    fetchAvailableTables();
+    setIsCreateModalOpen(true);
+  };
 
   const openDeleteModal = (order) => {
-    setCurrentOrder(order)
-    setIsDeleteModalOpen(true)
-  }
+    setCurrentOrder(order);
+    setIsDeleteModalOpen(true);
+  };
 
   const formatDate = (dateString) => {
     const options = {
@@ -236,9 +188,9 @@ const OrdersPage = () => {
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }
-    return new Date(dateString).toLocaleDateString("vi-VN", options)
-  }
+    };
+    return new Date(dateString).toLocaleDateString("vi-VN", options);
+  };
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -248,168 +200,198 @@ const OrdersPage = () => {
             <Clock className="mr-1 h-3 w-3" />
             Chờ xử lý
           </span>
-        )
+        );
       case "processing":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
             <Clock className="mr-1 h-3 w-3" />
             Đang xử lý
           </span>
-        )
+        );
       case "completed":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircle className="mr-1 h-3 w-3" />
             Hoàn thành
           </span>
-        )
+        );
       case "cancelled":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
             <XCircle className="mr-1 h-3 w-3" />
             Đã hủy
           </span>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   const getPaymentMethodText = (method) => {
     switch (method) {
       case "cash":
-        return "Tiền mặt"
+        return "Tiền mặt";
       case "card":
-        return "Thẻ tín dụng/ghi nợ"
+        return "Thẻ tín dụng/ghi nợ";
       case "ewallet":
-        return "Ví điện tử"
+        return "Ví điện tử";
       default:
-        return method
+        return method;
     }
-  }
+  };
 
-  const handleUpdateStatus = (orderId, newStatus) => {
-    // Update order status
-    const updatedOrders = orders.map((order) => (order.id === orderId ? { ...order, status: newStatus } : order))
+  const handleUpdateStatus = async (orderId, newStatus) => {
+    try {
+      await updateOrderStatus(orderId, newStatus);
+      await fetchData();
 
-    setOrders(updatedOrders)
-    setFilteredOrders(updatedOrders)
-
-    // Update current order if it's open in the modal
-    if (currentOrder && currentOrder.id === orderId) {
-      setCurrentOrder({ ...currentOrder, status: newStatus })
-    }
-  }
-
-  const handleAssignTable = (orderId, tableId) => {
-    const selectedTable = tables.find((table) => table.id === tableId)
-    if (!selectedTable) return
-
-    // Update order with table information
-    const updatedOrders = orders.map((order) =>
-      order.id === orderId
-        ? {
-            ...order,
-            tableId: tableId,
-            tableNumber: selectedTable.name,
-          }
-        : order,
-    )
-
-    setOrders(updatedOrders)
-    setFilteredOrders(updatedOrders)
-
-    // Update current order if it's open in the modal
-    if (currentOrder && currentOrder.id === orderId) {
-      setCurrentOrder({
-        ...currentOrder,
-        tableId: tableId,
-        tableNumber: selectedTable.name,
-      })
-    }
-  }
-
-  const handleSaveEditedOrder = () => {
-    // Calculate total
-    const total = editingOrder.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-
-    // If a table is selected, get the table name
-    let tableNumber = editingOrder.tableNumber
-    if (editingOrder.tableId) {
-      const selectedTable = tables.find((table) => table.id === editingOrder.tableId)
-      if (selectedTable) {
-        tableNumber = selectedTable.name
+      // Update current order if it's open in the modal
+      if (currentOrder && currentOrder.id === orderId) {
+        setCurrentOrder({ ...currentOrder, status: newStatus });
       }
+
+      alert("Cập nhật trạng thái thành công!");
+    } catch (error) {
+      console.error("Error updating status:", error);
+      alert("Lỗi khi cập nhật trạng thái");
     }
+  };
 
-    const updatedOrder = {
-      ...editingOrder,
-      total,
-      tableNumber,
-    }
+  const handleAssignTable = async (orderId, tableId) => {
+    try {
+      await assignTableToOrder(orderId, tableId);
+      await fetchData();
 
-    // Update orders array
-    const updatedOrders = orders.map((order) => (order.id === updatedOrder.id ? updatedOrder : order))
-
-    setOrders(updatedOrders)
-    setIsEditModalOpen(false)
-  }
-
-  const handleCreateOrder = () => {
-    // Calculate total
-    const total = newOrder.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-
-    // If a table is selected, get the table name
-    let tableNumber = ""
-    if (newOrder.tableId) {
-      const selectedTable = tables.find((table) => table.id === newOrder.tableId)
-      if (selectedTable) {
-        tableNumber = selectedTable.name
+      const selectedTable = tables.find((table) => table.id === tableId);
+      if (selectedTable && currentOrder && currentOrder.id === orderId) {
+        setCurrentOrder({
+          ...currentOrder,
+          tableId: tableId,
+          tableNumber: selectedTable.name,
+        });
       }
+
+      alert("Gán bàn thành công!");
+    } catch (error) {
+      console.error("Error assigning table:", error);
+      alert("Lỗi khi gán bàn");
     }
+  };
 
-    // Generate a new order ID (in a real app, this would come from the backend)
-    const orderId = `OD${Math.floor(100000 + Math.random() * 900000)}`
+  const handleSaveEditedOrder = async () => {
+    try {
+      // Kiểm tra dữ liệu trước khi gửi
+      if (!editingOrder.customerName) {
+        alert("Vui lòng nhập tên khách hàng");
+        return;
+      }
 
-    const createdOrder = {
-      ...newOrder,
-      id: orderId,
-      total,
-      tableNumber,
-      orderDate: new Date().toISOString(),
+      if (editingOrder.items.length === 0) {
+        alert("Đơn hàng phải có ít nhất một món");
+        return;
+      }
+
+      const orderData = {
+        customerName: editingOrder.customerName,
+        tableId: editingOrder.tableId || "",
+        status: editingOrder.status,
+        paymentMethod: editingOrder.paymentMethod,
+        notes: editingOrder.notes || "",
+        items: editingOrder.items.map((item) => ({
+          id: item.id.toString(),
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      };
+
+      console.log("Sending update order data:", JSON.stringify(orderData));
+      await updateOrder(editingOrder.id, orderData);
+      await fetchData();
+      setIsEditModalOpen(false);
+      alert("Cập nhật đơn hàng thành công!");
+    } catch (error) {
+      console.error("Error updating order:", error);
+      alert(`Lỗi khi cập nhật đơn hàng: ${error.message}`);
     }
+  };
 
-    // Add to orders array
-    const updatedOrders = [...orders, createdOrder]
-    setOrders(updatedOrders)
-    setIsCreateModalOpen(false)
-  }
+  const handleCreateOrder = async () => {
+    try {
+      // Kiểm tra dữ liệu trước khi gửi
+      if (!newOrder.customerName) {
+        alert("Vui lòng nhập tên khách hàng");
+        return;
+      }
 
-  const handleDeleteOrder = () => {
-    if (!currentOrder) return
+      if (newOrder.items.length === 0) {
+        alert("Đơn hàng phải có ít nhất một món");
+        return;
+      }
 
-    // Remove order from array
-    const updatedOrders = orders.filter((order) => order.id !== currentOrder.id)
-    setOrders(updatedOrders)
-    setIsDeleteModalOpen(false)
-  }
+      const orderData = {
+        customerName: newOrder.customerName,
+        tableId: newOrder.tableId || "",
+        status: newOrder.status,
+        paymentMethod: newOrder.paymentMethod,
+        notes: newOrder.notes || "",
+        items: newOrder.items.map((item) => ({
+          id: item.id.toString(),
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      };
+
+      console.log("Sending create order data:", JSON.stringify(orderData));
+      await createOrder(orderData);
+      await fetchData();
+      setIsCreateModalOpen(false);
+      alert("Tạo đơn hàng thành công!");
+    } catch (error) {
+      console.error("Error creating order:", error);
+      alert(`Lỗi khi tạo đơn hàng: ${error.message}`);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    try {
+      await deleteOrder(currentOrder.id);
+      await fetchData();
+      setIsDeleteModalOpen(false);
+      alert("Xóa đơn hàng thành công!");
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      alert("Lỗi khi xóa đơn hàng");
+    }
+  };
 
   const handleAddItemToOrder = (orderObj, setOrderObj) => {
-    if (!selectedMenuItem) return
+    if (!selectedMenuItem) {
+      alert("Vui lòng chọn món ăn");
+      return;
+    }
 
-    const menuItem = mockMenuItems.find((item) => item.id.toString() === selectedMenuItem)
-    if (!menuItem) return
+    const menuItem = menuItems.find(
+      (item) => item.id.toString() === selectedMenuItem
+    );
+    if (!menuItem) {
+      alert("Không tìm thấy món ăn");
+      return;
+    }
 
-    const quantity = Number.parseInt(selectedMenuItemQuantity) || 1
+    const quantity = Number.parseInt(selectedMenuItemQuantity) || 1;
 
     // Check if item already exists in order
-    const existingItemIndex = orderObj.items.findIndex((item) => item.id.toString() === selectedMenuItem)
+    const existingItemIndex = orderObj.items.findIndex(
+      (item) => item.id.toString() === selectedMenuItem
+    );
 
-    let updatedItems
+    let updatedItems;
     if (existingItemIndex >= 0) {
       // Update quantity if item exists
-      updatedItems = [...orderObj.items]
-      updatedItems[existingItemIndex].quantity += quantity
+      updatedItems = [...orderObj.items];
+      updatedItems[existingItemIndex].quantity += quantity;
     } else {
       // Add new item
       updatedItems = [
@@ -420,27 +402,27 @@ const OrdersPage = () => {
           price: menuItem.price,
           quantity: quantity,
         },
-      ]
+      ];
     }
 
     setOrderObj({
       ...orderObj,
       items: updatedItems,
-    })
+    });
 
     // Reset selection
-    setSelectedMenuItem("")
-    setSelectedMenuItemQuantity(1)
-  }
+    setSelectedMenuItem("");
+    setSelectedMenuItemQuantity(1);
+  };
 
   const handleRemoveItemFromOrder = (orderObj, setOrderObj, itemId) => {
-    const updatedItems = orderObj.items.filter((item) => item.id !== itemId)
+    const updatedItems = orderObj.items.filter((item) => item.id !== itemId);
 
     setOrderObj({
       ...orderObj,
       items: updatedItems,
-    })
-  }
+    });
+  };
 
   const handleExportExcel = () => {
     const exportData = orders.map((order, index) => ({
@@ -453,27 +435,51 @@ const OrdersPage = () => {
         order.status === "completed"
           ? "Hoàn thành"
           : order.status === "pending"
-            ? "Chờ xử lý"
-            : order.status === "processing"
-              ? "Đang xử lý"
-              : "Đã hủy",
+          ? "Chờ xử lý"
+          : order.status === "processing"
+          ? "Đang xử lý"
+          : "Đã hủy",
       "Tổng tiền": order.total.toLocaleString("vi-VN") + " ₫",
-    }))
+    }));
 
-    const worksheet = XLSX.utils.json_to_sheet(exportData)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachDonHang")
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachDonHang");
 
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "array",
-    })
+    });
 
     const file = new Blob([excelBuffer], {
       type: "application/octet-stream",
-    })
+    });
 
-    saveAs(file, "DanhSachDonHang.xlsx")
+    saveAs(file, "DanhSachDonHang.xlsx");
+  };
+
+  const fetchAvailableTables = async (orderDate = null) => {
+    try {
+      let dateTime = null;
+
+      if (orderDate) {
+        dateTime = new Date(orderDate);
+      }
+
+      const tables = await getAvailableTables(dateTime);
+      setTables(tables);
+    } catch (error) {
+      console.error("Error fetching available tables:", error);
+      alert("Lỗi khi lấy danh sách bàn trống");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500"></div>
+      </div>
+    );
   }
 
   return (
@@ -537,6 +543,31 @@ const OrdersPage = () => {
             <Download className="w-4 h-4 mr-2" />
             Xuất Excel
           </button>
+          <button
+            className="flex items-center px-4 py-2 text-blue-700 bg-white border rounded-lg hover:bg-blue-50"
+            onClick={fetchMenuItems}
+            disabled={menuLoading}
+          >
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${menuLoading ? "animate-spin" : ""}`}
+            />
+            Tải lại menu
+          </button>
+        </div>
+      </div>
+
+      {/* Menu items status */}
+      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-600">
+            Menu items: {menuItems.length} món
+            {menuLoading && (
+              <span className="ml-2 text-blue-600">Đang tải...</span>
+            )}
+          </span>
+          <span className="text-xs text-gray-500">
+            Cập nhật lần cuối: {new Date().toLocaleTimeString("vi-VN")}
+          </span>
         </div>
       </div>
 
@@ -593,25 +624,46 @@ const OrdersPage = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.customerName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {order.tableNumber || <span className="text-yellow-600 italic">Chưa gán bàn</span>}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {order.id}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(order.orderDate)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(order.status)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {order.customerName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {order.tableNumber || (
+                      <span className="text-yellow-600 italic">
+                        Chưa gán bàn
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(order.orderDate)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {getStatusBadge(order.status)}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
                     {order.total.toLocaleString("vi-VN")} ₫
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="flex justify-end space-x-2">
-                      <button onClick={() => openViewModal(order)} className="text-indigo-600 hover:text-indigo-900">
+                      <button
+                        onClick={() => openViewModal(order)}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
                         <Eye className="h-5 w-5" />
                       </button>
-                      <button onClick={() => openEditModal(order)} className="text-blue-600 hover:text-blue-900">
+                      <button
+                        onClick={() => openEditModal(order)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
                         <Edit className="h-5 w-5" />
                       </button>
-                      <button onClick={() => openDeleteModal(order)} className="text-red-600 hover:text-red-900">
+                      <button
+                        onClick={() => openDeleteModal(order)}
+                        className="text-red-600 hover:text-red-900"
+                      >
                         <Trash2 className="h-5 w-5" />
                       </button>
                     </div>
@@ -642,7 +694,9 @@ const OrdersPage = () => {
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Thông tin đơn hàng</h3>
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">
+                    Thông tin đơn hàng
+                  </h3>
                   <div className="bg-gray-50 p-4 rounded-md">
                     <div className="flex items-center mb-2">
                       <span className="font-medium mr-2">Mã đơn hàng:</span>
@@ -658,12 +712,19 @@ const OrdersPage = () => {
                         <span>{currentOrder.tableNumber}</span>
                       ) : (
                         <div className="flex items-center">
-                          <span className="text-yellow-600 italic mr-2">Chưa gán bàn</span>
+                          <span className="text-yellow-600 italic mr-2">
+                            Chưa gán bàn
+                          </span>
                           {currentOrder.status === "pending" && (
                             <div className="ml-2">
                               <select
                                 className="text-sm border border-gray-300 rounded px-2 py-1"
-                                onChange={(e) => handleAssignTable(currentOrder.id, e.target.value)}
+                                onChange={(e) =>
+                                  handleAssignTable(
+                                    currentOrder.id,
+                                    e.target.value
+                                  )
+                                }
                                 value={currentOrder.tableId || ""}
                               >
                                 <option value="">-- Chọn bàn --</option>
@@ -686,25 +747,35 @@ const OrdersPage = () => {
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Thông tin khách hàng</h3>
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">
+                    Thông tin khách hàng
+                  </h3>
                   <div className="bg-gray-50 p-4 rounded-md">
                     <div className="flex items-center mb-2">
                       <User className="h-4 w-4 text-gray-400 mr-2" />
                       <span>{currentOrder.customerName}</span>
                     </div>
                     <div className="flex items-center mb-2">
-                      <span className="font-medium mr-2">Phương thức thanh toán:</span>
-                      <span>{getPaymentMethodText(currentOrder.paymentMethod)}</span>
+                      <span className="font-medium mr-2">
+                        Phương thức thanh toán:
+                      </span>
+                      <span>
+                        {getPaymentMethodText(currentOrder.paymentMethod)}
+                      </span>
                     </div>
                     <div className="flex items-center">
                       <CreditCard className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="font-medium">{currentOrder.total.toLocaleString("vi-VN")} ₫</span>
+                      <span className="font-medium">
+                        {currentOrder.total.toLocaleString("vi-VN")} ₫
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Các món đã đặt</h3>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">
+                Các món đã đặt
+              </h3>
               <div className="bg-gray-50 rounded-md overflow-hidden mb-6">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-100">
@@ -738,7 +809,9 @@ const OrdersPage = () => {
                   <tbody className="divide-y divide-gray-200">
                     {currentOrder.items.map((item) => (
                       <tr key={item.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {item.name}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                           {item.quantity}
                         </td>
@@ -746,14 +819,18 @@ const OrdersPage = () => {
                           {item.price.toLocaleString("vi-VN")} ₫
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                          {(item.price * item.quantity).toLocaleString("vi-VN")} ₫
+                          {(item.price * item.quantity).toLocaleString("vi-VN")}{" "}
+                          ₫
                         </td>
                       </tr>
                     ))}
                   </tbody>
                   <tfoot className="bg-gray-50">
                     <tr>
-                      <td colSpan="3" className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
+                      <td
+                        colSpan="3"
+                        className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
+                      >
                         Tổng cộng:
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
@@ -765,43 +842,52 @@ const OrdersPage = () => {
               </div>
 
               {/* Status update buttons */}
-              {currentOrder.status !== "completed" && currentOrder.status !== "cancelled" && (
-                <div className="flex flex-wrap gap-3">
-                  {currentOrder.status === "pending" && (
-                    <button
-                      onClick={() => handleUpdateStatus(currentOrder.id, "processing")}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                      Xử lý đơn hàng
-                    </button>
-                  )}
+              {currentOrder.status !== "completed" &&
+                currentOrder.status !== "cancelled" && (
+                  <div className="flex flex-wrap gap-3">
+                    {currentOrder.status === "pending" && (
+                      <button
+                        onClick={() =>
+                          handleUpdateStatus(currentOrder.id, "processing")
+                        }
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        Xử lý đơn hàng
+                      </button>
+                    )}
 
-                  {(currentOrder.status === "pending" || currentOrder.status === "processing") && (
-                    <button
-                      onClick={() => handleUpdateStatus(currentOrder.id, "completed")}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                    >
-                      Hoàn thành đơn hàng
-                    </button>
-                  )}
+                    {(currentOrder.status === "pending" ||
+                      currentOrder.status === "processing") && (
+                      <button
+                        onClick={() =>
+                          handleUpdateStatus(currentOrder.id, "completed")
+                        }
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                      >
+                        Hoàn thành đơn hàng
+                      </button>
+                    )}
 
-                  {(currentOrder.status === "pending" || currentOrder.status === "processing") && (
-                    <button
-                      onClick={() => handleUpdateStatus(currentOrder.id, "cancelled")}
-                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                    >
-                      Hủy đơn hàng
-                    </button>
-                  )}
-                </div>
-              )}
+                    {(currentOrder.status === "pending" ||
+                      currentOrder.status === "processing") && (
+                      <button
+                        onClick={() =>
+                          handleUpdateStatus(currentOrder.id, "cancelled")
+                        }
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                      >
+                        Hủy đơn hàng
+                      </button>
+                    )}
+                  </div>
+                )}
             </div>
 
             <div className="p-6 border-t bg-gray-50 flex justify-end">
               <button
                 onClick={() => {
-                  setCurrentOrder(null)
-                  setIsViewModalOpen(false)
+                  setCurrentOrder(null);
+                  setIsViewModalOpen(false);
                 }}
                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
               >
@@ -823,20 +909,34 @@ const OrdersPage = () => {
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Khách hàng</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Khách hàng
+                  </label>
                   <input
                     type="text"
                     value={editingOrder.customerName}
-                    onChange={(e) => setEditingOrder({ ...editingOrder, customerName: e.target.value })}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        customerName: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Bàn</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Bàn
+                  </label>
                   <select
                     value={editingOrder.tableId || ""}
-                    onChange={(e) => setEditingOrder({ ...editingOrder, tableId: e.target.value })}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        tableId: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">-- Chưa gán bàn --</option>
@@ -849,10 +949,17 @@ const OrdersPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Trạng thái
+                  </label>
                   <select
                     value={editingOrder.status}
-                    onChange={(e) => setEditingOrder({ ...editingOrder, status: e.target.value })}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        status: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="pending">Chờ xử lý</option>
@@ -863,10 +970,17 @@ const OrdersPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phương thức thanh toán</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phương thức thanh toán
+                  </label>
                   <select
                     value={editingOrder.paymentMethod}
-                    onChange={(e) => setEditingOrder({ ...editingOrder, paymentMethod: e.target.value })}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        paymentMethod: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cash">Tiền mặt</option>
@@ -877,7 +991,9 @@ const OrdersPage = () => {
               </div>
 
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Thêm món</h3>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  Thêm món
+                </h3>
                 <div className="flex flex-wrap gap-3 mb-3">
                   <select
                     value={selectedMenuItem}
@@ -885,9 +1001,10 @@ const OrdersPage = () => {
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">-- Chọn món --</option>
-                    {mockMenuItems.map((item) => (
+                    {menuItems.map((item) => (
                       <option key={item.id} value={item.id}>
-                        {item.name} - {item.price.toLocaleString("vi-VN")} ₫
+                        {item.name} - {item.price.toLocaleString("vi-VN")} ₫ (
+                        {item.category})
                       </option>
                     ))}
                   </select>
@@ -895,19 +1012,30 @@ const OrdersPage = () => {
                     type="number"
                     min="1"
                     value={selectedMenuItemQuantity}
-                    onChange={(e) => setSelectedMenuItemQuantity(e.target.value)}
+                    onChange={(e) =>
+                      setSelectedMenuItemQuantity(e.target.value)
+                    }
                     className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button
-                    onClick={() => handleAddItemToOrder(editingOrder, setEditingOrder)}
+                    onClick={() =>
+                      handleAddItemToOrder(editingOrder, setEditingOrder)
+                    }
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                   >
                     Thêm
                   </button>
                 </div>
+                {menuItems.length === 0 && (
+                  <p className="text-sm text-red-600">
+                    Không có món ăn nào. Vui lòng tải lại menu.
+                  </p>
+                )}
               </div>
 
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Các món đã đặt</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">
+                Các món đã đặt
+              </h3>
               <div className="bg-gray-50 rounded-md overflow-hidden mb-6">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-100">
@@ -947,7 +1075,9 @@ const OrdersPage = () => {
                   <tbody className="divide-y divide-gray-200">
                     {editingOrder.items.map((item) => (
                       <tr key={item.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {item.name}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
                           <input
                             type="number"
@@ -955,9 +1085,18 @@ const OrdersPage = () => {
                             value={item.quantity}
                             onChange={(e) => {
                               const updatedItems = editingOrder.items.map((i) =>
-                                i.id === item.id ? { ...i, quantity: Number.parseInt(e.target.value) || 1 } : i,
-                              )
-                              setEditingOrder({ ...editingOrder, items: updatedItems })
+                                i.id === item.id
+                                  ? {
+                                      ...i,
+                                      quantity:
+                                        Number.parseInt(e.target.value) || 1,
+                                    }
+                                  : i
+                              );
+                              setEditingOrder({
+                                ...editingOrder,
+                                items: updatedItems,
+                              });
                             }}
                             className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center"
                           />
@@ -966,11 +1105,18 @@ const OrdersPage = () => {
                           {item.price.toLocaleString("vi-VN")} ₫
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                          {(item.price * item.quantity).toLocaleString("vi-VN")} ₫
+                          {(item.price * item.quantity).toLocaleString("vi-VN")}{" "}
+                          ₫
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <button
-                            onClick={() => handleRemoveItemFromOrder(editingOrder, setEditingOrder, item.id)}
+                            onClick={() =>
+                              handleRemoveItemFromOrder(
+                                editingOrder,
+                                setEditingOrder,
+                                item.id
+                              )
+                            }
                             className="text-red-600 hover:text-red-900"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -981,12 +1127,18 @@ const OrdersPage = () => {
                   </tbody>
                   <tfoot className="bg-gray-50">
                     <tr>
-                      <td colSpan="3" className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
+                      <td
+                        colSpan="3"
+                        className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
+                      >
                         Tổng cộng:
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
                         {editingOrder.items
-                          .reduce((sum, item) => sum + item.price * item.quantity, 0)
+                          .reduce(
+                            (sum, item) => sum + item.price * item.quantity,
+                            0
+                          )
                           .toLocaleString("vi-VN")}{" "}
                         ₫
                       </td>
@@ -1027,21 +1179,29 @@ const OrdersPage = () => {
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Khách hàng</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Khách hàng
+                  </label>
                   <input
                     type="text"
                     value={newOrder.customerName}
-                    onChange={(e) => setNewOrder({ ...newOrder, customerName: e.target.value })}
+                    onChange={(e) =>
+                      setNewOrder({ ...newOrder, customerName: e.target.value })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Nhập tên khách hàng"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Bàn</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Bàn
+                  </label>
                   <select
                     value={newOrder.tableId || ""}
-                    onChange={(e) => setNewOrder({ ...newOrder, tableId: e.target.value })}
+                    onChange={(e) =>
+                      setNewOrder({ ...newOrder, tableId: e.target.value })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">-- Chưa gán bàn --</option>
@@ -1054,10 +1214,14 @@ const OrdersPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Trạng thái
+                  </label>
                   <select
                     value={newOrder.status}
-                    onChange={(e) => setNewOrder({ ...newOrder, status: e.target.value })}
+                    onChange={(e) =>
+                      setNewOrder({ ...newOrder, status: e.target.value })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="pending">Chờ xử lý</option>
@@ -1067,10 +1231,17 @@ const OrdersPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phương thức thanh toán</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phương thức thanh toán
+                  </label>
                   <select
                     value={newOrder.paymentMethod}
-                    onChange={(e) => setNewOrder({ ...newOrder, paymentMethod: e.target.value })}
+                    onChange={(e) =>
+                      setNewOrder({
+                        ...newOrder,
+                        paymentMethod: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cash">Tiền mặt</option>
@@ -1081,7 +1252,9 @@ const OrdersPage = () => {
               </div>
 
               <div className="mb-6">
-                <h3 className="text-sm font-medium text-gray-700 mb-2">Thêm món</h3>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  Thêm món
+                </h3>
                 <div className="flex flex-wrap gap-3 mb-3">
                   <select
                     value={selectedMenuItem}
@@ -1089,9 +1262,10 @@ const OrdersPage = () => {
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">-- Chọn món --</option>
-                    {mockMenuItems.map((item) => (
+                    {menuItems.map((item) => (
                       <option key={item.id} value={item.id}>
-                        {item.name} - {item.price.toLocaleString("vi-VN")} ₫
+                        {item.name} - {item.price.toLocaleString("vi-VN")} ₫ (
+                        {item.category})
                       </option>
                     ))}
                   </select>
@@ -1099,7 +1273,9 @@ const OrdersPage = () => {
                     type="number"
                     min="1"
                     value={selectedMenuItemQuantity}
-                    onChange={(e) => setSelectedMenuItemQuantity(e.target.value)}
+                    onChange={(e) =>
+                      setSelectedMenuItemQuantity(e.target.value)
+                    }
                     className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <button
@@ -1109,11 +1285,18 @@ const OrdersPage = () => {
                     Thêm
                   </button>
                 </div>
+                {menuItems.length === 0 && (
+                  <p className="text-sm text-red-600">
+                    Không có món ăn nào. Vui lòng tải lại menu.
+                  </p>
+                )}
               </div>
 
               {newOrder.items.length > 0 && (
                 <>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Các món đã đặt</h3>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">
+                    Các món đã đặt
+                  </h3>
                   <div className="bg-gray-50 rounded-md overflow-hidden mb-6">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-100">
@@ -1163,9 +1346,19 @@ const OrdersPage = () => {
                                 value={item.quantity}
                                 onChange={(e) => {
                                   const updatedItems = newOrder.items.map((i) =>
-                                    i.id === item.id ? { ...i, quantity: Number.parseInt(e.target.value) || 1 } : i,
-                                  )
-                                  setNewOrder({ ...newOrder, items: updatedItems })
+                                    i.id === item.id
+                                      ? {
+                                          ...i,
+                                          quantity:
+                                            Number.parseInt(e.target.value) ||
+                                            1,
+                                        }
+                                      : i
+                                  );
+                                  setNewOrder({
+                                    ...newOrder,
+                                    items: updatedItems,
+                                  });
                                 }}
                                 className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center"
                               />
@@ -1174,11 +1367,20 @@ const OrdersPage = () => {
                               {item.price.toLocaleString("vi-VN")} ₫
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                              {(item.price * item.quantity).toLocaleString("vi-VN")} ₫
+                              {(item.price * item.quantity).toLocaleString(
+                                "vi-VN"
+                              )}{" "}
+                              ₫
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <button
-                                onClick={() => handleRemoveItemFromOrder(newOrder, setNewOrder, item.id)}
+                                onClick={() =>
+                                  handleRemoveItemFromOrder(
+                                    newOrder,
+                                    setNewOrder,
+                                    item.id
+                                  )
+                                }
                                 className="text-red-600 hover:text-red-900"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -1189,12 +1391,18 @@ const OrdersPage = () => {
                       </tbody>
                       <tfoot className="bg-gray-50">
                         <tr>
-                          <td colSpan="3" className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
+                          <td
+                            colSpan="3"
+                            className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
+                          >
                             Tổng cộng:
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
                             {newOrder.items
-                              .reduce((sum, item) => sum + item.price * item.quantity, 0)
+                              .reduce(
+                                (sum, item) => sum + item.price * item.quantity,
+                                0
+                              )
                               .toLocaleString("vi-VN")}{" "}
                             ₫
                           </td>
@@ -1218,7 +1426,9 @@ const OrdersPage = () => {
                 onClick={handleCreateOrder}
                 disabled={!newOrder.customerName || newOrder.items.length === 0}
                 className={`px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center ${
-                  !newOrder.customerName || newOrder.items.length === 0 ? "opacity-50 cursor-not-allowed" : ""
+                  !newOrder.customerName || newOrder.items.length === 0
+                    ? "opacity-50 cursor-not-allowed"
+                    : ""
                 }`}
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -1235,8 +1445,11 @@ const OrdersPage = () => {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <h2 className="text-xl font-bold mb-4">Xác nhận xóa</h2>
             <p className="mb-6">
-              Bạn có chắc chắn muốn xóa đơn hàng <span className="font-semibold">{currentOrder.id}</span> của khách hàng{" "}
-              <span className="font-semibold">{currentOrder.customerName}</span>?
+              Bạn có chắc chắn muốn xóa đơn hàng{" "}
+              <span className="font-semibold">{currentOrder.id}</span> của khách
+              hàng{" "}
+              <span className="font-semibold">{currentOrder.customerName}</span>
+              ?
             </p>
             <div className="flex justify-end gap-3">
               <button
@@ -1257,7 +1470,7 @@ const OrdersPage = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default OrdersPage
+export default OrdersPage;

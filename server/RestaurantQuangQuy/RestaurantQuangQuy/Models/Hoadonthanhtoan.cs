@@ -22,8 +22,9 @@ public partial class Hoadonthanhtoan
     public decimal? TongTien { get; set; }
 
     public string? PhuongThucThanhToan { get; set; }
+    public decimal? TienGiam { get; set; }
 
-    public string? TrangThaiThanhToan { get; set; }
+	public string? TrangThaiThanhToan { get; set; }
 
     public string? MaNhanVien { get; set; }
 

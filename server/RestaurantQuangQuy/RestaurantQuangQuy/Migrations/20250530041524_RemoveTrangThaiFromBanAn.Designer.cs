@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RestaurantQuangQuy.Models;
 
@@ -11,9 +12,11 @@ using RestaurantQuangQuy.Models;
 namespace RestaurantQuangQuy.Migrations
 {
     [DbContext(typeof(RestaurantManagementContext))]
-    partial class RestaurantManagementContextModelSnapshot : ModelSnapshot
+    [Migration("20250530041524_RemoveTrangThaiFromBanAn")]
+    partial class RemoveTrangThaiFromBanAn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

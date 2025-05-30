@@ -110,9 +110,9 @@ namespace RestaurantQuangQuy.Controllers.Client
                     MaDatMon = hoadondto.MaDatMon,
                     MaBanAn = hoadondto.MaBanAn,
                     MaKhachHang = hoadondto.MaKhachHang,
-                    ThoiGianDat = hoadondto.ThoiGianDat,
-                    ThoiGianThanhToan = hoadondto.ThoiGianThanhToan,
-                    MaKhuyenMai = hoadondto.MaKhuyenMai,
+					ThoiGianDat = DateTime.Now,
+					ThoiGianThanhToan = DateTime.Now,
+					MaKhuyenMai = hoadondto.MaKhuyenMai,
                     TongTien = hoadondto.TongTien,
                     PhuongThucThanhToan = hoadondto.PhuongThucThanhToan,
                     TrangThaiThanhToan = hoadondto.TrangThaiThanhToan,
@@ -156,9 +156,9 @@ namespace RestaurantQuangQuy.Controllers.Client
                 hoadon.MaDatMon = hoadondto.MaDatMon;
                 hoadon.MaBanAn = hoadondto.MaBanAn;
                 hoadon.MaKhachHang = hoadondto.MaKhachHang;
-                hoadon.ThoiGianDat = hoadondto.ThoiGianDat;
-                hoadon.ThoiGianThanhToan = hoadondto.ThoiGianThanhToan;
-                hoadon.MaKhuyenMai = hoadondto.MaKhuyenMai;
+                hoadon.ThoiGianDat = DateTime.Now;
+				hoadon.ThoiGianThanhToan = DateTime.Now;
+				hoadon.MaKhuyenMai = hoadondto.MaKhuyenMai;
                 hoadon.TongTien = hoadondto.TongTien;
                 hoadon.PhuongThucThanhToan = hoadondto.PhuongThucThanhToan;
                 hoadon.TrangThaiThanhToan = hoadondto.TrangThaiThanhToan;

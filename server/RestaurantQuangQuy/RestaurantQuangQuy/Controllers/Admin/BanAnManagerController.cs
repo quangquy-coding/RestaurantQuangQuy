@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RestaurantQuangQuy.DTO.BanAnDTO;
 using RestaurantQuangQuy.Models;
-
 
 namespace RestaurantQuangQuy.Controllers.Admin
 {
@@ -15,34 +15,103 @@ namespace RestaurantQuangQuy.Controllers.Admin
 		{
 			_context = context;
 		}
-		//  lấy danh sách bàn ăn mapping ở DTO
-		
+
+		// Lấy danh sách tất cả bàn
 		[HttpGet]
-		public IActionResult GetAllBanAn()
+		public IActionResult GetAllTables()
 		{
 			try
 			{
-				var banans = _context.Banans
+				var tables = _context.Banans
 					.Select(b => new BanAnDTO
 					{
 						MaBan = b.MaBan,
 						TenBan = b.TenBan,
 						ViTri = b.ViTri,
 						SoGhe = b.SoChoNgoi,
-						TrangThai = b.TrangThai,
 						GhiChu = b.GhiChu ?? ""
-					}).ToList();
+					})
+					.OrderBy(b => b.TenBan)
+					.ToList();
 
-				if (!banans.Any())
-				{
-					return NotFound("No tables found.");
-				}
-
-				return Ok(banans); // ✅ Trả về DTO
+				return Ok(tables);
 			}
 			catch (Exception ex)
 			{
-				return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
+				return BadRequest(new { message = "Lỗi khi lấy danh sách bàn", error = ex.Message });
+			}
+		}
+
+		// Lấy bàn trống theo thời gian
+		[HttpGet("available")]
+		public IActionResult GetAvailableTables([FromQuery] DateTime? dateTime = null)
+		{
+			try
+			{
+				var targetDateTime = dateTime ?? DateTime.Now;
+
+				// Lấy các bàn đang được sử dụng trong khoảng thời gian +/- 2 giờ
+				var startTime = targetDateTime.AddHours(-2);
+				var endTime = targetDateTime.AddHours(2);
+
+				var occupiedTableIds = _context.Hoadonthanhtoans
+					.Where(h => h.ThoiGianDat >= startTime && h.ThoiGianDat <= endTime &&
+							   (h.TrangThaiThanhToan == "Chờ xác nhận" ||
+								h.TrangThaiThanhToan == "Đang chuẩn bị" ||
+								h.TrangThaiThanhToan == "Đang phục vụ") &&
+							   !string.IsNullOrEmpty(h.MaBanAn))
+					.Select(h => h.MaBanAn)
+					.ToList();
+
+				var availableTables = _context.Banans
+					.Where(b => !occupiedTableIds.Contains(b.MaBan))
+					.Select(b => new
+					{
+						MaBan = b.MaBan,
+						TenBan = b.TenBan,
+						ViTri = b.ViTri,
+						SoChoNgoi = b.SoChoNgoi,
+						GhiChu = b.GhiChu ?? ""
+					})
+					.OrderBy(b => b.TenBan)
+					.ToList();
+
+				return Ok(availableTables);
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { message = "Lỗi khi lấy danh sách bàn trống", error = ex.Message });
+			}
+		}
+
+		// Lấy thông tin bàn theo ID
+		[HttpGet("{maBan}")]
+		public IActionResult GetTableById(string maBan)
+		{
+			try
+			{
+				var table = _context.Banans
+					.Where(b => b.MaBan == maBan)
+					.Select(b => new BanAnDTO
+					{
+						MaBan = b.MaBan,
+						TenBan = b.TenBan,
+						ViTri = b.ViTri,
+						SoGhe = b.SoChoNgoi,
+						GhiChu = b.GhiChu ?? ""
+					})
+					.FirstOrDefault();
+
+				if (table == null)
+				{
+					return NotFound(new { message = "Không tìm thấy bàn" });
+				}
+
+				return Ok(table);
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { message = "Lỗi khi lấy thông tin bàn", error = ex.Message });
 			}
 		}
 
@@ -78,13 +147,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				return BadRequest("Giá trị 'ViTri' không hợp lệ. Chỉ chấp nhận: Tầng 1, Tầng 2, Tầng 3, Ngoài trời.");
 			}
 
-			// Danh sách hợp lệ cho TrangThai
-			var validTrangThaiValues = new List<string> { "Trống", "Đã đặt", "Đang sử dụng"};
-			if (!validTrangThaiValues.Contains(bananDTO.TrangThai))
-			{
-				return BadRequest("Giá trị 'TrangThai' không hợp lệ. Chỉ chấp nhận: Trống, Đã đặt, Đang sử dụng.");
-			}
-
 			try
 			{
 				// Sinh mã bàn tự động
@@ -96,7 +158,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 					TenBan = bananDTO.TenBan,
 					ViTri = bananDTO.ViTri,
 					SoChoNgoi = bananDTO.SoGhe,
-					TrangThai = bananDTO.TrangThai,
 					GhiChu = bananDTO.GhiChu
 				};
 
@@ -110,11 +171,10 @@ namespace RestaurantQuangQuy.Controllers.Admin
 					TenBan = banan.TenBan,
 					ViTri = banan.ViTri,
 					SoGhe = banan.SoChoNgoi,
-					TrangThai = banan.TrangThai,
 					GhiChu = banan.GhiChu
 				};
 
-				return CreatedAtAction(nameof(GetBanAnByIdOrName), new { id = banan.MaBan }, result);
+				return CreatedAtAction(nameof(GetTableById), new { maBan = banan.MaBan }, result);
 			}
 			catch (Exception ex)
 			{
@@ -155,20 +215,12 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				return BadRequest("Giá trị 'ViTri' không hợp lệ. Chỉ chấp nhận: Tầng 1, Tầng 2, Tầng 3, Ngoài trời.");
 			}
 
-			// Danh sách hợp lệ cho TrangThai
-			var validTrangThaiValues = new List<string> { "Trống", "Đã đặt", "Đang sử dụng" };
-			if (!validTrangThaiValues.Contains(bananDTO.TrangThai))
-			{
-				return BadRequest("Giá trị 'TrangThai' không hợp lệ. Chỉ chấp nhận: Trống, Đã đặt, Đang sử dụng.");
-			}
-
 			try
 			{
 				// Cập nhật thông tin bàn ăn
 				existingBanAn.TenBan = bananDTO.TenBan;
 				existingBanAn.ViTri = bananDTO.ViTri;
 				existingBanAn.SoChoNgoi = bananDTO.SoGhe;
-				existingBanAn.TrangThai = bananDTO.TrangThai;
 				existingBanAn.GhiChu = bananDTO.GhiChu;
 
 				_context.Banans.Update(existingBanAn);
@@ -181,27 +233,16 @@ namespace RestaurantQuangQuy.Controllers.Admin
 					TenBan = existingBanAn.TenBan,
 					ViTri = existingBanAn.ViTri,
 					SoGhe = existingBanAn.SoChoNgoi,
-					TrangThai = existingBanAn.TrangThai,
 					GhiChu = existingBanAn.GhiChu
 				};
 
-				return Ok(result);  // Trả về kết quả sau khi cập nhật
+				return Ok(result);
 			}
 			catch (Exception ex)
 			{
 				return StatusCode(StatusCodes.Status500InternalServerError, $"Lỗi hệ thống: {ex.Message}");
 			}
 		}
-
-
-
-
-
-
-
-
-
-
 
 		// xóa bàn ăn
 		[HttpDelete("{id}")]
@@ -223,34 +264,14 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
 			}
 		}
-		// tìm bàn ăn theo id hoặc tên
-		[HttpGet("{id}")]
-		public IActionResult GetBanAnByIdOrName(string id)
-		{
-			try
-			{
-				var banan = _context.Banans.FirstOrDefault(c => c.MaBan == id || c.TenBan == id);
-				if (banan == null)
-				{
-					return NotFound($"Table with id or name '{id}' not found.");
-				}
-				return Ok(banan);
-			}
-			catch (Exception ex)
-			{
-				return StatusCode(StatusCodes.Status500InternalServerError, $"Internal server error: {ex.Message}");
-			}
-		}
 
 		[HttpGet("search")]
 		public IActionResult SearchBanAn(
-	[FromQuery] string? tenBan,
-	[FromQuery] string? viTri,
-	[FromQuery] string? trangThai)
+			[FromQuery] string? tenBan,
+			[FromQuery] string? viTri)
 		{
 			// Danh sách hợp lệ
 			var validViTri = new List<string> { "Tầng 1", "Tầng 2", "Tầng 3", "Ngoài trời" };
-			var validTrangThai = new List<string> { "Trống", "Đã đặt", "Đang sử dụng" };
 
 			// Truy vấn cơ bản
 			var query = _context.Banans.AsQueryable();
@@ -273,17 +294,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				query = query.Where(b => b.ViTri == viTri);
 			}
 
-			// Lọc theo trạng thái nếu có và hợp lệ
-			if (!string.IsNullOrWhiteSpace(trangThai))
-			{
-				if (!validTrangThai.Contains(trangThai))
-				{
-					return BadRequest("Trạng thái không hợp lệ. Chỉ chấp nhận: Trống, Đã đặt, Đang sử dụng.");
-				}
-
-				query = query.Where(b => b.TrangThai == trangThai);
-			}
-
 			// Thực thi truy vấn
 			var result = query
 				.Select(b => new
@@ -291,7 +301,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 					MaBan = b.MaBan,
 					TenBan = b.TenBan,
 					ViTri = b.ViTri,
-					TrangThai = b.TrangThai,
 					SoGhe = b.SoChoNgoi,
 					GhiChu = b.GhiChu
 				})
@@ -304,6 +313,5 @@ namespace RestaurantQuangQuy.Controllers.Admin
 
 			return Ok(result);
 		}
-
 	}
 }

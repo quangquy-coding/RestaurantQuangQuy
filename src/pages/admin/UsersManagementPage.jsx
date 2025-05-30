@@ -2,7 +2,14 @@ import React, { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { toast } from "react-hot-toast";
 import { saveAs } from "file-saver";
-import {getUsers, getUserById, addUser, updateUser, deleteUser, searchUsers } from "../../api/userApi";
+import {
+  getUsers,
+  getUserById,
+  addUser,
+  updateUser,
+  deleteUser,
+  searchUsers,
+} from "../../api/userApi";
 
 const UsersManagementPage = () => {
   const [users, setUsers] = useState([]);
@@ -91,7 +98,8 @@ const UsersManagementPage = () => {
 
     // Validate form
     const errors = {};
-    if (!newUser.tenTaiKhoan?.trim()) errors.tenTaiKhoan = "Tên tài khoản không được để trống";
+    if (!newUser.tenTaiKhoan?.trim())
+      errors.tenTaiKhoan = "Tên tài khoản không được để trống";
     if (!newUser.email?.trim()) {
       errors.email = "Email không được để trống";
     } else if (!/\S+@\S+\.\S+/.test(newUser.email)) {
@@ -141,7 +149,8 @@ const UsersManagementPage = () => {
       userData.hoTenNhanVien = newUser.hoTenNhanVien || newUser.tenTaiKhoan;
       userData.chucVu = newUser.chucVu || "Nhân viên";
       userData.luong = newUser.luong || 0;
-      userData.ngayTuyenDung = newUser.ngayTuyenDung || new Date().toISOString().split("T")[0];
+      userData.ngayTuyenDung =
+        newUser.ngayTuyenDung || new Date().toISOString().split("T")[0];
       userData.soCccd = newUser.soCccd || "";
     }
 
@@ -155,7 +164,11 @@ const UsersManagementPage = () => {
       // setTimeout(() => setSuccessMessage(""), 2000);
     } catch (error) {
       console.error("Error adding user:", error);
-      setFormErrors({ api: "Có lỗi khi thêm người dùng: " + (error.response?.data || "Lỗi không xác định") });
+      setFormErrors({
+        api:
+          "Có lỗi khi thêm người dùng: " +
+          (error.response?.data || "Lỗi không xác định"),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -190,7 +203,8 @@ const UsersManagementPage = () => {
 
     // Validate form
     const errors = {};
-    if (!editingUser.tenTaiKhoan?.trim()) errors.tenTaiKhoan = "Tên tài khoản không được để trống";
+    if (!editingUser.tenTaiKhoan?.trim())
+      errors.tenTaiKhoan = "Tên tài khoản không được để trống";
     if (!editingUser.email?.trim()) {
       errors.email = "Email không được để trống";
     } else if (!/\S+@\S+\.\S+/.test(editingUser.email)) {
@@ -230,11 +244,16 @@ const UsersManagementPage = () => {
     // Add role-specific info
     if (editingUser.maQuyen === "Q006") {
       // Khách hàng
-      userData.tenKhachHang = editingUser.tenKhachHang || editingUser.tenTaiKhoan;
+      userData.tenKhachHang =
+        editingUser.tenKhachHang || editingUser.tenTaiKhoan;
       userData.maKhachHang = editingUser.maKhachHang || "";
-    } else if (editingUser.maQuyen === "Q003" || editingUser.maQuyen === "Q001") {
+    } else if (
+      editingUser.maQuyen === "Q003" ||
+      editingUser.maQuyen === "Q001"
+    ) {
       // Nhân viên hoặc Quản trị viên
-      userData.hoTenNhanVien = editingUser.hoTenNhanVien || editingUser.tenTaiKhoan;
+      userData.hoTenNhanVien =
+        editingUser.hoTenNhanVien || editingUser.tenTaiKhoan;
       userData.maNhanVien = editingUser.maNhanVien || "";
       userData.chucVu = editingUser.chucVu || "Nhân viên";
       userData.luong = editingUser.luong || 0;
@@ -248,11 +267,17 @@ const UsersManagementPage = () => {
       await fetchUsers();
       setIsEditUserModalOpen(false);
       setEditingUser(null);
-      toast.success("Cập nhật người dùng " + editingUser.tenTaiKhoan + " thành công!");
+      toast.success(
+        "Cập nhật người dùng " + editingUser.tenTaiKhoan + " thành công!"
+      );
       //  setTimeout(() => setSuccessMessage(""), 2000);
     } catch (error) {
       console.error("Error updating user:", error);
-      setFormErrors({ api: "Có lỗi khi cập nhật người dùng: " + (error.response?.data || "Lỗi không xác định") });
+      setFormErrors({
+        api:
+          "Có lỗi khi cập nhật người dùng: " +
+          (error.response?.data || "Lỗi không xác định"),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -272,7 +297,9 @@ const UsersManagementPage = () => {
       await fetchUsers();
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
-      toast.success("Đã xóa người dùng " + userToDelete.tenTaiKhoan + " thành công!");
+      toast.success(
+        "Đã xóa người dùng " + userToDelete.tenTaiKhoan + " thành công!"
+      );
     } catch (error) {
       console.error("Error deleting user:", error);
       // Show error message
@@ -291,7 +318,9 @@ const UsersManagementPage = () => {
         await deleteUser(userId);
       }
       await fetchUsers();
-      toast.success("Đã xóa " + selectedUsers.length + " người dùng thành công!");
+      toast.success(
+        "Đã xóa " + selectedUsers.length + " người dùng thành công!"
+      );
       setSelectedUsers([]);
     } catch (error) {
       console.error("Error deleting selected users:", error);
@@ -390,10 +419,20 @@ const UsersManagementPage = () => {
     if (searchTerm) {
       filtered = filtered.filter(
         (user) =>
-          (user.tenTaiKhoan && user.tenTaiKhoan.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (user.tenKhachHang && user.tenKhachHang.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (user.hoTenNhanVien && user.hoTenNhanVien.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (user.tenTaiKhoan &&
+            user.tenTaiKhoan
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())) ||
+          (user.tenKhachHang &&
+            user.tenKhachHang
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())) ||
+          (user.hoTenNhanVien &&
+            user.hoTenNhanVien
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())) ||
+          (user.email &&
+            user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (user.soDienThoai && user.soDienThoai.includes(searchTerm))
       );
     }
@@ -437,7 +476,9 @@ const UsersManagementPage = () => {
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      const currentPageUsers = getCurrentPageUsers().map((user) => user.maTaiKhoan);
+      const currentPageUsers = getCurrentPageUsers().map(
+        (user) => user.maTaiKhoan
+      );
       setSelectedUsers(currentPageUsers);
     } else {
       setSelectedUsers([]);
@@ -479,7 +520,9 @@ const UsersManagementPage = () => {
       "Vai trò": user.tenQuyen,
       "Trạng thái": user.trangThai || "Hoạt động",
       "Ngày đăng ký": user.ngayDangKy,
-      "Ngày sinh": user.ngaySinh ? new Date(user.ngaySinh).toLocaleDateString("vi-VN") : "-",
+      "Ngày sinh": user.ngaySinh
+        ? new Date(user.ngaySinh).toLocaleDateString("vi-VN")
+        : "-",
       "Hình ảnh": user.hinhAnh || "",
       "Địa chỉ": user.diaChi || "",
       "Mật khẩu": user.matKhau || "",
@@ -487,8 +530,10 @@ const UsersManagementPage = () => {
       "Tên khách hàng": user.tenKhachHang || "",
       "Họ tên nhân viên": user.hoTenNhanVien || "",
       "Chức vụ": user.chucVu || "",
-      "Lương": user.luong || "",
-      "Ngày tuyển dụng": user.ngayTuyenDung ? new Date(user.ngayTuyenDung).toLocaleDateString("vi-VN") : "-",
+      Lương: user.luong || "",
+      "Ngày tuyển dụng": user.ngayTuyenDung
+        ? new Date(user.ngayTuyenDung).toLocaleDateString("vi-VN")
+        : "-",
       "Số CCCD": user.soCccd || "",
     }));
 
@@ -518,41 +563,44 @@ const UsersManagementPage = () => {
       return dateString;
     }
   };
-const handleImageChange = async (e, mode) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", "demo_preset"); // Thay bằng preset Cloudinary của bạn
+  const handleImageChange = async (e, mode) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "demo_preset"); // Thay bằng preset Cloudinary của bạn
 
-  try {
-    const res = await fetch("https://api.cloudinary.com/v1_1/dlozjvjhf/image/upload", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json();
-    if (data.secure_url) {
-      if (mode === "add") {
-        setNewUser(prev => ({
-          ...prev,
-          hinhAnh: data.secure_url, // Lưu URL Cloudinary
-          preview: data.secure_url,
-        }));
-      } else if (mode === "edit") {
-        setEditingUser(prev => ({
-          ...prev,
-          hinhAnh: data.secure_url,
-          preview: data.secure_url,
-        }));
+    try {
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/dlozjvjhf/image/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+      const data = await res.json();
+      if (data.secure_url) {
+        if (mode === "add") {
+          setNewUser((prev) => ({
+            ...prev,
+            hinhAnh: data.secure_url, // Lưu URL Cloudinary
+            preview: data.secure_url,
+          }));
+        } else if (mode === "edit") {
+          setEditingUser((prev) => ({
+            ...prev,
+            hinhAnh: data.secure_url,
+            preview: data.secure_url,
+          }));
+        }
+      } else {
+        toast.error("Lỗi upload ảnh Cloudinary");
       }
-    } else {
+    } catch (err) {
       toast.error("Lỗi upload ảnh Cloudinary");
+      console.error(err);
     }
-  } catch (err) {
-    toast.error("Lỗi upload ảnh Cloudinary");
-    console.error(err);
-  }
-};
+  };
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -607,7 +655,6 @@ const handleImageChange = async (e, mode) => {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
-          
           </div>
 
           <div className="flex flex-col md:flex-row gap-4">
@@ -703,10 +750,15 @@ const handleImageChange = async (e, mode) => {
               type="checkbox"
               className="rounded text-blue-600 focus:ring-blue-500"
               onChange={handleSelectAll}
-              checked={selectedUsers.length === getCurrentPageUsers().length && getCurrentPageUsers().length > 0}
+              checked={
+                selectedUsers.length === getCurrentPageUsers().length &&
+                getCurrentPageUsers().length > 0
+              }
               disabled={isLoading}
             />
-            <span className="ml-3 text-sm font-medium">{selectedUsers.length} người dùng đã chọn</span>
+            <span className="ml-3 text-sm font-medium">
+              {selectedUsers.length} người dùng đã chọn
+            </span>
           </div>
 
           {selectedUsers.length > 0 && (
@@ -746,7 +798,10 @@ const handleImageChange = async (e, mode) => {
                     type="checkbox"
                     className="rounded text-blue-600 focus:ring-blue-500"
                     onChange={handleSelectAll}
-                    checked={selectedUsers.length === getCurrentPageUsers().length && getCurrentPageUsers().length > 0}
+                    checked={
+                      selectedUsers.length === getCurrentPageUsers().length &&
+                      getCurrentPageUsers().length > 0
+                    }
                     disabled={isLoading}
                   />
                 </th>
@@ -758,7 +813,9 @@ const handleImageChange = async (e, mode) => {
                   <div className="flex items-center">
                     Mã tài khoản
                     {sortConfig.key === "maTaiKhoan" && (
-                      <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      <span className="ml-1">
+                        {sortConfig.direction === "asc" ? "↑" : "↓"}
+                      </span>
                     )}
                   </div>
                 </th>
@@ -770,7 +827,9 @@ const handleImageChange = async (e, mode) => {
                   <div className="flex items-center">
                     Người dùng
                     {sortConfig.key === "tenTaiKhoan" && (
-                      <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      <span className="ml-1">
+                        {sortConfig.direction === "asc" ? "↑" : "↓"}
+                      </span>
                     )}
                   </div>
                 </th>
@@ -782,7 +841,9 @@ const handleImageChange = async (e, mode) => {
                   <div className="flex items-center">
                     Vai trò
                     {sortConfig.key === "tenQuyen" && (
-                      <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      <span className="ml-1">
+                        {sortConfig.direction === "asc" ? "↑" : "↓"}
+                      </span>
                     )}
                   </div>
                 </th>
@@ -794,7 +855,9 @@ const handleImageChange = async (e, mode) => {
                   <div className="flex items-center">
                     Chức vụ
                     {sortConfig.key === "chucVu" && (
-                      <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      <span className="ml-1">
+                        {sortConfig.direction === "asc" ? "↑" : "↓"}
+                      </span>
                     )}
                   </div>
                 </th>
@@ -806,7 +869,9 @@ const handleImageChange = async (e, mode) => {
                   <div className="flex items-center">
                     Ngày tạo
                     {sortConfig.key === "ngayDangKy" && (
-                      <span className="ml-1">{sortConfig.direction === "asc" ? "↑" : "↓"}</span>
+                      <span className="ml-1">
+                        {sortConfig.direction === "asc" ? "↑" : "↓"}
+                      </span>
                     )}
                   </div>
                 </th>
@@ -821,7 +886,10 @@ const handleImageChange = async (e, mode) => {
             <tbody className="bg-white divide-y divide-gray-200">
               {isLoading && (
                 <tr>
-                  <td colSpan="8" className="px-6 py-10 text-center text-gray-500">
+                  <td
+                    colSpan="8"
+                    className="px-6 py-10 text-center text-gray-500"
+                  >
                     <div className="flex justify-center items-center">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                       <span className="ml-2">Đang tải...</span>
@@ -841,23 +909,38 @@ const handleImageChange = async (e, mode) => {
                         onChange={() => handleSelectUser(user.maTaiKhoan)}
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.maTaiKhoan}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.maTaiKhoan}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
                           <img
                             className="h-10 w-10 rounded-full object-cover"
-                            src={user.hinhAnh || "/placeholder.svg?height=40&width=40"}
+                            src={
+                              user.hinhAnh ||
+                              "/placeholder.svg?height=40&width=40"
+                            }
                             alt=""
                           />
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {user.tenKhachHang || user.hoTenNhanVien || user.tenTaiKhoan}
+                            {user.tenKhachHang ||
+                              user.hoTenNhanVien ||
+                              user.tenTaiKhoan}
                           </div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
-                          <div className="text-sm text-gray-500">{user.soDienThoai}</div>
-                          {user.soCccd && <div className="text-sm text-gray-500">{user.soCccd}</div>}
+                          <div className="text-sm text-gray-500">
+                            {user.email}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {user.soDienThoai}
+                          </div>
+                          {user.soCccd && (
+                            <div className="text-sm text-gray-500">
+                              {user.soCccd}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -875,7 +958,9 @@ const handleImageChange = async (e, mode) => {
                         {user.tenQuyen}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.chucVu || "-"}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.chucVu || "-"}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(user.ngayDangKy)}
                     </td>
@@ -970,7 +1055,10 @@ const handleImageChange = async (e, mode) => {
 
               {!isLoading && getCurrentPageUsers().length === 0 && (
                 <tr>
-                  <td colSpan="8" className="px-6 py-10 text-center text-gray-500">
+                  <td
+                    colSpan="8"
+                    className="px-6 py-10 text-center text-gray-500"
+                  >
                     Không tìm thấy người dùng nào
                   </td>
                 </tr>
@@ -983,9 +1071,14 @@ const handleImageChange = async (e, mode) => {
         {filteredUsers.length > 0 && (
           <div className="px-6 py-3 flex items-center justify-between border-t">
             <div className="text-sm text-gray-700">
-              Hiển thị <span className="font-medium">{indexOfFirstUser + 1}</span> đến{" "}
-              <span className="font-medium">{Math.min(indexOfLastUser, filteredUsers.length)}</span> trong số{" "}
-              <span className="font-medium">{filteredUsers.length}</span> người dùng
+              Hiển thị{" "}
+              <span className="font-medium">{indexOfFirstUser + 1}</span> đến{" "}
+              <span className="font-medium">
+                {Math.min(indexOfLastUser, filteredUsers.length)}
+              </span>{" "}
+              trong số{" "}
+              <span className="font-medium">{filteredUsers.length}</span> người
+              dùng
             </div>
 
             <div className="flex space-x-2">
@@ -1005,22 +1098,34 @@ const handleImageChange = async (e, mode) => {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
                 </svg>
               </button>
 
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter((page) => {
                   // Show first page, last page, current page, and pages around current page
-                  return page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
+                  return (
+                    page === 1 ||
+                    page === totalPages ||
+                    Math.abs(page - currentPage) <= 1
+                  );
                 })
                 .map((page, index, array) => {
                   // Add ellipsis if there's a gap
-                  const showEllipsis = index > 0 && array[index - 1] !== page - 1;
+                  const showEllipsis =
+                    index > 0 && array[index - 1] !== page - 1;
 
                   return (
                     <div key={page} className="flex items-center">
-                      {showEllipsis && <span className="px-2 py-2 text-gray-500">...</span>}
+                      {showEllipsis && (
+                        <span className="px-2 py-2 text-gray-500">...</span>
+                      )}
                       <button
                         onClick={() => paginate(page)}
                         disabled={isLoading}
@@ -1052,7 +1157,12 @@ const handleImageChange = async (e, mode) => {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
                 </svg>
               </button>
             </div>
@@ -1064,11 +1174,17 @@ const handleImageChange = async (e, mode) => {
       {isAddUserModalOpen && (
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="fixed inset-0 bg-black opacity-30" onClick={() => setIsAddUserModalOpen(false)}></div>
+            <div
+              className="fixed inset-0 bg-black opacity-30"
+              onClick={() => setIsAddUserModalOpen(false)}
+            ></div>
             <div className="relative bg-white rounded-lg shadow-lg max-w-2xl w-full p-8 z-20 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium">Thêm người dùng mới</h3>
-                <button onClick={() => setIsAddUserModalOpen(false)} className="text-gray-400 hover:text-gray-500">
+                <button
+                  onClick={() => setIsAddUserModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-5 w-5"
@@ -1076,7 +1192,12 @@ const handleImageChange = async (e, mode) => {
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -1100,7 +1221,11 @@ const handleImageChange = async (e, mode) => {
                       <option value="Q003">Nhân viên</option>
                       <option value="Q001">Quản trị viên</option>
                     </select>
-                    {formErrors.maQuyen && <p className="mt-1 text-sm text-red-600">{formErrors.maQuyen}</p>}
+                    {formErrors.maQuyen && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.maQuyen}
+                      </p>
+                    )}
                   </div>
 
                   {/* Tên tài khoản */}
@@ -1117,7 +1242,11 @@ const handleImageChange = async (e, mode) => {
                         formErrors.tenTaiKhoan ? "border-red-500" : ""
                       }`}
                     />
-                    {formErrors.tenTaiKhoan && <p className="mt-1 text-sm text-red-600">{formErrors.tenTaiKhoan}</p>}
+                    {formErrors.tenTaiKhoan && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.tenTaiKhoan}
+                      </p>
+                    )}
                   </div>
 
                   {/* Mật khẩu */}
@@ -1135,7 +1264,11 @@ const handleImageChange = async (e, mode) => {
                         formErrors.matKhau ? "border-red-500" : ""
                       }`}
                     />
-                    {formErrors.matKhau && <p className="mt-1 text-sm text-red-600">{formErrors.matKhau}</p>}
+                    {formErrors.matKhau && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.matKhau}
+                      </p>
+                    )}
                   </div>
 
                   {/* Xác thực mật khẩu */}
@@ -1154,7 +1287,9 @@ const handleImageChange = async (e, mode) => {
                       }`}
                     />
                     {formErrors.xacThucMatKhau && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.xacThucMatKhau}</p>
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.xacThucMatKhau}
+                      </p>
                     )}
                   </div>
 
@@ -1172,7 +1307,11 @@ const handleImageChange = async (e, mode) => {
                         formErrors.email ? "border-red-500" : ""
                       }`}
                     />
-                    {formErrors.email && <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>}
+                    {formErrors.email && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.email}
+                      </p>
+                    )}
                   </div>
 
                   {/* Số điện thoại */}
@@ -1189,12 +1328,18 @@ const handleImageChange = async (e, mode) => {
                         formErrors.soDienThoai ? "border-red-500" : ""
                       }`}
                     />
-                    {formErrors.soDienThoai && <p className="mt-1 text-sm text-red-600">{formErrors.soDienThoai}</p>}
+                    {formErrors.soDienThoai && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.soDienThoai}
+                      </p>
+                    )}
                   </div>
 
                   {/* Địa chỉ */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Địa chỉ
+                    </label>
                     <input
                       type="text"
                       name="diaChi"
@@ -1206,7 +1351,9 @@ const handleImageChange = async (e, mode) => {
 
                   {/* Ngày sinh */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Ngày sinh</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Ngày sinh
+                    </label>
                     <input
                       type="date"
                       name="ngaySinh"
@@ -1219,7 +1366,9 @@ const handleImageChange = async (e, mode) => {
                   {/* Trường riêng cho từng vai trò */}
                   {newUser.maQuyen === "Q006" && (
                     <div className="col-span-1 md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700">Tên khách hàng</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Tên khách hàng
+                      </label>
                       <input
                         type="text"
                         name="tenKhachHang"
@@ -1229,10 +1378,13 @@ const handleImageChange = async (e, mode) => {
                       />
                     </div>
                   )}
-                  {(newUser.maQuyen === "Q003" || newUser.maQuyen === "Q001") && (
+                  {(newUser.maQuyen === "Q003" ||
+                    newUser.maQuyen === "Q001") && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Họ tên nhân viên</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Họ tên nhân viên
+                        </label>
                         <input
                           type="text"
                           name="hoTenNhanVien"
@@ -1242,7 +1394,9 @@ const handleImageChange = async (e, mode) => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Chức vụ</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Chức vụ
+                        </label>
                         <input
                           type="text"
                           name="chucVu"
@@ -1252,7 +1406,9 @@ const handleImageChange = async (e, mode) => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Lương</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Lương
+                        </label>
                         <input
                           type="number"
                           name="luong"
@@ -1262,7 +1418,9 @@ const handleImageChange = async (e, mode) => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Ngày tuyển dụng</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Ngày tuyển dụng
+                        </label>
                         <input
                           type="date"
                           name="ngayTuyenDung"
@@ -1272,7 +1430,9 @@ const handleImageChange = async (e, mode) => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Số CCCD</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Số CCCD
+                        </label>
                         <input
                           type="text"
                           name="soCccd"
@@ -1281,25 +1441,33 @@ const handleImageChange = async (e, mode) => {
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         />
                       </div>
-                      
                     </>
-                    
                   )}
-                    <div>
-  <label className="block text-sm font-medium text-gray-700">Ảnh đại diện</label>
-  <input
-    type="file"
-    accept="image/*"
-    onChange={e => handleImageChange(e, "add")}
-    className="mt-1 block w-full text-sm text-gray-500"
-  />
-  {newUser.preview && (
-    <img src={newUser.preview} alt="Preview" className="mt-2 w-20 h-20 object-cover rounded-full" />
-  )}
-</div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Ảnh đại diện
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageChange(e, "add")}
+                      className="mt-1 block w-full text-sm text-gray-500"
+                    />
+                    {newUser.preview && (
+                      <img
+                        src={newUser.preview}
+                        alt="Preview"
+                        className="mt-2 w-20 h-20 object-cover rounded-full"
+                      />
+                    )}
+                  </div>
                 </div>
-              
-                {formErrors.api && <div className="mt-4 p-2 bg-red-50 text-red-600 rounded-md">{formErrors.api}</div>}
+
+                {formErrors.api && (
+                  <div className="mt-4 p-2 bg-red-50 text-red-600 rounded-md">
+                    {formErrors.api}
+                  </div>
+                )}
                 <div className="mt-6 flex justify-end space-x-3">
                   <button
                     type="button"
@@ -1330,11 +1498,17 @@ const handleImageChange = async (e, mode) => {
       {isEditUserModalOpen && editingUser && (
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="fixed inset-0 bg-black opacity-30" onClick={() => setIsEditUserModalOpen(false)}></div>
+            <div
+              className="fixed inset-0 bg-black opacity-30"
+              onClick={() => setIsEditUserModalOpen(false)}
+            ></div>
             <div className="relative bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 z-20 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium">Chỉnh sửa người dùng</h3>
-                <button onClick={() => setIsEditUserModalOpen(false)} className="text-gray-400 hover:text-gray-500">
+                <button
+                  onClick={() => setIsEditUserModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-5 w-5"
@@ -1342,7 +1516,12 @@ const handleImageChange = async (e, mode) => {
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -1363,7 +1542,11 @@ const handleImageChange = async (e, mode) => {
                         formErrors.tenTaiKhoan ? "border-red-500" : ""
                       }`}
                     />
-                    {formErrors.tenTaiKhoan && <p className="mt-1 text-sm text-red-600">{formErrors.tenTaiKhoan}</p>}
+                    {formErrors.tenTaiKhoan && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.tenTaiKhoan}
+                      </p>
+                    )}
                   </div>
 
                   {/* Email */}
@@ -1380,7 +1563,11 @@ const handleImageChange = async (e, mode) => {
                         formErrors.email ? "border-red-500" : ""
                       }`}
                     />
-                    {formErrors.email && <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>}
+                    {formErrors.email && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.email}
+                      </p>
+                    )}
                   </div>
 
                   {/* Số điện thoại */}
@@ -1397,12 +1584,18 @@ const handleImageChange = async (e, mode) => {
                         formErrors.soDienThoai ? "border-red-500" : ""
                       }`}
                     />
-                    {formErrors.soDienThoai && <p className="mt-1 text-sm text-red-600">{formErrors.soDienThoai}</p>}
+                    {formErrors.soDienThoai && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.soDienThoai}
+                      </p>
+                    )}
                   </div>
 
                   {/* Địa chỉ */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Địa chỉ
+                    </label>
                     <input
                       type="text"
                       name="diaChi"
@@ -1414,7 +1607,9 @@ const handleImageChange = async (e, mode) => {
 
                   {/* Ngày sinh */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Ngày sinh</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Ngày sinh
+                    </label>
                     <input
                       type="date"
                       name="ngaySinh"
@@ -1439,13 +1634,19 @@ const handleImageChange = async (e, mode) => {
                         formErrors.matKhau ? "border-red-500" : ""
                       }`}
                     />
-                    {formErrors.matKhau && <p className="mt-1 text-sm text-red-600">{formErrors.matKhau}</p>}
+                    {formErrors.matKhau && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {formErrors.matKhau}
+                      </p>
+                    )}
                   </div>
 
                   {/* Trường riêng cho từng vai trò */}
                   {editingUser.maQuyen === "Q006" && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Tên khách hàng</label>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Tên khách hàng
+                      </label>
                       <input
                         type="text"
                         name="tenKhachHang"
@@ -1455,10 +1656,13 @@ const handleImageChange = async (e, mode) => {
                       />
                     </div>
                   )}
-                  {(editingUser.maQuyen === "Q003" || editingUser.maQuyen === "Q001") && (
+                  {(editingUser.maQuyen === "Q003" ||
+                    editingUser.maQuyen === "Q001") && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Họ tên nhân viên</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Họ tên nhân viên
+                        </label>
                         <input
                           type="text"
                           name="hoTenNhanVien"
@@ -1468,7 +1672,9 @@ const handleImageChange = async (e, mode) => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Chức vụ</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Chức vụ
+                        </label>
                         <input
                           type="text"
                           name="chucVu"
@@ -1478,7 +1684,9 @@ const handleImageChange = async (e, mode) => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Lương</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Lương
+                        </label>
                         <input
                           type="number"
                           name="luong"
@@ -1488,7 +1696,9 @@ const handleImageChange = async (e, mode) => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Ngày tuyển dụng</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Ngày tuyển dụng
+                        </label>
                         <input
                           type="date"
                           name="ngayTuyenDung"
@@ -1498,7 +1708,9 @@ const handleImageChange = async (e, mode) => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Số CCCD</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Số CCCD
+                        </label>
                         <input
                           type="text"
                           name="soCccd"
@@ -1509,21 +1721,31 @@ const handleImageChange = async (e, mode) => {
                       </div>
                     </>
                   )}
-                                  <div>
-  <label className="block text-sm font-medium text-gray-700">Ảnh đại diện</label>
-  <input
-    type="file"
-    accept="image/*"
-    onChange={e => handleImageChange(e, "edit")}
-    className="mt-1 block w-full text-sm text-gray-500"
-  />
-  {editingUser?.preview && (
-    <img src={editingUser.preview} alt="Preview" className="mt-2 w-20 h-20 object-cover rounded-full" />
-  )}
-</div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Ảnh đại diện
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageChange(e, "edit")}
+                      className="mt-1 block w-full text-sm text-gray-500"
+                    />
+                    {editingUser?.preview && (
+                      <img
+                        src={editingUser.preview}
+                        alt="Preview"
+                        className="mt-2 w-20 h-20 object-cover rounded-full"
+                      />
+                    )}
+                  </div>
                 </div>
 
-                {formErrors.api && <div className="mt-4 p-2 bg-red-50 text-red-600 rounded-md">{formErrors.api}</div>}
+                {formErrors.api && (
+                  <div className="mt-4 p-2 bg-red-50 text-red-600 rounded-md">
+                    {formErrors.api}
+                  </div>
+                )}
                 <div className="mt-6 flex justify-end space-x-3">
                   <button
                     type="button"
@@ -1554,12 +1776,18 @@ const handleImageChange = async (e, mode) => {
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="fixed inset-0 bg-black opacity-30" onClick={() => setIsDeleteModalOpen(false)}></div>
+            <div
+              className="fixed inset-0 bg-black opacity-30"
+              onClick={() => setIsDeleteModalOpen(false)}
+            ></div>
 
             <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full p-6 z-20">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium">Xác nhận xóa</h3>
-                <button onClick={() => setIsDeleteModalOpen(false)} className="text-gray-400 hover:text-gray-500">
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-5 w-5"
@@ -1567,7 +1795,12 @@ const handleImageChange = async (e, mode) => {
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -1576,7 +1809,9 @@ const handleImageChange = async (e, mode) => {
                 <p className="text-gray-700">
                   Bạn có chắc chắn muốn xóa người dùng{" "}
                   <span className="font-medium">
-                    {userToDelete?.tenTaiKhoan || userToDelete?.tenKhachHang || userToDelete?.hoTenNhanVien}
+                    {userToDelete?.tenTaiKhoan ||
+                      userToDelete?.tenKhachHang ||
+                      userToDelete?.hoTenNhanVien}
                   </span>
                   ? Hành động này không thể hoàn tác.
                 </p>
@@ -1595,7 +1830,9 @@ const handleImageChange = async (e, mode) => {
                   className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center"
                   disabled={isLoading}
                 >
-                  {isLoading && <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>}
+                  {isLoading && (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  )}
                   Xóa
                 </button>
               </div>
@@ -1608,11 +1845,19 @@ const handleImageChange = async (e, mode) => {
       {isDetailModalOpen && userDetail && (
         <div className="fixed inset-0 z-10 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="fixed inset-0 bg-black opacity-30" onClick={() => setIsDetailModalOpen(false)}></div>
+            <div
+              className="fixed inset-0 bg-black opacity-30"
+              onClick={() => setIsDetailModalOpen(false)}
+            ></div>
             <div className="relative bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 z-20 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-medium">Thông tin chi tiết người dùng</h3>
-                <button onClick={() => setIsDetailModalOpen(false)} className="text-gray-400 hover:text-gray-500">
+                <h3 className="text-xl font-medium">
+                  Thông tin chi tiết người dùng
+                </h3>
+                <button
+                  onClick={() => setIsDetailModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-5 w-5"
@@ -1620,7 +1865,12 @@ const handleImageChange = async (e, mode) => {
                     viewBox="0 0 24 24"
                     stroke="currentColor"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -1630,13 +1880,18 @@ const handleImageChange = async (e, mode) => {
                 <div className="flex flex-col items-center">
                   <div className="w-32 h-32 rounded-full overflow-hidden mb-4">
                     <img
-                      src={userDetail.hinhAnh || "/placeholder.svg?height=128&width=128"}
+                      src={
+                        userDetail.hinhAnh ||
+                        "/placeholder.svg?height=128&width=128"
+                      }
                       alt={userDetail.tenTaiKhoan}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <h4 className="text-lg font-medium text-center">
-                    {userDetail.tenKhachHang || userDetail.hoTenNhanVien || userDetail.tenTaiKhoan}
+                    {userDetail.tenKhachHang ||
+                      userDetail.hoTenNhanVien ||
+                      userDetail.tenTaiKhoan}
                   </h4>
                   <span
                     className={`px-3 py-1 mt-2 inline-flex text-xs leading-5 font-semibold rounded-full 
@@ -1656,35 +1911,59 @@ const handleImageChange = async (e, mode) => {
                 <div className="flex-1">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <h5 className="text-sm font-medium text-gray-500">Thông tin tài khoản</h5>
+                      <h5 className="text-sm font-medium text-gray-500">
+                        Thông tin tài khoản
+                      </h5>
                       <div className="mt-2 space-y-3">
                         <div>
-                          <span className="text-sm text-gray-500">Mã tài khoản:</span>
+                          <span className="text-sm text-gray-500">
+                            Mã tài khoản:
+                          </span>
                           <p className="font-medium">{userDetail.maTaiKhoan}</p>
                         </div>
                         <div>
-                          <span className="text-sm text-gray-500">Tên tài khoản:</span>
-                          <p className="font-medium">{userDetail.tenTaiKhoan}</p>
+                          <span className="text-sm text-gray-500">
+                            Tên tài khoản:
+                          </span>
+                          <p className="font-medium">
+                            {userDetail.tenTaiKhoan}
+                          </p>
                         </div>
                         <div>
                           <span className="text-sm text-gray-500">Email:</span>
                           <p className="font-medium">{userDetail.email}</p>
                         </div>
                         <div>
-                          <span className="text-sm text-gray-500">Số điện thoại:</span>
-                          <p className="font-medium">{userDetail.soDienThoai}</p>
+                          <span className="text-sm text-gray-500">
+                            Số điện thoại:
+                          </span>
+                          <p className="font-medium">
+                            {userDetail.soDienThoai}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm text-gray-500">Ngày đăng ký:</span>
-                          <p className="font-medium">{formatDate(userDetail.ngayDangKy)}</p>
+                          <span className="text-sm text-gray-500">
+                            Ngày đăng ký:
+                          </span>
+                          <p className="font-medium">
+                            {formatDate(userDetail.ngayDangKy)}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm text-gray-500">Ngày sinh:</span>
-                          <p className="font-medium">{formatDate(userDetail.ngaySinh)}</p>
+                          <span className="text-sm text-gray-500">
+                            Ngày sinh:
+                          </span>
+                          <p className="font-medium">
+                            {formatDate(userDetail.ngaySinh)}
+                          </p>
                         </div>
                         <div>
-                          <span className="text-sm text-gray-500">Địa chỉ:</span>
-                          <p className="font-medium">{userDetail.diaChi || "-"}</p>
+                          <span className="text-sm text-gray-500">
+                            Địa chỉ:
+                          </span>
+                          <p className="font-medium">
+                            {userDetail.diaChi || "-"}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -1692,53 +1971,89 @@ const handleImageChange = async (e, mode) => {
                     {/* Role-specific information */}
                     {userDetail.tenQuyen === "Khách hàng" && (
                       <div>
-                        <h5 className="text-sm font-medium text-gray-500">Thông tin khách hàng</h5>
+                        <h5 className="text-sm font-medium text-gray-500">
+                          Thông tin khách hàng
+                        </h5>
                         <div className="mt-2 space-y-3">
                           <div>
-                            <span className="text-sm text-gray-500">Mã khách hàng:</span>
-                            <p className="font-medium">{userDetail.maKhachHang || "-"}</p>
+                            <span className="text-sm text-gray-500">
+                              Mã khách hàng:
+                            </span>
+                            <p className="font-medium">
+                              {userDetail.maKhachHang || "-"}
+                            </p>
                           </div>
                           <div>
-                            <span className="text-sm text-gray-500">Tên khách hàng:</span>
-                            <p className="font-medium">{userDetail.tenKhachHang || "-"}</p>
+                            <span className="text-sm text-gray-500">
+                              Tên khách hàng:
+                            </span>
+                            <p className="font-medium">
+                              {userDetail.tenKhachHang || "-"}
+                            </p>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {(userDetail.tenQuyen === "Nhân viên" || userDetail.tenQuyen === "Admin") && (
+                    {(userDetail.tenQuyen === "Nhân viên" ||
+                      userDetail.tenQuyen === "Admin") && (
                       <div>
-                        <h5 className="text-sm font-medium text-gray-500">Thông tin nhân viên</h5>
+                        <h5 className="text-sm font-medium text-gray-500">
+                          Thông tin nhân viên
+                        </h5>
                         <div className="mt-2 space-y-3">
                           <div>
-                            <span className="text-sm text-gray-500">Mã nhân viên:</span>
-                            <p className="font-medium">{userDetail.maNhanVien || "-"}</p>
+                            <span className="text-sm text-gray-500">
+                              Mã nhân viên:
+                            </span>
+                            <p className="font-medium">
+                              {userDetail.maNhanVien || "-"}
+                            </p>
                           </div>
                           <div>
-                            <span className="text-sm text-gray-500">Họ tên nhân viên:</span>
-                            <p className="font-medium">{userDetail.hoTenNhanVien || "-"}</p>
+                            <span className="text-sm text-gray-500">
+                              Họ tên nhân viên:
+                            </span>
+                            <p className="font-medium">
+                              {userDetail.hoTenNhanVien || "-"}
+                            </p>
                           </div>
                           <div>
-                            <span className="text-sm text-gray-500">Chức vụ:</span>
-                            <p className="font-medium">{userDetail.chucVu || "-"}</p>
+                            <span className="text-sm text-gray-500">
+                              Chức vụ:
+                            </span>
+                            <p className="font-medium">
+                              {userDetail.chucVu || "-"}
+                            </p>
                           </div>
                           <div>
-                            <span className="text-sm text-gray-500">Lương:</span>
+                            <span className="text-sm text-gray-500">
+                              Lương:
+                            </span>
                             <p className="font-medium">
                               {userDetail.luong
-                                ? new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-                                    userDetail.luong
-                                  )
+                                ? new Intl.NumberFormat("vi-VN", {
+                                    style: "currency",
+                                    currency: "VND",
+                                  }).format(userDetail.luong)
                                 : "-"}
                             </p>
                           </div>
                           <div>
-                            <span className="text-sm text-gray-500">Ngày tuyển dụng:</span>
-                            <p className="font-medium">{formatDate(userDetail.ngayTuyenDung)}</p>
+                            <span className="text-sm text-gray-500">
+                              Ngày tuyển dụng:
+                            </span>
+                            <p className="font-medium">
+                              {formatDate(userDetail.ngayTuyenDung)}
+                            </p>
                           </div>
                           <div>
-                            <span className="text-sm text-gray-500">Số CCCD:</span>
-                            <p className="font-medium">{userDetail.soCccd || "-"}</p>
+                            <span className="text-sm text-gray-500">
+                              Số CCCD:
+                            </span>
+                            <p className="font-medium">
+                              {userDetail.soCccd || "-"}
+                            </p>
                           </div>
                         </div>
                       </div>

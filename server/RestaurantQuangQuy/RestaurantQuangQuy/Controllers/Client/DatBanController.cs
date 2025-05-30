@@ -52,7 +52,7 @@ namespace RestaurantQuangQuy.Controllers.Client
                         MaBan = b.Banans.MaBan,
                         TenBan = b.Banans.TenBan,
                         ViTri = b.Banans.ViTri,
-                        TrangThai = b.Banans.TrangThai,
+                     
                         SoGhe = b.Banans.SoChoNgoi,
                         GhiChu = b.Banans.GhiChu ?? ""
                     }).ToList()
@@ -104,7 +104,7 @@ namespace RestaurantQuangQuy.Controllers.Client
                         MaBan = dba.Banans.MaBan,
                         TenBan = dba.Banans.TenBan,
                         ViTri = dba.Banans.ViTri,
-                        TrangThai = dba.Banans.TrangThai,
+                      
                         SoGhe = dba.Banans.SoChoNgoi,
                         GhiChu = dba.Banans.GhiChu ?? ""
                     }).ToList()

@@ -75,7 +75,7 @@ namespace RestaurantQuangQuy.Controllers
 			}
 			existingBanAn.TenBan= banan.TenBan;
 			existingBanAn.SoChoNgoi = banan.SoChoNgoi;
-			existingBanAn.TrangThai = banan.TrangThai;
+		
 			existingBanAn.GhiChu = banan.GhiChu;
 			_context.SaveChanges();
 			return NoContent();

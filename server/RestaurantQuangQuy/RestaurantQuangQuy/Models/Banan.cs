@@ -12,7 +12,7 @@ public partial class Banan
 	public string ViTri { get; set; } = null!;
 	public int SoChoNgoi { get; set; }
 
-    public string TrangThai { get; set; } = null!;
+   
 
     public string? GhiChu { get; set; }
 
