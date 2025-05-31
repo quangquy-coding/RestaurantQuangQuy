@@ -651,7 +651,9 @@ const OrdersPage = () => {
                     {order.customerName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {order.tableNumber || (
+                    {order.tables && order.tables.length > 0 ? (
+                      order.tables.map((table) => table.tenBan).join(", ")
+                    ) : (
                       <span className="text-yellow-600 italic">
                         Chưa gán bàn
                       </span>
@@ -732,8 +734,18 @@ const OrdersPage = () => {
                     </div>
                     <div className="flex items-center mb-2">
                       <span className="font-medium mr-2">Ngày giờ đặt:</span>
-                      <span>{formatDate(currentOrder.orderDate)}</span>
+                      <span>
+                        {formatDate(currentOrder.bookingInfo.thoiGianDat)}
+                      </span>
                     </div>
+
+                    <div className="flex items-center mb-2">
+                      <span className="font-medium mr-2">Ngày giờ đến:</span>
+                      <span>
+                        {formatDate(currentOrder.bookingInfo.thoiGianDen)}
+                      </span>
+                    </div>
+
                     <div className="flex items-center mb-2">
                       <span className="font-medium mr-2">Số lượng người:</span>
                       <span>{currentOrder.guestCount}</span>
@@ -980,11 +992,24 @@ const OrdersPage = () => {
                   </label>
                   <input
                     type="text"
-                    value={formatDate(editingOrder.orderDate)}
+                    value={formatDate(editingOrder.bookingInfo.thoiGianDat)}
                     disabled
                     className="w-full px-3 py-2 border border-gray-200 bg-gray-100 rounded-md"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ngày giờ đặt
+                  </label>
+                  <input
+                    type="text"
+                    value={formatDate(editingOrder.bookingInfo.thoiGianDen)}
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-200 bg-gray-100 rounded-md"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Số lượng người
@@ -992,7 +1017,7 @@ const OrdersPage = () => {
                   <input
                     type="number"
                     min={1}
-                    value={editingOrder.guestCount}
+                    value={editingOrder.bookingInfo.soLuongKhach}
                     onChange={(e) =>
                       setEditingOrder({
                         ...editingOrder,
