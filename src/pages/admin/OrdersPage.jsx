@@ -56,7 +56,7 @@ const OrdersPage = () => {
     items: [],
     total: 0,
     orderDate: new Date().toISOString(),
-    guestCount: 1,
+    guestCount: 2,
   });
   const [selectedMenuItem, setSelectedMenuItem] = useState("");
   const [selectedMenuItemQuantity, setSelectedMenuItemQuantity] = useState(1);
@@ -300,11 +300,10 @@ const OrdersPage = () => {
       }
 
       const orderData = {
-        bookingCode: editingOrder.bookingCode || "",
         customerName: editingOrder.customerName,
-        tableId: editingOrder.tableId || "",
+        orderTableId: editingOrder.bookingCode || "",
+        tableId: editingOrder.tableIds || [],
         status: editingOrder.status,
-        guestCount: editingOrder.guestCount,
         paymentMethod: editingOrder.paymentMethod,
         notes: editingOrder.notes || "",
         items: editingOrder.items.map((item) => ({
@@ -313,7 +312,9 @@ const OrdersPage = () => {
           quantity: item.quantity,
           price: item.price,
         })),
+        guest:editingOrder.guestCount,
       };
+      
 
       console.log("Sending update order data:", JSON.stringify(orderData));
       await updateOrder(editingOrder.id, orderData);

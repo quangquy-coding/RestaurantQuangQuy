@@ -436,14 +436,14 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				};
 
 				// Kiểm tra bàn có trống không nếu thay đổi bàn
-				if (!string.IsNullOrEmpty(request.TableId) && request.TableId != order.MaBanAn)
+				if (!string.IsNullOrEmpty(request.OrderTableId) && request.OrderTableId != order.MaBanAn)
 				{
 					var orderDateTime = order.ThoiGianDat;
 					var startTime = orderDateTime.AddHours(-2);
 					var endTime = orderDateTime.AddHours(2);
 
 					var isTableOccupied = await _context.Hoadonthanhtoans
-						.AnyAsync(h => h.MaBanAn == request.TableId &&
+						.AnyAsync(h => h.MaBanAn == request.OrderTableId &&
 									  h.ThoiGianDat >= startTime && h.ThoiGianDat <= endTime &&
 									  (h.TrangThaiThanhToan == "Chờ xác nhận" ||
 									   h.TrangThaiThanhToan == "Đang chuẩn bị" ||
@@ -459,15 +459,49 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				// Cập nhật hóa đơn
 				order.TrangThaiThanhToan = vietnameseStatus;
 				order.PhuongThucThanhToan = vietnamesePayment;
-				order.MaBanAn = string.IsNullOrEmpty(request.TableId) ? null : request.TableId;
+				order.MaBanAn = string.IsNullOrEmpty(request.OrderTableId) ? null : request.OrderTableId;
 				order.GhiChu = request.Notes;
 				order.TongTien = request.Items.Sum(i => i.Price * i.Quantity);
 
 				// Cập nhật đơn đặt món
 				donDatMon.GhiChu = request.Notes;
 
-				// Xóa chi tiết cũ
-				var oldDetails = await _context.Chitietdondatmons
+                // === Cập nhật lại danh sách bàn của đơn ===
+                var oldTableLinks = await _context.DatBanBanAns
+                    .Where(d => d.MaDatBan == order.MaBanAn)
+                    .ToListAsync();
+
+                if (oldTableLinks.Any())
+                {
+                    _context.DatBanBanAns.RemoveRange(oldTableLinks);
+                    await _context.SaveChangesAsync();
+                }
+
+                if (request.TableId != null && request.TableId.Any())
+                {
+                    var newLinks = request.TableId.Select(banId => new DatBanBanAn
+                    {
+                        MaDatBan = order.MaBanAn,
+                        MaBanAn = banId
+                    }).ToList();
+
+                    _context.DatBanBanAns.AddRange(newLinks);
+                    await _context.SaveChangesAsync();
+                }
+
+				//cập nhật số lượng khách trong đơn đặt bàn
+				var donDatBan = await _context.Datbans
+					.FirstOrDefaultAsync(d => d.MaBanAn == order.MaBanAn);
+
+                if (donDatBan != null)
+                {
+                    donDatBan.SoLuongKhach = request.Guest;
+                    _context.Datbans.Update(donDatBan);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Xóa chi tiết cũ
+                var oldDetails = await _context.Chitietdondatmons
 					.Where(ct => ct.MaDatMon == order.MaDatMon)
 					.ToListAsync();
 
@@ -589,10 +623,12 @@ namespace RestaurantQuangQuy.Controllers.Admin
 	public class UpdateOrderRequest
 	{
 		public string CustomerName { get; set; } = null!;
-		public string? TableId { get; set; }
-		public string Status { get; set; } = "pending";
+        public string? OrderTableId { get; set; }
+        public List<string> TableId { get; set; } = new();
+        public string Status { get; set; } = "pending";
 		public string PaymentMethod { get; set; } = "cash";
 		public string? Notes { get; set; }
+		public int Guest { get; set; }
 		public List<OrderItemRequest> Items { get; set; } = new();
 	}
 
