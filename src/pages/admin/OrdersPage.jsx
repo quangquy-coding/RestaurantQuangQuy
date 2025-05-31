@@ -45,15 +45,18 @@ const OrdersPage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [currentOrder, setCurrentOrder] = useState(null);
   const [editingOrder, setEditingOrder] = useState(null);
+  const [selectedTableId, setSelectedTableId] = useState("");
   const [newOrder, setNewOrder] = useState({
+    bookingCode: "",
     customerName: "",
-    tableId: "",
+    tableIds: [],
     tableNumber: "",
     status: "pending",
     paymentMethod: "cash",
     items: [],
     total: 0,
     orderDate: new Date().toISOString(),
+    guestCount: 1,
   });
   const [selectedMenuItem, setSelectedMenuItem] = useState("");
   const [selectedMenuItemQuantity, setSelectedMenuItemQuantity] = useState(1);
@@ -156,7 +159,12 @@ const OrdersPage = () => {
   };
 
   const openEditModal = (order) => {
-    setEditingOrder({ ...order });
+    setEditingOrder({
+      ...order,
+      bookingCode: order.bookingCode || "",
+      tableIds: order.tableIds || (order.tableId ? [order.tableId] : []),
+      guestCount: order.guestCount || 1, // Thêm trường số lượng người
+    });
     fetchAvailableTables(order.orderDate);
     setIsEditModalOpen(true);
   };
@@ -164,7 +172,7 @@ const OrdersPage = () => {
   const openCreateModal = () => {
     setNewOrder({
       customerName: "",
-      tableId: "",
+      tableIds: [],
       tableNumber: "",
       status: "pending",
       paymentMethod: "cash",
@@ -292,9 +300,11 @@ const OrdersPage = () => {
       }
 
       const orderData = {
+        bookingCode: editingOrder.bookingCode || "",
         customerName: editingOrder.customerName,
         tableId: editingOrder.tableId || "",
         status: editingOrder.status,
+        guestCount: editingOrder.guestCount,
         paymentMethod: editingOrder.paymentMethod,
         notes: editingOrder.notes || "",
         items: editingOrder.items.map((item) => ({
@@ -335,6 +345,8 @@ const OrdersPage = () => {
         status: newOrder.status,
         paymentMethod: newOrder.paymentMethod,
         notes: newOrder.notes || "",
+        orderDate: newOrder.orderDate,
+        guestCount: newOrder.guestCount,
         items: newOrder.items.map((item) => ({
           id: item.id.toString(),
           name: item.name,
@@ -697,6 +709,10 @@ const OrdersPage = () => {
                   <h3 className="text-sm font-medium text-gray-500 mb-1">
                     Thông tin đơn hàng
                   </h3>
+                  <div className="flex items-center mb-2">
+                    <span className="font-medium mr-2">Mã đặt bàn:</span>
+                    <span>{currentOrder.id}</span>
+                  </div>
                   <div className="bg-gray-50 p-4 rounded-md">
                     <div className="flex items-center mb-2">
                       <span className="font-medium mr-2">Mã đơn hàng:</span>
@@ -705,6 +721,14 @@ const OrdersPage = () => {
                     <div className="flex items-center mb-2">
                       <Calendar className="h-4 w-4 text-gray-400 mr-2" />
                       <span>{formatDate(currentOrder.orderDate)}</span>
+                    </div>
+                    <div className="flex items-center mb-2">
+                      <span className="font-medium mr-2">Ngày giờ đặt:</span>
+                      <span>{formatDate(currentOrder.orderDate)}</span>
+                    </div>
+                    <div className="flex items-center mb-2">
+                      <span className="font-medium mr-2">Số lượng người:</span>
+                      <span>{currentOrder.guestCount}</span>
                     </div>
                     <div className="flex items-center mb-2">
                       <span className="font-medium mr-2">Bàn:</span>
@@ -910,6 +934,23 @@ const OrdersPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mã đặt bàn
+                  </label>
+                  <input
+                    type="text"
+                    value={editingOrder.bookingCode}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        bookingCode: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nhập mã đặt bàn"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Khách hàng
                   </label>
                   <input
@@ -926,6 +967,35 @@ const OrdersPage = () => {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ngày giờ đặt
+                  </label>
+                  <input
+                    type="text"
+                    value={formatDate(editingOrder.orderDate)}
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-200 bg-gray-100 rounded-md"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số lượng người
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editingOrder.guestCount}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        guestCount: Number(e.target.value),
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nhập số lượng người"
+                  />
+                </div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Bàn
                   </label>
@@ -946,8 +1016,81 @@ const OrdersPage = () => {
                       </option>
                     ))}
                   </select>
+                </div> */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Chọn bàn
+                  </label>
+                  <div className="flex gap-2">
+                    <select
+                      value={selectedTableId || ""}
+                      onChange={(e) => setSelectedTableId(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">-- Chọn bàn --</option>
+                      {tables
+                        .filter(
+                          (table) => !editingOrder.tableIds?.includes(table.id)
+                        )
+                        .map((table) => (
+                          <option key={table.id} value={table.id}>
+                            {table.name} ({table.capacity} người)
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      onClick={() => {
+                        if (
+                          selectedTableId &&
+                          !editingOrder.tableIds.includes(selectedTableId)
+                        ) {
+                          setEditingOrder({
+                            ...editingOrder,
+                            tableIds: [
+                              ...editingOrder.tableIds,
+                              selectedTableId,
+                            ],
+                          });
+                          setSelectedTableId("");
+                        }
+                      }}
+                    >
+                      Thêm bàn
+                    </button>
+                  </div>
+                  {/* Danh sách các bàn đã gán */}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {editingOrder.tableIds.map((id) => {
+                      const table = tables.find((t) => t.id === id);
+                      return (
+                        <span
+                          key={id}
+                          className="inline-flex items-center px-2 py-1 bg-gray-100 rounded text-sm"
+                        >
+                          {table
+                            ? `${table.name} (${table.capacity} người)`
+                            : id}
+                          <button
+                            type="button"
+                            className="ml-2 text-red-500 hover:text-red-700"
+                            onClick={() =>
+                              setEditingOrder({
+                                ...editingOrder,
+                                tableIds: editingOrder.tableIds.filter(
+                                  (tid) => tid !== id
+                                ),
+                              })
+                            }
+                          >
+                            &times;
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Trạng thái
@@ -968,7 +1111,6 @@ const OrdersPage = () => {
                     <option value="cancelled">Đã hủy</option>
                   </select>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Phương thức thanh toán
@@ -1180,6 +1322,20 @@ const OrdersPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mã đặt bàn
+                  </label>
+                  <input
+                    type="text"
+                    value={newOrder.bookingCode}
+                    onChange={(e) =>
+                      setNewOrder({ ...newOrder, bookingCode: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nhập mã đặt bàn"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Khách hàng
                   </label>
                   <input
@@ -1194,6 +1350,37 @@ const OrdersPage = () => {
                 </div>
 
                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ngày giờ đặt
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={newOrder.orderDate.slice(0, 16)}
+                    onChange={(e) =>
+                      setNewOrder({ ...newOrder, orderDate: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số lượng người
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newOrder.guestCount}
+                    onChange={(e) =>
+                      setNewOrder({
+                        ...newOrder,
+                        guestCount: Number(e.target.value),
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nhập số lượng người"
+                  />
+                </div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Bàn
                   </label>
@@ -1211,8 +1398,78 @@ const OrdersPage = () => {
                       </option>
                     ))}
                   </select>
+                </div> */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Chọn bàn
+                  </label>
+                  <div className="flex gap-2">
+                    <select
+                      value={selectedTableId || ""}
+                      onChange={(e) => setSelectedTableId(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">-- Chọn bàn --</option>
+                      {tables
+                        .filter(
+                          (table) => !newOrder.tableIds?.includes(table.id)
+                        )
+                        .map((table) => (
+                          <option key={table.id} value={table.id}>
+                            {table.name} ({table.capacity} người)
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      onClick={() => {
+                        if (
+                          selectedTableId &&
+                          !newOrder.tableIds.includes(selectedTableId)
+                        ) {
+                          setNewOrder({
+                            ...newOrder,
+                            tableIds: [...newOrder.tableIds, selectedTableId],
+                          });
+                          setSelectedTableId("");
+                        }
+                      }}
+                    >
+                      Thêm bàn
+                    </button>
+                  </div>
+                  {/* Danh sách các bàn đã gán */}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {newOrder.tableIds.map((id) => {
+                      const table = tables.find((t) => t.id === id);
+                      return (
+                        <span
+                          key={id}
+                          className="inline-flex items-center px-2 py-1 bg-gray-100 rounded text-sm"
+                        >
+                          {table
+                            ? `${table.name} (${table.capacity} người)`
+                            : id}
+                          <button
+                            type="button"
+                            className="ml-2 text-red-500 hover:text-red-700"
+                            onClick={() =>
+                              setNewOrder({
+                                ...newOrder,
+                                tableIds: newOrder.tableIds.filter(
+                                  (tid) => tid !== id
+                                ),
+                              })
+                            }
+                          >
+                            &times;
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Trạng thái
@@ -1229,7 +1486,6 @@ const OrdersPage = () => {
                     <option value="completed">Hoàn thành</option>
                   </select>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Phương thức thanh toán
