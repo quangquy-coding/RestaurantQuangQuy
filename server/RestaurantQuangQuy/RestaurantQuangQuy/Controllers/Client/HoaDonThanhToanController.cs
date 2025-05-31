@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RestaurantQuangQuy.DTO.HoaDonDTO;
 using RestaurantQuangQuy.Models;
+using RestaurantQuangQuy.Services;
 
 namespace RestaurantQuangQuy.Controllers.Client
 {
@@ -10,10 +11,12 @@ namespace RestaurantQuangQuy.Controllers.Client
     public class HoaDonThanhToanController : ControllerBase
     {
         private readonly RestaurantManagementContext _context;
-        public HoaDonThanhToanController(RestaurantManagementContext context)
+		private readonly IEmailService _emailService;
+		public HoaDonThanhToanController(RestaurantManagementContext context, IEmailService emailService)
         {
             _context = context;
-        }
+			_emailService = emailService;
+		}
 
         //lấy danh sách hóa đơn
         [HttpGet]
@@ -93,7 +96,7 @@ namespace RestaurantQuangQuy.Controllers.Client
 
         //thêm hóa đơn
         [HttpPost("CreateHoaDon")]
-        public IActionResult CreateHoaDon([FromBody] HoaDonCreateDTO hoadondto)
+        public async Task<IActionResult> CreateHoaDonAsync([FromBody] HoaDonCreateDTO hoadondto)
         {
             try
             {
@@ -122,7 +125,62 @@ namespace RestaurantQuangQuy.Controllers.Client
                 //thêm hóa đơn
                 _context.Hoadonthanhtoans.Add(hoadon);
                 _context.SaveChanges();
-                return Ok(new { message = "Thêm hóa đơn thành công", data = hoadon });
+				try
+				{
+					var khachHang = _context.Khachhangs.FirstOrDefault(kh => kh.MaKhachHang == hoadondto.MaKhachHang);
+					string toEmail = khachHang?.Email ?? "default@email.com";
+					string subject = "💰 Xác nhận thanh toán thành công - Nhà Hàng Quang Quý";
+
+					string body = $@"
+        <div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;'>
+            <div style='max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); overflow: hidden;'>
+                <div style='background-color: #388e3c; color: white; padding: 16px; text-align: center;'>
+                    <h2 style='margin: 0;'>Thanh toán thành công</h2>
+                </div>
+                <div style='padding: 24px;'>
+                    <p>Xin chào <strong>{khachHang?.TenKhachHang ?? "Quý khách"}</strong>,</p>
+                    <p>Chúng tôi xin xác nhận rằng bạn đã thanh toán thành công tại <strong>Nhà Hàng Quang Quý</strong>.</p>
+
+                    <table style='width: 100%; margin-top: 16px; border-collapse: collapse;'>
+                        <tr>
+                            <td style='padding: 8px; font-weight: bold;'>🧾 Mã hóa đơn:</td>
+                            <td style='padding: 8px;'>{mahoadon}</td>
+                        </tr>
+                        <tr style='background-color: #f9f9f9;'>
+                            <td style='padding: 8px; font-weight: bold;'>💳 Phương thức:</td>
+                            <td style='padding: 8px;'>{hoadondto.PhuongThucThanhToan}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px; font-weight: bold;'>💸 Tổng tiền:</td>
+                            <td style='padding: 8px;'>{hoadondto.TongTien:N0} VNĐ</td>
+                        </tr>
+                        <tr style='background-color: #f9f9f9;'>
+                            <td style='padding: 8px; font-weight: bold;'>📅 Ngày thanh toán:</td>
+                            <td style='padding: 8px;'>{DateTime.Now:HH:mm dd/MM/yyyy}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px; font-weight: bold;'>📝 Ghi chú:</td>
+                            <td style='padding: 8px;'>{(string.IsNullOrEmpty(hoadondto.GhiChu) ? "Không có" : hoadondto.GhiChu)}</td>
+                        </tr>
+                    </table>
+
+                    <p style='margin-top: 24px;'>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
+                    <p style='margin-top: 16px;'>Trân trọng,<br/><strong>Nhà Hàng Quang Quý</strong></p>
+                </div>
+                <div style='background-color: #eeeeee; padding: 12px; text-align: center; font-size: 12px; color: #555;'>
+                    © {DateTime.Now.Year} Nhà Hàng Quang Quý. Mọi quyền được bảo lưu.
+                </div>
+            </div>
+        </div>";
+
+					await _emailService.SendEmailAsync(toEmail, subject, body);
+				}
+				catch (Exception emailEx)
+				{
+					Console.WriteLine("❌ Lỗi gửi email hóa đơn: " + emailEx.Message);
+				}
+
+				return Ok(new { message = "Thêm hóa đơn thành công", data = hoadon });
             }
             catch (Exception ex)
             {

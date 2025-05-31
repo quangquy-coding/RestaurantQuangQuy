@@ -6,6 +6,8 @@ using RestaurantQuangQuy.Models;
 using RestaurantQuangQuy.Services;
 using System.Text;
 
+using RestaurantQuangQuy.Helpers;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. Cấu hình DbContext
@@ -16,6 +18,7 @@ builder.Services.AddDbContext<RestaurantManagementContext>(options =>
 // 2. Cấu hình Email Service
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddTransient<IEmailService, EmailService>();
+
 
 // 3. Cấu hình JWT
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
