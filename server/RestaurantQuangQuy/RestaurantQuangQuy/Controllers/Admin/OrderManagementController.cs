@@ -73,7 +73,21 @@ namespace RestaurantQuangQuy.Controllers.Admin
                                 trangThai = db.TrangThai,
                                 ghiChu = db.GhiChu
                             })
-                            .FirstOrDefault()
+                            .FirstOrDefault(),
+                        tables = (
+								from dbba in _context.DatBanBanAns
+								join b in _context.Banans on dbba.MaBanAn equals b.MaBan
+								where dbba.MaDatBan == h.MaBanAn
+								select new
+								{
+									maBan = b.MaBan,
+									tenBan = b.TenBan,
+									viTri = b.ViTri,
+									soChoNgoi = b.SoChoNgoi,
+									ghiChu = b.GhiChu
+								}
+							).ToList()
+
                     })
                     .OrderByDescending(h => h.orderDate)
                     .ToListAsync();
@@ -144,7 +158,20 @@ namespace RestaurantQuangQuy.Controllers.Admin
                                 trangThai = db.TrangThai,
                                 ghiChu = db.GhiChu
                             })
-                            .FirstOrDefault()
+                            .FirstOrDefault(),
+                        tables = (
+                                from dbba in _context.DatBanBanAns
+                                join b in _context.Banans on dbba.MaBanAn equals b.MaBan
+                                where dbba.MaDatBan == h.MaBanAn
+                                select new
+                                {
+                                    maBan = b.MaBan,
+                                    tenBan = b.TenBan,
+                                    viTri = b.ViTri,
+                                    soChoNgoi = b.SoChoNgoi,
+                                    ghiChu = b.GhiChu
+                                }
+                            ).ToList()
                     })
                     .OrderByDescending(h => h.orderDate)
                     .ToListAsync();

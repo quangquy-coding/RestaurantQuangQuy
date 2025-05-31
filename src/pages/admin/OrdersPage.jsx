@@ -644,10 +644,10 @@ const OrdersPage = () => {
                     {order.customerName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {order.tableNumber || (
-                      <span className="text-yellow-600 italic">
-                        Chưa gán bàn
-                      </span>
+                    {order.tables && order.tables.length > 0 ? (
+                      order.tables.map((table) => table.tenBan).join(", ")
+                    ) : (
+                      <span className="text-yellow-600 italic">Chưa gán bàn</span>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -979,11 +979,24 @@ const OrdersPage = () => {
                   </label>
                   <input
                     type="text"
-                    value={formatDate(editingOrder.orderDate)}
+                    value={formatDate(editingOrder.bookingInfo.thoiGianDat)}
                     disabled
                     className="w-full px-3 py-2 border border-gray-200 bg-gray-100 rounded-md"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ngày giờ đặt
+                  </label>
+                  <input
+                    type="text"
+                    value={formatDate(editingOrder.bookingInfo.thoiGianDen)}
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-200 bg-gray-100 rounded-md"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Số lượng người
@@ -991,7 +1004,7 @@ const OrdersPage = () => {
                   <input
                     type="number"
                     min={1}
-                    value={editingOrder.guestCount}
+                    value={editingOrder.bookingInfo.soLuongKhach}
                     onChange={(e) =>
                       setEditingOrder({
                         ...editingOrder,
