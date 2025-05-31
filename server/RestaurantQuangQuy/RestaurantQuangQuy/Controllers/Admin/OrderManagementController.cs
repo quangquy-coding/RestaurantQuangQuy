@@ -16,111 +16,149 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			_context = context;
 		}
 
-		// Lấy tất cả đơn hàng cho admin
-		[HttpGet("all")]
-		public async Task<IActionResult> GetAllOrders()
-		{
-			try
-			{
-				var orders = await _context.Hoadonthanhtoans
-					.Select(h => new
-					{
-						id = h.MaHoaDon,
-						customerName = _context.Khachhangs
-							.Where(k => k.MaKhachHang == h.MaKhachHang)
-							.Select(k => k.TenKhachHang)
-							.FirstOrDefault() ?? "Khách vãng lai",
-						tableNumber = _context.Banans
-							.Where(b => b.MaBan == h.MaBanAn)
-							.Select(b => b.TenBan)
-							.FirstOrDefault() ?? "",
-						tableId = h.MaBanAn ?? "",
-						orderDate = h.ThoiGianDat,
-						status = h.TrangThaiThanhToan == "Chờ xác nhận" ? "pending" :
-								h.TrangThaiThanhToan == "Đang chuẩn bị" ? "processing" :
-								h.TrangThaiThanhToan == "Hoàn thành" ? "completed" :
-								h.TrangThaiThanhToan == "Đã hủy" ? "cancelled" : "pending",
-						total = h.TongTien ?? 0,
-						paymentMethod = h.PhuongThucThanhToan == "Tiền mặt" ? "cash" :
-									   h.PhuongThucThanhToan == "Thẻ" ? "card" : "ewallet",
-						items = _context.Chitietdondatmons
-							.Where(ct => ct.MaDatMon == h.MaDatMon)
-							.Select(ct => new
-							{
-								id = ct.MaMon,
-								name = _context.Monans
-									.Where(m => m.MaMon == ct.MaMon)
-									.Select(m => m.TenMon)
-									.FirstOrDefault(),
-								quantity = ct.SoLuong,
-								price = ct.Gia
-							}).ToList()
-					})
-					.OrderByDescending(h => h.orderDate)
-					.ToListAsync();
+        // Lấy tất cả đơn hàng cho admin
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllOrders()
+        {
+            try
+            {
+                var orders = await _context.Hoadonthanhtoans
+                    .Select(h => new
+                    {
+                        id = h.MaHoaDon,
+                        customerName = _context.Khachhangs
+                            .Where(k => k.MaKhachHang == h.MaKhachHang)
+                            .Select(k => k.TenKhachHang)
+                            .FirstOrDefault() ?? "Khách vãng lai",
 
-				return Ok(orders);
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { message = "Lỗi khi lấy danh sách đơn hàng", error = ex.Message });
-			}
-		}
+                        tableNumber = _context.Banans
+                            .Where(b => b.MaBan == h.MaBanAn)
+                            .Select(b => b.TenBan)
+                            .FirstOrDefault() ?? "",
 
-		// Lấy đơn hàng theo khách hàng
-		[HttpGet("customer/{customerId}")]
-		public async Task<IActionResult> GetOrdersByCustomer(string customerId)
-		{
-			try
-			{
-				var orders = await _context.Hoadonthanhtoans
-					.Where(h => h.MaKhachHang == customerId)
-					.Select(h => new
-					{
-						id = h.MaHoaDon,
-						customerName = _context.Khachhangs
-							.Where(k => k.MaKhachHang == h.MaKhachHang)
-							.Select(k => k.TenKhachHang)
-							.FirstOrDefault() ?? "Khách vãng lai",
-						tableNumber = _context.Banans
-							.Where(b => b.MaBan == h.MaBanAn)
-							.Select(b => b.TenBan)
-							.FirstOrDefault() ?? "",
-						tableId = h.MaBanAn ?? "",
-						orderDate = h.ThoiGianDat,
-						status = h.TrangThaiThanhToan == "Chờ xác nhận" ? "pending" :
-								h.TrangThaiThanhToan == "Đang chuẩn bị" ? "processing" :
-								h.TrangThaiThanhToan == "Hoàn thành" ? "completed" :
-								h.TrangThaiThanhToan == "Đã hủy" ? "cancelled" : "pending",
-						total = h.TongTien ?? 0,
-						paymentMethod = h.PhuongThucThanhToan == "Tiền mặt" ? "cash" :
-									   h.PhuongThucThanhToan == "Thẻ" ? "card" : "ewallet",
-						items = _context.Chitietdondatmons
-							.Where(ct => ct.MaDatMon == h.MaDatMon)
-							.Select(ct => new
-							{
-								id = ct.MaMon,
-								name = _context.Monans
-									.Where(m => m.MaMon == ct.MaMon)
-									.Select(m => m.TenMon)
-									.FirstOrDefault(),
-								quantity = ct.SoLuong,
-								price = ct.Gia
-							}).ToList()
-					})
-					.OrderByDescending(h => h.orderDate)
-					.ToListAsync();
+                        tableId = h.MaBanAn ?? "",
+                        orderDate = h.ThoiGianDat,
 
-				return Ok(orders);
-			}
-			catch (Exception ex)
-			{
-				return BadRequest(new { message = "Lỗi khi lấy đơn hàng khách hàng", error = ex.Message });
-			}
-		}
+                        status = h.TrangThaiThanhToan == "Chờ xác nhận" ? "pending" :
+                                 h.TrangThaiThanhToan == "Đang chuẩn bị" ? "processing" :
+                                 h.TrangThaiThanhToan == "Hoàn thành" ? "completed" :
+                                 h.TrangThaiThanhToan == "Đã hủy" ? "cancelled" : "pending",
 
-		// Lấy bàn trống theo thời gian
-		[HttpGet("available-tables")]
+                        total = h.TongTien ?? 0,
+
+                        paymentMethod = h.PhuongThucThanhToan == "Tiền mặt" ? "cash" :
+                                        h.PhuongThucThanhToan == "Thẻ" ? "card" : "ewallet",
+
+                        items = _context.Chitietdondatmons
+                            .Where(ct => ct.MaDatMon == h.MaDatMon)
+                            .Select(ct => new
+                            {
+                                id = ct.MaMon,
+                                name = _context.Monans
+                                    .Where(m => m.MaMon == ct.MaMon)
+                                    .Select(m => m.TenMon)
+                                    .FirstOrDefault(),
+                                quantity = ct.SoLuong,
+                                price = ct.Gia
+                            }).ToList(),
+
+                        bookingInfo = _context.Datbans
+                            .Where(db => db.MaBanAn == h.MaBanAn)
+                            .Select(db => new
+                            {
+                                maDatBan = db.MaBanAn,
+                                soLuongKhach = db.SoLuongKhach,
+                                thoiGianDat = db.ThoiGianDat,
+                                thoiGianDen = db.ThoiGianDen,
+                                trangThai = db.TrangThai,
+                                ghiChu = db.GhiChu
+                            })
+                            .FirstOrDefault()
+                    })
+                    .OrderByDescending(h => h.orderDate)
+                    .ToListAsync();
+
+                return Ok(orders);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Lỗi khi lấy danh sách đơn hàng", error = ex.Message });
+            }
+        }
+
+        [HttpGet("customer/{customerId}")]
+        public async Task<IActionResult> GetOrdersByCustomer(string customerId)
+        {
+            try
+            {
+                var orders = await _context.Hoadonthanhtoans
+                    .Where(h => h.MaKhachHang == customerId)
+                    .Select(h => new
+                    {
+                        id = h.MaHoaDon,
+
+                        customerName = _context.Khachhangs
+                            .Where(k => k.MaKhachHang == h.MaKhachHang)
+                            .Select(k => k.TenKhachHang)
+                            .FirstOrDefault() ?? "Khách vãng lai",
+
+                        tableNumber = _context.Banans
+                            .Where(b => b.MaBan == h.MaBanAn)
+                            .Select(b => b.TenBan)
+                            .FirstOrDefault() ?? "",
+
+                        tableId = h.MaBanAn ?? "",
+                        orderDate = h.ThoiGianDat,
+
+                        status = h.TrangThaiThanhToan == "Chờ xác nhận" ? "pending" :
+                                 h.TrangThaiThanhToan == "Đang chuẩn bị" ? "processing" :
+                                 h.TrangThaiThanhToan == "Hoàn thành" ? "completed" :
+                                 h.TrangThaiThanhToan == "Đã hủy" ? "cancelled" : "pending",
+
+                        total = h.TongTien ?? 0,
+
+                        paymentMethod = h.PhuongThucThanhToan == "Tiền mặt" ? "cash" :
+                                        h.PhuongThucThanhToan == "Thẻ" ? "card" : "ewallet",
+
+                        items = _context.Chitietdondatmons
+                            .Where(ct => ct.MaDatMon == h.MaDatMon)
+                            .Select(ct => new
+                            {
+                                id = ct.MaMon,
+                                name = _context.Monans
+                                    .Where(m => m.MaMon == ct.MaMon)
+                                    .Select(m => m.TenMon)
+                                    .FirstOrDefault(),
+                                quantity = ct.SoLuong,
+                                price = ct.Gia
+                            }).ToList(),
+
+                        bookingInfo = _context.Datbans
+                            .Where(db => db.MaBanAn == h.MaBanAn)
+                            .Select(db => new
+                            {
+                                maDatBan = db.MaBanAn,
+                                soLuongKhach = db.SoLuongKhach,
+                                thoiGianDat = db.ThoiGianDat,
+                                thoiGianDen = db.ThoiGianDen,
+                                trangThai = db.TrangThai,
+                                ghiChu = db.GhiChu
+                            })
+                            .FirstOrDefault()
+                    })
+                    .OrderByDescending(h => h.orderDate)
+                    .ToListAsync();
+
+                return Ok(orders);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Lỗi khi lấy đơn hàng khách hàng", error = ex.Message });
+            }
+        }
+
+        // Lấy bàn trống theo thời gian
+        [HttpGet("available-tables")]
 		public async Task<IActionResult> GetAvailableTables([FromQuery] DateTime? dateTime = null)
 		{
 			try

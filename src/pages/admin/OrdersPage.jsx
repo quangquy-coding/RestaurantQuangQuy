@@ -161,7 +161,7 @@ const OrdersPage = () => {
   const openEditModal = (order) => {
     setEditingOrder({
       ...order,
-      bookingCode: order.bookingCode || "",
+      tableNumber: order.bookingCode || "",
       tableIds: order.tableIds || (order.tableId ? [order.tableId] : []),
       guestCount: order.guestCount || 1, // Thêm trường số lượng người
     });
@@ -725,8 +725,14 @@ const OrdersPage = () => {
                     </div>
                     <div className="flex items-center mb-2">
                       <span className="font-medium mr-2">Ngày giờ đặt:</span>
-                      <span>{formatDate(currentOrder.orderDate)}</span>
+                      <span>{formatDate(currentOrder.bookingInfo.thoiGianDat)}</span>
                     </div>
+
+                    <div className="flex items-center mb-2">
+                      <span className="font-medium mr-2">Ngày giờ đến:</span>
+                      <span>{formatDate(currentOrder.bookingInfo.thoiGianDen)}</span>
+                    </div>
+
                     <div className="flex items-center mb-2">
                       <span className="font-medium mr-2">Số lượng người:</span>
                       <span>{currentOrder.guestCount}</span>
