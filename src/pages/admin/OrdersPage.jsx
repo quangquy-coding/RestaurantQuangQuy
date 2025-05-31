@@ -161,9 +161,9 @@ const OrdersPage = () => {
   const openEditModal = (order) => {
     setEditingOrder({
       ...order,
-      bookingCode: order.bookingCode || "",
-      tableIds: order.tableIds || (order.tableId ? [order.tableId] : []),
-      guestCount: order.guestCount || 1, // Thêm trường số lượng người
+
+      tableIds: order.tableIds || [],
+      guestCount: order.guestCount || 1,
     });
     fetchAvailableTables(order.orderDate);
     setIsEditModalOpen(true);
@@ -301,8 +301,12 @@ const OrdersPage = () => {
 
       const orderData = {
         customerName: editingOrder.customerName,
-        orderTableId: editingOrder.bookingCode || "",
-        tableId: editingOrder.tableIds || [],
+        orderTableId: editingOrder.tableId || "", // Sửa lại truyền đúng trường bookingCode
+        tableId:
+          Array.isArray(editingOrder.tableIds) &&
+          editingOrder.tableIds.length === 1
+            ? editingOrder.tableIds[0]
+            : editingOrder.tableIds || [],
         status: editingOrder.status,
         paymentMethod: editingOrder.paymentMethod,
         notes: editingOrder.notes || "",
@@ -312,9 +316,8 @@ const OrdersPage = () => {
           quantity: item.quantity,
           price: item.price,
         })),
-        guest:editingOrder.guestCount,
+        guestCount: editingOrder.guestCount,
       };
-      
 
       console.log("Sending update order data:", JSON.stringify(orderData));
       await updateOrder(editingOrder.id, orderData);
@@ -342,7 +345,11 @@ const OrdersPage = () => {
 
       const orderData = {
         customerName: newOrder.customerName,
-        tableId: newOrder.tableId || "",
+        orderTableId: newOrder.bookingCode || "", // Thêm dòng này để truyền mã đặt bàn
+        tableId:
+          Array.isArray(newOrder.tableIds) && newOrder.tableIds.length === 1
+            ? newOrder.tableIds[0]
+            : newOrder.tableIds || [],
         status: newOrder.status,
         paymentMethod: newOrder.paymentMethod,
         notes: newOrder.notes || "",
@@ -712,7 +719,7 @@ const OrdersPage = () => {
                   </h3>
                   <div className="flex items-center mb-2">
                     <span className="font-medium mr-2">Mã đặt bàn:</span>
-                    <span>{currentOrder.id}</span>
+                    <span>{currentOrder.tableId || "-"}</span>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-md">
                     <div className="flex items-center mb-2">
@@ -939,7 +946,7 @@ const OrdersPage = () => {
                   </label>
                   <input
                     type="text"
-                    value={editingOrder.bookingCode}
+                    value={editingOrder.tableId || ""}
                     onChange={(e) =>
                       setEditingOrder({
                         ...editingOrder,
@@ -1285,7 +1292,6 @@ const OrdersPage = () => {
                           .toLocaleString("vi-VN")}{" "}
                         ₫
                       </td>
-                      <td></td>
                     </tr>
                   </tfoot>
                 </table>
@@ -1321,20 +1327,16 @@ const OrdersPage = () => {
 
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mã đặt bàn
-                  </label>
-                  <input
-                    type="text"
-                    value={newOrder.bookingCode}
-                    onChange={(e) =>
-                      setNewOrder({ ...newOrder, bookingCode: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nhập mã đặt bàn"
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={newOrder.bookingCode || ""}
+                  onChange={(e) =>
+                    setNewOrder({ ...newOrder, bookingCode: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Nhập mã đặt bàn"
+                />
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Khách hàng
@@ -1729,5 +1731,4 @@ const OrdersPage = () => {
     </div>
   );
 };
-
 export default OrdersPage;
