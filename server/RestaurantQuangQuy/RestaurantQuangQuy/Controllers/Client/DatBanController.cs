@@ -2,9 +2,12 @@
 using Microsoft.AspNetCore.Mvc;
 using RestaurantQuangQuy.Models;
 using RestaurantQuangQuy.DTO;
+using RestaurantQuangQuy.Helpers;
+
 using RestaurantQuangQuy.DTO.DatBanDTO;
 using Microsoft.EntityFrameworkCore;
 using RestaurantQuangQuy.DTO.BanAnDTO;
+using RestaurantQuangQuy.Services;
 
 namespace RestaurantQuangQuy.Controllers.Client
 {
@@ -13,10 +16,12 @@ namespace RestaurantQuangQuy.Controllers.Client
     public class DatBanController : ControllerBase
     {
         private readonly RestaurantManagementContext _context;
-        public DatBanController(RestaurantManagementContext context)
+		private readonly IEmailService _emailService;
+		public DatBanController(RestaurantManagementContext context, IEmailService emailService)
         {
             _context = context;
-        }
+			_emailService = emailService;
+		}
         // GET: api/DatBan
         [HttpGet("GetAll")]
         public  IActionResult GetDatBan()
@@ -122,7 +127,7 @@ namespace RestaurantQuangQuy.Controllers.Client
 
         // POST: api/DatBan
         [HttpPost("Create")]
-        public IActionResult CreateDatBan([FromBody] DatBanCreateDTO datBanDTO)
+        public async Task<IActionResult> CreateDatBanAsync([FromBody] DatBanCreateDTO datBanDTO)
         {
             try
             {
@@ -161,10 +166,64 @@ namespace RestaurantQuangQuy.Controllers.Client
                     GhiChu = datBanDTO.GhiChu
                 };
 
+
                 _context.Datbans.Add(datBan);
                 _context.SaveChanges();
+				try
+				{
+					var khachHang = _context.Khachhangs.FirstOrDefault(kh => kh.MaKhachHang == datBanDTO.MaKhachHang);
+					string toEmail = khachHang?.Email ?? "default@email.com";
+					string subject = "✅ Xác nhận đặt bàn thành công - Nhà Hàng Quang Quý";
 
-                return Ok(maBanAn);
+					string body = $@"
+		<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;'>
+			<div style='max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);'>
+				<div style='background-color: #d32f2f; padding: 16px; color: white; text-align: center;'>
+					<h2 style='margin: 0;'>Xác nhận đặt bàn thành công</h2>
+				</div>
+				<div style='padding: 24px;'>
+					<p>Xin chào <strong>{khachHang?.TenKhachHang ?? "Quý khách"}</strong>,</p>
+					<p>Cảm ơn bạn đã đặt bàn tại <strong>Nhà Hàng Quang Quý</strong>. Dưới đây là thông tin chi tiết đặt bàn của bạn:</p>
+					<table style='width: 100%; border-collapse: collapse; margin-top: 16px;'>
+						<tr>
+							<td style='padding: 8px; font-weight: bold;'>📌 Mã đặt bàn:</td>
+							<td style='padding: 8px;'>{maBanAn}</td>
+						</tr>
+						<tr style='background-color: #f9f9f9;'>
+							<td style='padding: 8px; font-weight: bold;'>🕐 Thời gian đặt:</td>
+							<td style='padding: 8px;'>{datBanDTO.ThoiGianDat:HH:mm dd/MM/yyyy}</td>
+						</tr>
+						<tr>
+							<td style='padding: 8px; font-weight: bold;'>🚶‍♂️ Thời gian đến:</td>
+							<td style='padding: 8px;'>{datBanDTO.ThoiGianDen:HH:mm dd/MM/yyyy}</td>
+						</tr>
+						<tr style='background-color: #f9f9f9;'>
+							<td style='padding: 8px; font-weight: bold;'>👥 Số lượng khách:</td>
+							<td style='padding: 8px;'>{datBanDTO.SoLuongKhach}</td>
+						</tr>
+						<tr>
+							<td style='padding: 8px; font-weight: bold;'>📝 Ghi chú:</td>
+							<td style='padding: 8px;'>{(string.IsNullOrEmpty(datBanDTO.GhiChu) ? "Không có" : datBanDTO.GhiChu)}</td>
+						</tr>
+					</table>
+					<p style='margin-top: 24px;'>Chúng tôi rất mong được phục vụ bạn tại nhà hàng!</p>
+					<p style='margin-top: 16px;'>Trân trọng,<br/><strong>Nhà Hàng Quang Quý</strong></p>
+				</div>
+				<div style='background-color: #eeeeee; padding: 12px; text-align: center; font-size: 12px; color: #555;'>
+					© {DateTime.Now.Year} Nhà Hàng Quang Quý. Mọi quyền được bảo lưu.
+				</div>
+			</div>
+		</div>";
+
+					await _emailService.SendEmailAsync(toEmail, subject, body);
+				}
+				catch (Exception emailEx)
+				{
+					Console.WriteLine("❌ Lỗi gửi email: " + emailEx.Message);
+				}
+
+
+				return Ok(maBanAn);
             }
             catch (Exception ex)
             {
