@@ -39,8 +39,8 @@ namespace RestaurantQuangQuy.Controllers.Admin
                         tableId = h.MaBanAn ?? "",
                         orderDate = h.ThoiGianDat,
 
-                        status = h.TrangThaiThanhToan == "Chờ xác nhận" ? "pending" :
-                                 h.TrangThaiThanhToan == "Đang chuẩn bị" ? "processing" :
+                        status = h.TrangThaiThanhToan == "Chờ xử lí" ? "pending" :
+                                 h.TrangThaiThanhToan == "Đang xử lí" ? "processing" :
                                  h.TrangThaiThanhToan == "Hoàn thành" ? "completed" :
                                  h.TrangThaiThanhToan == "Đã hủy" ? "cancelled" : "pending",
 
@@ -124,8 +124,8 @@ namespace RestaurantQuangQuy.Controllers.Admin
                         tableId = h.MaBanAn ?? "",
                         orderDate = h.ThoiGianDat,
 
-                        status = h.TrangThaiThanhToan == "Chờ xác nhận" ? "pending" :
-                                 h.TrangThaiThanhToan == "Đang chuẩn bị" ? "processing" :
+                        status = h.TrangThaiThanhToan == "Chờ xử lí" ? "pending" :
+                                 h.TrangThaiThanhToan == "Đang xử lí" ? "processing" :
                                  h.TrangThaiThanhToan == "Hoàn thành" ? "completed" :
                                  h.TrangThaiThanhToan == "Đã hủy" ? "cancelled" : "pending",
 
@@ -274,8 +274,8 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				// Convert status
 				var vietnameseStatus = request.Status switch
 				{
-					"pending" => "Chờ xác nhận",
-					"processing" => "Đang chuẩn bị",
+					"pending" => "Chờ xử lí",
+					"processing" => "Đang xử lí",
 					"completed" => "Hoàn thành",
 					"cancelled" => "Đã hủy",
 					_ => request.Status
@@ -391,11 +391,11 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				var maHoaDon = "HD" + DateTime.Now.ToString("yyyyMMddHHmmss");
 				var vietnameseStatus = request.Status switch
 				{
-					"pending" => "Chờ xác nhận",
-					"processing" => "Đang chuẩn bị",
+					"pending" => "Chờ xử lí",
+					"processing" => "Đang xử lí",
 					"completed" => "Hoàn thành",
 					"cancelled" => "Đã hủy",
-					_ => "Chờ xác nhận"
+					_ => "Chờ xử lí"
 				};
 
 				var vietnamesePayment = request.PaymentMethod switch
@@ -485,11 +485,11 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				// Cập nhật thông tin đơn hàng
 				var vietnameseStatus = request.Status switch
 				{
-					"pending" => "Chờ xác nhận",
-					"processing" => "Đang chuẩn bị",
+					"pending" => "Chờ xử lí",
+					"processing" => "Đang xử lí",
 					"completed" => "Hoàn thành",
 					"cancelled" => "Đã hủy",
-					_ => "Chờ xác nhận"
+					_ => "Chờ xử lí"
 				};
 
 				var vietnamesePayment = request.PaymentMethod switch

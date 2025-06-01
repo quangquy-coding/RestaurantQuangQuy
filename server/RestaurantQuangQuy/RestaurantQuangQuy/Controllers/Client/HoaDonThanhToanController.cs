@@ -180,7 +180,7 @@ namespace RestaurantQuangQuy.Controllers.Client
 					Console.WriteLine("❌ Lỗi gửi email hóa đơn: " + emailEx.Message);
 				}
 
-				return Ok(new { message = "Thêm hóa đơn thành công", data = hoadon });
+				return Ok(new { message = "Thêm hóa đơn thành công", mahoadon });
             }
             catch (Exception ex)
             {

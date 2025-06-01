@@ -161,8 +161,13 @@ const OrdersPage = () => {
   const openEditModal = (order) => {
     setEditingOrder({
       ...order,
-      tableIds: order.tableIds || [],
-      guestCount: order.guestCount || 1,
+      tableIds:
+        order.tableIds && order.tableIds.length > 0
+          ? order.tableIds.filter(Boolean)
+          : order.tables
+          ? order.tables.map((t) => t.id).filter(Boolean)
+          : [],
+      guestCount: order.guestCount || order.bookingInfo?.soLuongKhach || 1,
     });
     fetchAvailableTables(order.orderDate);
     setIsEditModalOpen(true);
@@ -189,14 +194,14 @@ const OrdersPage = () => {
   };
 
   const formatDate = (dateString) => {
-    const options = {
-      year: "numeric",
-      month: "numeric",
-      day: "numeric",
+    const date = new Date(dateString);
+    const day = date.toLocaleDateString("vi-VN"); // "31/05/2025"
+    const time = date.toLocaleTimeString("vi-VN", {
       hour: "2-digit",
       minute: "2-digit",
-    };
-    return new Date(dateString).toLocaleDateString("vi-VN", options);
+      hour12: false,
+    }); // "18:30"
+    return `${day} ${time}`; // "31/05/2025 18:30"
   };
 
   const getStatusBadge = (status) => {
@@ -301,11 +306,7 @@ const OrdersPage = () => {
       const orderData = {
         customerName: editingOrder.customerName,
         orderTableId: editingOrder.tableId || "", // Sửa lại truyền đúng trường bookingCode
-        tableId:
-          Array.isArray(editingOrder.tableIds) &&
-          editingOrder.tableIds.length === 1
-            ? editingOrder.tableIds[0]
-            : editingOrder.tableIds || [],
+        tableId: (editingOrder.tableIds || []).filter(Boolean),
         status: editingOrder.status,
         paymentMethod: editingOrder.paymentMethod,
         notes: editingOrder.notes || "",
@@ -315,7 +316,7 @@ const OrdersPage = () => {
           quantity: item.quantity,
           price: item.price,
         })),
-        guestCount: editingOrder.guestCount,
+        guest: editingOrder.guestCount,
       };
 
       console.log("Sending update order data:", JSON.stringify(orderData));
@@ -345,15 +346,12 @@ const OrdersPage = () => {
       const orderData = {
         customerName: newOrder.customerName,
         orderTableId: newOrder.bookingCode || "", // Thêm dòng này để truyền mã đặt bàn
-        tableId:
-          Array.isArray(newOrder.tableIds) && newOrder.tableIds.length === 1
-            ? newOrder.tableIds[0]
-            : newOrder.tableIds || [],
+        tableId: newOrder.tableIds[0] || "",
         status: newOrder.status,
         paymentMethod: newOrder.paymentMethod,
         notes: newOrder.notes || "",
         orderDate: newOrder.orderDate,
-        guestCount: newOrder.guestCount,
+        guest: newOrder.guestCount,
         items: newOrder.items.map((item) => ({
           id: item.id.toString(),
           name: item.name,
@@ -653,7 +651,9 @@ const OrdersPage = () => {
                     {order.tables && order.tables.length > 0 ? (
                       order.tables.map((table) => table.tenBan).join(", ")
                     ) : (
-                      <span className="text-yellow-600 italic">Chưa gán bàn</span>
+                      <span className="text-yellow-600 italic">
+                        Chưa gán bàn
+                      </span>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -716,64 +716,59 @@ const OrdersPage = () => {
                   <h3 className="text-sm font-medium text-gray-500 mb-1">
                     Thông tin đơn hàng
                   </h3>
-                  <div className="flex items-center mb-2">
-                    <span className="font-medium mr-2">Mã đặt bàn:</span>
-                    <span>{currentOrder.tableId || "-"}</span>
-                  </div>
+
                   <div className="bg-gray-50 p-4 rounded-md">
                     <div className="flex items-center mb-2">
                       <span className="font-medium mr-2">Mã đơn hàng:</span>
                       <span>{currentOrder.id}</span>
                     </div>
                     <div className="flex items-center mb-2">
+                      <span className="font-medium mr-2">Mã đặt bàn:</span>
+                      <span>{currentOrder.tableId || "-"}</span>
+                    </div>
+                    <div className="flex items-center mb-2">
                       <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="font-medium mr-2">
+                        Ngày giờ đặt món:
+                      </span>
                       <span>{formatDate(currentOrder.orderDate)}</span>
                     </div>
                     <div className="flex items-center mb-2">
-                      <span className="font-medium mr-2">Ngày giờ đặt:</span>
-                      <span>{formatDate(currentOrder.bookingInfo.thoiGianDat)}</span>
+                      <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="font-medium mr-2">
+                        Ngày giờ đặt bàn:
+                      </span>
+                      <span>
+                        {formatDate(currentOrder.bookingInfo.thoiGianDat)}
+                      </span>
                     </div>
 
                     <div className="flex items-center mb-2">
+                      <Calendar className="h-4 w-4 text-gray-400 mr-2" />
                       <span className="font-medium mr-2">Ngày giờ đến:</span>
-                      <span>{formatDate(currentOrder.bookingInfo.thoiGianDen)}</span>
+                      <span>
+                        {formatDate(currentOrder.bookingInfo.thoiGianDen)}
+                      </span>
                     </div>
 
                     <div className="flex items-center mb-2">
                       <span className="font-medium mr-2">Số lượng người:</span>
-                      <span>{currentOrder.guestCount}</span>
+                      <span>{currentOrder.bookingInfo.soLuongKhach}</span>
                     </div>
                     <div className="flex items-center mb-2">
                       <span className="font-medium mr-2">Bàn:</span>
-                      {currentOrder.tableNumber ? (
+                      {currentOrder.tables && currentOrder.tables.length > 0 ? (
+                        <span>
+                          {currentOrder.tables
+                            .map((table) => table.tenBan || table.name || "Bàn")
+                            .join(", ")}
+                        </span>
+                      ) : currentOrder.tableNumber ? (
                         <span>{currentOrder.tableNumber}</span>
                       ) : (
-                        <div className="flex items-center">
-                          <span className="text-yellow-600 italic mr-2">
-                            Chưa gán bàn
-                          </span>
-                          {currentOrder.status === "pending" && (
-                            <div className="ml-2">
-                              <select
-                                className="text-sm border border-gray-300 rounded px-2 py-1"
-                                onChange={(e) =>
-                                  handleAssignTable(
-                                    currentOrder.id,
-                                    e.target.value
-                                  )
-                                }
-                                value={currentOrder.tableId || ""}
-                              >
-                                <option value="">-- Chọn bàn --</option>
-                                {tables.map((table) => (
-                                  <option key={table.id} value={table.id}>
-                                    {table.name} ({table.capacity} người)
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          )}
-                        </div>
+                        <span className="text-yellow-600 italic">
+                          Chưa gán bàn
+                        </span>
                       )}
                     </div>
                     <div className="flex items-center">
@@ -978,7 +973,6 @@ const OrdersPage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Ngày giờ đặt
@@ -990,7 +984,6 @@ const OrdersPage = () => {
                     className="w-full px-3 py-2 border border-gray-200 bg-gray-100 rounded-md"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Ngày giờ đặt
@@ -1002,7 +995,6 @@ const OrdersPage = () => {
                     className="w-full px-3 py-2 border border-gray-200 bg-gray-100 rounded-md"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Số lượng người
@@ -1010,7 +1002,7 @@ const OrdersPage = () => {
                   <input
                     type="number"
                     min={1}
-                    value={editingOrder.bookingInfo.soLuongKhach}
+                    value={editingOrder.guestCount}
                     onChange={(e) =>
                       setEditingOrder({
                         ...editingOrder,
@@ -1019,6 +1011,24 @@ const OrdersPage = () => {
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Nhập số lượng người"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ghi chú
+                  </label>
+                  <textarea
+                    readOnly
+                    defaultValue={editingOrder.bookingInfo.ghiChu || ""}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        ghiChu: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Nhập ghi chú (nếu có)"
                   />
                 </div>
                 {/* <div>
@@ -1076,8 +1086,8 @@ const OrdersPage = () => {
                             ...editingOrder,
                             tableIds: [
                               ...editingOrder.tableIds,
-                              selectedTableId,
-                            ],
+                              String(selectedTableId),
+                            ].filter(Boolean),
                           });
                           setSelectedTableId("");
                         }
