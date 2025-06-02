@@ -13,19 +13,24 @@ import { orderService } from "../../api/orderApi";
 import React from "react";
 
 const USER_API_URL = "http://localhost:5080/api/NguoiDungManager";
+const PAYMENT_API_URL = "http://localhost:5080/api/Payment";
+
 const api = {
   getUserById: (userId) => axios.get(`${USER_API_URL}/${userId}`),
+  createVNPayPayment: (data) =>
+    axios.post(`${PAYMENT_API_URL}/create-payment`, data),
 };
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [total, setTotal] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState("Tiền mặt"); // Mặc định là tiền mặt
+  const [paymentMethod, setPaymentMethod] = useState("cash"); // Mặc định là tiền mặt
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null);
   const [userLoading, setUserLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [redirecting, setRedirecting] = useState(false); // Trạng thái chuyển hướng VNPay
 
   const [customerInfo, setCustomerInfo] = useState({
     maDatBan: "",
@@ -35,6 +40,7 @@ const CheckoutPage = () => {
     tableNumber: "",
     guestCount: 1,
     note: "",
+    maKhachHang: "",
   });
   const [loading, setLoading] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
@@ -74,7 +80,8 @@ const CheckoutPage = () => {
       const userEmail = userData.email || "";
       const maDatBan = localStorage.getItem("maDatBan") || "";
 
-      if (maDatBan == "") {
+      if (maDatBan === "") {
+        setError("Vui lòng chọn bàn trước khi thanh toán.");
         return;
       }
 
@@ -82,9 +89,10 @@ const CheckoutPage = () => {
         name: userName,
         email: userEmail,
         phone: userPhone,
-        specialRequests: "",
+        note: "",
         maKhachHang: customerCode,
         tableNumber: maDatBan,
+        guestCount: 1,
       });
     } catch (err) {
       console.error("❌ Lỗi lấy thông tin người dùng:", err);
@@ -98,7 +106,7 @@ const CheckoutPage = () => {
         } else {
           setError(
             "Lỗi tải thông tin người dùng: " +
-              (err.response.data || "Unknown error")
+              (err.response.data?.message || "Unknown error")
           );
         }
       } else {
@@ -153,8 +161,9 @@ const CheckoutPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
-    let maDatMon = null; // để rollback nếu lỗi
+    let maDatMon = null; // Để rollback nếu lỗi
 
     try {
       // 1. Tạo DTO đặt món
@@ -180,54 +189,85 @@ const CheckoutPage = () => {
       maDatMon = datMonRes.data?.maDatMon;
       const maBanAn = datMonRes.data?.maBanAn;
 
-      const statusPay = paymentMethod === "cash" ? "processing" : "completed";
+      // 3. Xử lý thanh toán
+      if (paymentMethod === "cash") {
+        // Thanh toán tiền mặt
+        const hoaDonDTO = {
+          MaHoaDon: "",
+          MaDatMon: maDatMon,
+          MaBanAn: maBanAn,
+          MaKhachHang: customerInfo.maKhachHang,
+          ThoiGianDat: new Date().toISOString(),
+          ThoiGianThanhToan: new Date().toISOString(),
+          MaKhuyenMai: "KM001",
+          TongTien: total,
+          PhuongThucThanhToan: "cash",
+          TrangThaiThanhToan: "processing",
+          MaNhanVien: "NV001",
+          GhiChu: customerInfo.note || "",
+        };
 
-      // 3. Gửi hóa đơn
-      const hoaDonDTO = {
-        MaHoaDon: "",
-        MaDatMon: maDatMon,
-        MaBanAn: maBanAn,
-        MaKhachHang: customerInfo.maKhachHang,
-        ThoiGianDat: new Date().toISOString(),
-        ThoiGianThanhToan: new Date().toISOString(),
-        MaKhuyenMai: "KM001",
-        TongTien: total,
-        PhuongThucThanhToan: paymentMethod,
-        TrangThaiThanhToan: statusPay,
-        MaNhanVien: "NV001",
-        GhiChu: customerInfo.note || "",
-      };
+        const res = await orderService.createHoaDon(hoaDonDTO);
+        const maHoaDon = res.data?.data?.maHoaDon || "HD" + Date.now();
 
-      const res = await orderService.createHoaDon(hoaDonDTO);
-      const maHoaDon = res.data?.data?.maHoaDon || "HD" + Date.now();
+        // Thành công
+        setOrderId(maHoaDon);
+        setOrderComplete(true);
 
-      // 4. Thành công
-      setOrderId(maHoaDon);
-      setOrderComplete(true);
+        // Dọn dữ liệu localStorage
+        localStorage.removeItem("checkoutItems");
+        localStorage.removeItem("customerInfo");
 
-      // 5. Dọn dữ liệu localStorage
-      localStorage.removeItem("checkoutItems");
-      localStorage.removeItem("customerInfo");
+        const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
+        const remainingItems = savedCart.filter(
+          (item) => !cartItems.some((c) => c.id === item.id)
+        );
+        localStorage.setItem("cart", JSON.stringify(remainingItems));
+        window.dispatchEvent(
+          new CustomEvent("cartUpdated", { detail: { cart: remainingItems } })
+        );
+      } else {
+        // Thanh toán VNPay
+        const vnpayRequest = {
+          OrderId: maDatMon,
+          Amount: total,
+          OrderDescription: `Thanh toan don hang ${maDatMon} tai Restaurant Quang Quy`,
+          CustomerName: customerInfo.name,
+          CustomerEmail: customerInfo.email,
+          CustomerPhone: customerInfo.phone,
+        };
 
-      const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
-      const remainingItems = savedCart.filter(
-        (item) => !cartItems.some((c) => c.id === item.id)
-      );
-      localStorage.setItem("cart", JSON.stringify(remainingItems));
-      window.dispatchEvent(
-        new CustomEvent("cartUpdated", { detail: { cart: remainingItems } })
-      );
+        const vnpayRes = await api.createVNPayPayment(vnpayRequest);
+        if (vnpayRes.data.success) {
+          // Lưu thông tin hóa đơn vào localStorage để sử dụng sau khi quay lại từ VNPay
+          localStorage.setItem(
+            "pendingHoaDon",
+            JSON.stringify({
+              MaDatMon: maDatMon,
+              MaBanAn: maBanAn,
+              MaKhachHang: customerInfo.maKhachHang,
+              TongTien: total,
+              GhiChu: customerInfo.note,
+            })
+          );
+          // Chuyển hướng đến URL thanh toán VNPay
+          setRedirecting(true);
+          setTimeout(() => {
+            window.location.href = vnpayRes.data.paymentUrl;
+          }, 1000); // Đợi 1 giây để hiển thị UI chuyển hướng
+        } else {
+          throw new Error(
+            vnpayRes.data.message || "Lỗi tạo URL thanh toán VNPay"
+          );
+        }
+      }
     } catch (err) {
       console.error("❌ Lỗi khi gửi đơn hàng:", err);
+      setError(
+        err.message || "Đã xảy ra lỗi khi xử lý đơn hàng. Vui lòng thử lại."
+      );
 
-      // Xử lý lỗi mã bàn không tồn tại từ server
-      if (err.response?.status === 404) {
-        const msg = err.response.data?.message || "Không tìm thấy dữ liệu";
-        alert(`⚠️ ${msg}`);
-        return;
-      }
-
-      // Nếu lỗi khác, rollback đơn đã tạo
+      // Rollback đơn đặt món nếu có lỗi
       if (maDatMon) {
         try {
           await orderService.deleteDatMon(maDatMon);
@@ -236,12 +276,26 @@ const CheckoutPage = () => {
           console.error("❌ Lỗi khi rollback đơn đặt món:", delErr);
         }
       }
-
-      alert("Đã xảy ra lỗi khi xử lý đơn hàng. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
   };
+
+  if (redirecting) {
+    return (
+      <div className="min-h-screen bg-red-50 p-4 flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
+          <Clock className="animate-spin mx-auto h-16 w-16 text-blue-500 mb-4" />
+          <h1 className="text-2xl font-bold mb-2">
+            Đang chuyển hướng đến VNPay...
+          </h1>
+          <p className="text-gray-600 mb-4">
+            Vui lòng chờ trong giây lát để hoàn tất thanh toán.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (orderComplete) {
     return (
@@ -260,7 +314,7 @@ const CheckoutPage = () => {
           </div>
           <button
             onClick={() => navigate("/")}
-            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors w-full"
+            className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors w-full"
           >
             Quay về trang chủ
           </button>
@@ -279,6 +333,20 @@ const CheckoutPage = () => {
           </Link>
           .
         </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-600">{error}</p>
+        <button
+          onClick={() => navigate("/checkout")}
+          className="mt-4 bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Thử lại
+        </button>
       </div>
     );
   }
@@ -380,10 +448,10 @@ const CheckoutPage = () => {
                     value={customerInfo.email}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    required={paymentMethod !== "cash"}
                   />
                 </div>
 
-                {/* <div className="grid grid-cols-2 gap-4"> */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Số bàn
@@ -394,26 +462,9 @@ const CheckoutPage = () => {
                     value={customerInfo.tableNumber}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    required
                   />
                 </div>
-
-                {/* <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Số khách
-                    </label>
-                    <div className="flex items-center">
-                      <Users className="h-5 w-5 text-gray-400 mr-2" />
-                      <input
-                        type="number"
-                        name="guestCount"
-                        min="1"
-                        value={customerInfo.guestCount}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div> */}
-                {/* </div> */}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -432,7 +483,7 @@ const CheckoutPage = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Phương thức thanh toán
                   </label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
                       <input
                         type="radio"
@@ -455,38 +506,19 @@ const CheckoutPage = () => {
                     <div>
                       <input
                         type="radio"
-                        id="card"
+                        id="vnpay"
                         name="paymentMethod"
-                        value="card"
-                        checked={paymentMethod === "card"}
-                        onChange={() => setPaymentMethod("card")}
+                        value="vnpay"
+                        checked={paymentMethod === "vnpay"}
+                        onChange={() => setPaymentMethod("vnpay")}
                         className="sr-only peer"
                       />
                       <label
-                        htmlFor="card"
+                        htmlFor="vnpay"
                         className="flex flex-col items-center justify-between rounded-md border-2 border-gray-200 p-4 cursor-pointer hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50"
                       >
                         <CreditCard className="mb-2 h-6 w-6 text-gray-700 peer-checked:text-blue-600" />
-                        <span className="text-sm">Thẻ</span>
-                      </label>
-                    </div>
-
-                    <div>
-                      <input
-                        type="radio"
-                        id="ewallet"
-                        name="paymentMethod"
-                        value="ewallet"
-                        checked={paymentMethod === "ewallet"}
-                        onChange={() => setPaymentMethod("ewallet")}
-                        className="sr-only peer"
-                      />
-                      <label
-                        htmlFor="ewallet"
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-gray-200 p-4 cursor-pointer hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50"
-                      >
-                        <Wallet className="mb-2 h-6 w-6 text-gray-700 peer-checked:text-blue-600" />
-                        <span className="text-sm">Ví điện tử</span>
+                        <span className="text-sm">VNPay</span>
                       </label>
                     </div>
                   </div>
@@ -494,16 +526,18 @@ const CheckoutPage = () => {
 
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center"
+                  disabled={loading || userLoading || redirecting}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center disabled:bg-gray-400"
                 >
-                  {loading ? (
+                  {loading || redirecting ? (
                     <>
                       <Clock className="animate-spin mr-2 h-5 w-5" />
                       Đang xử lý...
                     </>
-                  ) : (
+                  ) : paymentMethod === "cash" ? (
                     "Hoàn tất đặt hàng"
+                  ) : (
+                    "Tiến hành thanh toán VNPay"
                   )}
                 </button>
               </div>

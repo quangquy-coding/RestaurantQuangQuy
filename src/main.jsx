@@ -1,87 +1,77 @@
-import React from "react"
+import React from "react";
 import { Toaster } from "react-hot-toast";
 import ReactDOM from "react-dom/client";
 
-
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
-
-import { createBrowserRouter, RouterProvider } from "react-router-dom"
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 // Layouts
-import UserLayout from "./components/layout/UserLayout"
-import AdminLayout from "./layouts/AdminLayout"
+import UserLayout from "./components/layout/UserLayout";
+import AdminLayout from "./layouts/AdminLayout";
 
 // User Pages
-import HomePage from "./pages/home/HomePage"
-import VerifyOTPPage from "./pages/VerifyOTPPage"
+import HomePage from "./pages/home/HomePage";
+import VerifyOTPPage from "./pages/VerifyOTPPage";
+import PaymentReturnPage from "./components/cart/PaymentReturnPage";
 
-import ShoppingCart from "./components/cart/ShoppingCart"
-import CheckoutPage from "./components/cart/CheckoutPage"
+import ShoppingCart from "./components/cart/ShoppingCart";
+import CheckoutPage from "./components/cart/CheckoutPage";
 // import ReservationPage from "./pages/reservation/ReservationPage"
-import AboutPage from "./pages/about/AboutPage"
-import ContactPage from "./pages/contact/ContactPage"
-import ProfilePage from "./pages/user/ProfilePage"
-import UserOrdersPage from "./pages/user/OrdersPage"
-import LoginPage from "./pages/login"
-import RegisterPage from "./pages/register"
-
-
-
+import AboutPage from "./pages/about/AboutPage";
+import ContactPage from "./pages/contact/ContactPage";
+import ProfilePage from "./pages/user/ProfilePage";
+import UserOrdersPage from "./pages/user/OrdersPage";
+import LoginPage from "./pages/login";
+import RegisterPage from "./pages/register";
 
 // Admin Pages
-import PrivateRoute from "./components/common/PrivateRoute"
-import Dashboard from "./pages/admin/DashboardPage"
+import PrivateRoute from "./components/common/PrivateRoute";
+import Dashboard from "./pages/admin/DashboardPage";
 
-import DishesPage from "./pages/admin/DishesPage"
-import TablesPage from "./pages/admin/TablesPage"
-import OrdersPage from "./pages/admin/OrdersPage"
-import ReportsPage from "./pages/admin/ReportsPage"
-import StaffOrdersPage from "./pages/staff/StaffOrdersPage"
+import DishesPage from "./pages/admin/DishesPage";
+import TablesPage from "./pages/admin/TablesPage";
+import OrdersPage from "./pages/admin/OrdersPage";
+import ReportsPage from "./pages/admin/ReportsPage";
+import StaffOrdersPage from "./pages/staff/StaffOrdersPage";
 
-import DishDetailPage from "./pages/menu/DishDetailPage"
-import AccountSettingsPage from "./pages/user/AccountSettingsPage"
-import UsersManagementPage from "./pages/admin/UsersManagementPage"
-import CategoriesManagementPage from "./pages/admin/CategoriesManagementPage"
-
+import DishDetailPage from "./pages/menu/DishDetailPage";
+import AccountSettingsPage from "./pages/user/AccountSettingsPage";
+import UsersManagementPage from "./pages/admin/UsersManagementPage";
+import CategoriesManagementPage from "./pages/admin/CategoriesManagementPage";
 
 // import OrderDetailPage from './pages/order/OrderDetailPage'
-import OrderPage from './pages/order/OrderPage'
-import ReviewPage from './pages/review/ReviewPage'
+import OrderPage from "./pages/order/OrderPage";
+import ReviewPage from "./pages/review/ReviewPage";
 
-import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage"
-import ResetPasswordPage from "./pages/auth/ResetPasswordPage"
+import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/auth/ResetPasswordPage";
 
+import AdvancedSearchPage from "./pages/menu/AdvancedSearchPage";
 
-import AdvancedSearchPage from "./pages/menu/AdvancedSearchPage"
+import LoyaltyProgramPage from "./pages/loyalty/LoyaltyProgramPage";
+import AdvancedReservationPage from "./pages/reservation/AdvancedReservationPage";
 
-import LoyaltyProgramPage from "./pages/loyalty/LoyaltyProgramPage"
-import AdvancedReservationPage from "./pages/reservation/AdvancedReservationPage" 
+import BlogPage from "./pages/blog/BlogPage";
+import BlogPostDetailPage from "./pages/blog/BlogPostDetailPage";
 
-import BlogPage from "./pages/blog/BlogPage"
-import BlogPostDetailPage from "./pages/blog/BlogPostDetailPage"
- 
-import AdminCustomerAnalyticsPage from "./pages/admin/AdminCustomerAnalyticsPage"
-import AdminPromotionsPage from './pages/admin/AdminPromotionsPage'
-import AdminReviewsPage from './pages/admin/AdminReviewsPage'
+import AdminCustomerAnalyticsPage from "./pages/admin/AdminCustomerAnalyticsPage";
+import AdminPromotionsPage from "./pages/admin/AdminPromotionsPage";
+import AdminReviewsPage from "./pages/admin/AdminReviewsPage";
 
-
-
-import "./index.css"
-import "./App.css"
+import "./index.css";
+import "./App.css";
 
 const router = createBrowserRouter([
-
   {
     path: "/",
     element: <UserLayout />,
     children: [
-      
       {
         index: true,
         element: <HomePage />,
       },
-     
+
       // {
       //   path: "order",
       //   element: <OrderPage />,
@@ -98,7 +88,7 @@ const router = createBrowserRouter([
       //   path: "order/:id",
       //   element: <OrderDetailPage />,
       // },
-      
+
       {
         path: "cart",
         element: <ShoppingCart />,
@@ -106,6 +96,10 @@ const router = createBrowserRouter([
       {
         path: "checkout",
         element: <CheckoutPage />,
+      },
+      {
+        path: "payment-return",
+        element: <PaymentReturnPage />,
       },
       // {
       //   path: "reservation",
@@ -127,17 +121,17 @@ const router = createBrowserRouter([
         path: "menu/:id",
         element: <DishDetailPage />,
       },
-   
+
       // {
       //   path: "categories-management",
       //   element: <CategoriesManagementPage />,
       // },
-      
+
       {
         path: "account-settings",
         element: <AccountSettingsPage />,
       },
-      
+
       {
         path: "orders",
         element: <UserOrdersPage />,
@@ -146,7 +140,7 @@ const router = createBrowserRouter([
         path: "login",
         element: <LoginPage />,
       },
-         {
+      {
         path: "verify",
         element: <VerifyOTPPage />,
       },
@@ -154,7 +148,7 @@ const router = createBrowserRouter([
         path: "register",
         element: <RegisterPage />,
       },
-    
+
       {
         path: "forgot-password",
         element: <ForgotPasswordPage />,
@@ -184,8 +178,6 @@ const router = createBrowserRouter([
         path: "/blog/:id",
         element: <BlogPostDetailPage />,
       },
-      
-   
     ],
   },
 
@@ -206,7 +198,7 @@ const router = createBrowserRouter([
         path: "users",
         element: <UsersManagementPage />,
       },
-      
+
       {
         path: "categories",
         element: <CategoriesManagementPage />,
@@ -243,20 +235,16 @@ const router = createBrowserRouter([
         path: "staff",
         element: <StaffOrdersPage />,
       },
-
-     
     ],
   },
+]);
 
-])
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <GoogleOAuthProvider clientId="87695933712-4368bbf54fpluhmqm4detrvro03ok39f.apps.googleusercontent.com">
     <React.StrictMode>
-    <Toaster position="top-right" />
+      <Toaster position="top-right" />
       <RouterProvider router={router} />
     </React.StrictMode>
   </GoogleOAuthProvider>
 );
-
