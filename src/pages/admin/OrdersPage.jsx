@@ -29,7 +29,7 @@ import {
   createOrder,
   updateOrder,
   deleteOrder,
-  updateOrderFoodStatus
+  updateOrderFoodStatus,
 } from "../../api/orderApi";
 
 const OrdersPage = () => {
@@ -260,7 +260,7 @@ const OrdersPage = () => {
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircle className="mr-1 h-3 w-3" />
-            Hoàn thành
+            Đã thanh toán
           </span>
         );
       case "cancelled":
@@ -280,9 +280,9 @@ const OrdersPage = () => {
       case "cash":
         return "Tiền mặt";
       case "card":
-        return "Thẻ tín dụng/ghi nợ";
-      case "ewallet":
-        return "Ví điện tử";
+        return "VNPay";
+      // case "ewallet":
+      //   return "Ví điện tử";
       default:
         return method;
     }
@@ -370,7 +370,7 @@ const OrdersPage = () => {
           price: item.price,
         })),
         guest: editingOrder.guestCount,
-        statusOrderFood: editingOrder.orderInfo.trangThai
+        statusOrderFood: editingOrder.orderInfo.trangThai,
       };
 
       console.log("Sending update order data:", JSON.stringify(orderData));
@@ -581,7 +581,7 @@ const OrdersPage = () => {
             >
               <option value="">Tất cả trạng thái</option>
               <option value="processing">Chưa thanh toán</option>
-              <option value="completed">Hoàn thành</option>
+              <option value="completed">Đã thanh toán</option>
               <option value="cancelled">Đã hủy</option>
             </select>
           </div>
@@ -825,8 +825,18 @@ const OrdersPage = () => {
                       )}
                     </div>
                     <div className="flex items-center">
-                      <span className="font-medium mr-2">Trạng thái:</span>
+                      <span className="font-medium mr-2">
+                        Trạng thái thanh toán:
+                      </span>
                       {getStatusBadge(currentOrder.status)}
+                    </div>
+                    <div className="flex items-center">
+                      <span className="font-medium mr-2">
+                        Trạng thái đặt món:
+                      </span>
+                      {getStatusBadgeOrderFood(
+                        currentOrder.orderInfo.trangThai
+                      )}
                     </div>
                   </div>
                 </div>
@@ -928,43 +938,52 @@ const OrdersPage = () => {
 
               {/* Status update buttons */}
               {currentOrder.orderInfo.trangThai !== "cancelled" && (
-                  <div className="flex flex-wrap gap-3">
-                    {currentOrder.orderInfo.trangThai === "pending" && (
-                      <button
-                        onClick={() =>
-                        handleUpdateFoodStatus(currentOrder.orderInfo.maDatMon, "processing")
-                        }
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                      >
-                        Xử lý đơn hàng
-                      </button>
-                    )}
+                <div className="flex flex-wrap gap-3">
+                  {currentOrder.orderInfo.trangThai === "pending" && (
+                    <button
+                      onClick={() =>
+                        handleUpdateFoodStatus(
+                          currentOrder.orderInfo.maDatMon,
+                          "processing"
+                        )
+                      }
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Xử lý đơn hàng
+                    </button>
+                  )}
 
-                    {(currentOrder.orderInfo.trangThai === "pending" ||
-                      currentOrder.orderInfo.trangThai === "processing") && (
-                        <button
-                          onClick={() =>
-                        handleUpdateFoodStatus(currentOrder.orderInfo.maDatMon, "completed")
-                          }
-                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                        >
-                          Hoàn thành đơn hàng
-                        </button>
-                      )}
+                  {(currentOrder.orderInfo.trangThai === "pending" ||
+                    currentOrder.orderInfo.trangThai === "processing") && (
+                    <button
+                      onClick={() =>
+                        handleUpdateFoodStatus(
+                          currentOrder.orderInfo.maDatMon,
+                          "completed"
+                        )
+                      }
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                    >
+                      Hoàn thành đơn hàng
+                    </button>
+                  )}
 
-                    {(currentOrder.orderInfo.trangThai === "pending" ||
-                      currentOrder.orderInfo.trangThai === "processing") && (
-                        <button
-                          onClick={() =>
-                        handleUpdateFoodStatus(currentOrder.orderInfo.maDatMon, "cancelled")
-                          }
-                          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                        >
-                          Hủy đơn hàng
-                        </button>
-                      )}
-                  </div>
-                )}
+                  {(currentOrder.orderInfo.trangThai === "pending" ||
+                    currentOrder.orderInfo.trangThai === "processing") && (
+                    <button
+                      onClick={() =>
+                        handleUpdateFoodStatus(
+                          currentOrder.orderInfo.maDatMon,
+                          "cancelled"
+                        )
+                      }
+                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                    >
+                      Hủy đơn hàng
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="p-6 border-t bg-gray-50 flex justify-end">
@@ -1194,7 +1213,7 @@ const OrdersPage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="processing">Chưa thanh toán</option>
-                    <option value="completed">Hoàn thành</option>
+                    <option value="completed">Đã thanh toán</option>
                     <option value="cancelled">Đã hủy</option>
                   </select>
                 </div>
@@ -1213,8 +1232,8 @@ const OrdersPage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cash">Tiền mặt</option>
-                    <option value="card">Thẻ tín dụng/ghi nợ</option>
-                    <option value="ewallet">Ví điện tử</option>
+                    <option value="card">VNPay</option>
+                    {/* <option value="ewallet">Ví điện tử</option> */}
                   </select>
                 </div>
               </div>
@@ -1606,8 +1625,8 @@ const OrdersPage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cash">Tiền mặt</option>
-                    <option value="card">Thẻ tín dụng/ghi nợ</option>
-                    <option value="ewallet">Ví điện tử</option>
+                    <option value="card">VNPay</option>
+                    {/* <option value="ewallet">Ví điện tử</option> */}
                   </select>
                 </div>
               </div>

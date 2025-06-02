@@ -45,7 +45,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 						total = h.TongTien ?? 0,
 
 						paymentMethod = h.PhuongThucThanhToan == "Tiền mặt" ? "cash" :
-										h.PhuongThucThanhToan == "Thẻ" ? "card" : "ewallet",
+										h.PhuongThucThanhToan == "VNPay" ? "card" : "ewallet",
 
 						items = _context.Chitietdondatmons
 							.Where(ct => ct.MaDatMon == h.MaDatMon)
@@ -143,7 +143,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
                         total = h.TongTien ?? 0,
 
                         paymentMethod = h.PhuongThucThanhToan == "Tiền mặt" ? "cash" :
-                                        h.PhuongThucThanhToan == "Thẻ" ? "card" : "ewallet",
+                                        h.PhuongThucThanhToan == "VNPay" ? "card" : "ewallet",
 
                         items = _context.Chitietdondatmons
                             .Where(ct => ct.MaDatMon == h.MaDatMon)
@@ -420,7 +420,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				var vietnamesePayment = request.PaymentMethod switch
 				{
 					"cash" => "Tiền mặt",
-					"card" => "Thẻ",
+					"card" => "VNPay",
 					"ewallet" => "Ví điện tử",
 					_ => "Tiền mặt"
 				};
@@ -507,7 +507,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				var vietnamesePayment = request.PaymentMethod switch
 				{
 					"cash" => "Tiền mặt",
-					"card" => "Thẻ",
+					"card" => "VNPay",
 					"ewallet" => "Ví điện tử",
 					_ => "Tiền mặt"
 				};

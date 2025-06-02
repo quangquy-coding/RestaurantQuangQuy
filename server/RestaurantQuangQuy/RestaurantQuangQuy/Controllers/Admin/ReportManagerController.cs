@@ -16,7 +16,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			_context = context;
 		}
 
-		// GET: api/ReportManager/DoanhThuTheoNgay
+		// Existing endpoints (unchanged, included for completeness)
 		[HttpGet("DoanhThuTheoNgay")]
 		public async Task<IActionResult> GetDoanhThuTheoNgay([FromQuery] DateOnly? tuNgay, [FromQuery] DateOnly? denNgay)
 		{
@@ -26,20 +26,19 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				var endDate = denNgay ?? DateOnly.FromDateTime(DateTime.Now);
 
 				var doanhThu = await _context.Hoadonthanhtoans
-	.Where(hd => hd.ThoiGianThanhToan.HasValue &&
-				hd.ThoiGianThanhToan.Value.Date >= startDate.ToDateTime(TimeOnly.MinValue).Date &&
-				hd.ThoiGianThanhToan.Value.Date <= endDate.ToDateTime(TimeOnly.MinValue).Date)
-	.GroupBy(hd => hd.ThoiGianThanhToan.Value.Date)
-	.Select(g => new
-	{
-		Ngay = g.Key,
-		TongDoanhThu = g.Sum(hd => hd.TongTien),
-		SoHoaDon = g.Count(),
-		DoanhThuTrungBinh = g.Average(hd => hd.TongTien)
-	})
-	.OrderBy(x => x.Ngay)
-	.ToListAsync();
-
+					.Where(hd => hd.ThoiGianThanhToan.HasValue &&
+								 hd.ThoiGianThanhToan.Value.Date >= startDate.ToDateTime(TimeOnly.MinValue).Date &&
+								 hd.ThoiGianThanhToan.Value.Date <= endDate.ToDateTime(TimeOnly.MinValue).Date)
+					.GroupBy(hd => hd.ThoiGianThanhToan.Value.Date)
+					.Select(g => new
+					{
+						Ngay = g.Key,
+						TongDoanhThu = g.Sum(hd => hd.TongTien),
+						SoHoaDon = g.Count(),
+						DoanhThuTrungBinh = g.Average(hd => hd.TongTien)
+					})
+					.OrderBy(x => x.Ngay)
+					.ToListAsync();
 
 				var tongDoanhThu = doanhThu.Sum(x => x.TongDoanhThu);
 				var tongHoaDon = doanhThu.Sum(x => x.SoHoaDon);
@@ -60,10 +59,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// Fix for CS1061: 'DateOnly?' does not contain a definition for 'Year'
-		// The issue arises because 'DateOnly?' is nullable, and you need to access the 'Year' property of the underlying 'DateOnly' value.
-		// Use the null-coalescing operator or null-conditional operator to handle nullable values.
-
 		[HttpGet("DoanhThuTheoThang")]
 		public async Task<IActionResult> GetDoanhThuTheoThang([FromQuery] int? nam)
 		{
@@ -71,11 +66,10 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			{
 				var year = nam ?? DateTime.Now.Year;
 
-				// Fix: Removed 'HasValue' and 'Value' as 'DateOnly' is not nullable
 				var doanhThu = await _context.Hoadonthanhtoans
-				  .Where(hd => hd.ThoiGianThanhToan.HasValue &&
-				hd.ThoiGianThanhToan.Value.Year == year)
-	.GroupBy(hd => hd.ThoiGianThanhToan.Value.Month)
+					.Where(hd => hd.ThoiGianThanhToan.HasValue &&
+								 hd.ThoiGianThanhToan.Value.Year == year)
+					.GroupBy(hd => hd.ThoiGianThanhToan.Value.Month)
 					.Select(g => new
 					{
 						Thang = g.Key,
@@ -103,10 +97,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
 			}
 		}
-
-		// Fix for CS1061: 'DateTime' does not contain a definition for 'HasValue'
-		// Explanation: The error occurs because 'DateTime' is a non-nullable value type and does not have a 'HasValue' property.
-		// Solution: Remove the 'HasValue' check and directly use the 'DateTime' value.
 
 		[HttpGet("MonAnBanChay")]
 		public async Task<IActionResult> GetMonAnBanChay([FromQuery] DateOnly? tuNgay, [FromQuery] DateOnly? denNgay, [FromQuery] int top = 10)
@@ -148,7 +138,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// GET: api/ReportManager/KhachHangThanThiet
 		[HttpGet("KhachHangThanThiet")]
 		public async Task<IActionResult> GetKhachHangThanThiet([FromQuery] int top = 10)
 		{
@@ -183,7 +172,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// GET: api/ReportManager/ThongKeKhuyenMai
 		[HttpGet("ThongKeKhuyenMai")]
 		public async Task<IActionResult> GetThongKeKhuyenMai([FromQuery] DateOnly? tuNgay, [FromQuery] DateOnly? denNgay)
 		{
@@ -193,13 +181,13 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				var endDate = denNgay ?? DateOnly.FromDateTime(DateTime.Now);
 
 				var startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
-				var endDateTime = endDate.ToDateTime(TimeOnly.MaxValue); // lấy đến cuối ngày
+				var endDateTime = endDate.ToDateTime(TimeOnly.MaxValue);
 
 				var thongKeKhuyenMai = await _context.Hoadonthanhtoans
 					.Include(hd => hd.MaKhuyenMaiNavigation)
 					.Where(hd => hd.ThoiGianThanhToan >= startDateTime &&
-								hd.ThoiGianThanhToan <= endDateTime &&
-								hd.MaKhuyenMai != null)
+								 hd.ThoiGianThanhToan <= endDateTime &&
+								 hd.MaKhuyenMai != null)
 					.GroupBy(hd => new { hd.MaKhuyenMai, hd.MaKhuyenMaiNavigation!.TenKhuyenMai })
 					.Select(g => new
 					{
@@ -230,8 +218,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-
-		// GET: api/ReportManager/TongQuan
 		[HttpGet("TongQuan")]
 		public async Task<IActionResult> GetTongQuan()
 		{
@@ -241,38 +227,36 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				var thisMonth = new DateOnly(today.Year, today.Month, 1);
 				var lastMonth = thisMonth.AddMonths(-1);
 
-				// Doanh thu hôm nay
 				var doanhThuHomNay = await _context.Hoadonthanhtoans
-					.Where(hd => hd.ThoiGianThanhToan.Value.Date == today.ToDateTime(TimeOnly.MinValue).Date)
+					.Where(hd => hd.ThoiGianThanhToan.HasValue &&
+								 hd.ThoiGianThanhToan.Value.Date == today.ToDateTime(TimeOnly.MinValue).Date)
 					.SumAsync(hd => hd.TongTien);
 
-				// Doanh thu tháng này
 				var doanhThuThangNay = await _context.Hoadonthanhtoans
-					.Where(hd => hd.ThoiGianThanhToan >= thisMonth.ToDateTime(TimeOnly.MinValue))
+					.Where(hd => hd.ThoiGianThanhToan.HasValue &&
+								 hd.ThoiGianThanhToan.Value >= thisMonth.ToDateTime(TimeOnly.MinValue))
 					.SumAsync(hd => hd.TongTien);
 
-				// Doanh thu tháng trước
 				var doanhThuThangTruoc = await _context.Hoadonthanhtoans
-	.Where(hd => hd.ThoiGianThanhToan >= lastMonth.ToDateTime(TimeOnly.MinValue)
-			  && hd.ThoiGianThanhToan < thisMonth.ToDateTime(TimeOnly.MinValue))
-	.SumAsync(hd => hd.TongTien);
-				// Số đơn hàng hôm nay
+					.Where(hd => hd.ThoiGianThanhToan.HasValue &&
+								 hd.ThoiGianThanhToan.Value >= lastMonth.ToDateTime(TimeOnly.MinValue) &&
+								 hd.ThoiGianThanhToan.Value < thisMonth.ToDateTime(TimeOnly.MinValue))
+					.SumAsync(hd => hd.TongTien);
+
 				var donHangHomNay = await _context.Hoadonthanhtoans
-					.CountAsync(hd => hd.ThoiGianThanhToan.Value.Date == today.ToDateTime(TimeOnly.MinValue).Date);
+					.CountAsync(hd => hd.ThoiGianThanhToan.HasValue &&
+									  hd.ThoiGianThanhToan.Value.Date == today.ToDateTime(TimeOnly.MinValue).Date);
 
-				// Tổng khách hàng
 				var tongKhachHang = await _context.Khachhangs.CountAsync();
-
-				// Tổng món ăn
 				var tongMonAn = await _context.Monans.CountAsync();
-
-				// Đánh giá trung bình
 				var danhGiaTrungBinh = await _context.Danhgia.AverageAsync(dg => (double?)dg.XepHang) ?? 0;
 
-				// Tỷ lệ tăng trưởng
 				var tyLeTangTruong = doanhThuThangTruoc > 0
-					? Math.Round((double)(doanhThuThangNay - doanhThuThangTruoc) / (double)doanhThuThangTruoc * 100, 1)
-					: 0;
+					? Math.Round(
+	doanhThuThangTruoc > 0
+		? (double)((doanhThuThangNay ?? 0) - (doanhThuThangTruoc ?? 0)) / (double)doanhThuThangTruoc * 100
+		: 0, 1)
+: 0;
 
 				return Ok(new
 				{
@@ -292,7 +276,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// GET: api/ReportManager/DoanhThuTheoGio
 		[HttpGet("DoanhThuTheoGio")]
 		public async Task<IActionResult> GetDoanhThuTheoGio([FromQuery] DateOnly? ngay)
 		{
@@ -301,9 +284,9 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				var targetDate = ngay ?? DateOnly.FromDateTime(DateTime.Now);
 
 				var doanhThuTheoGio = await _context.Hoadonthanhtoans
-					 .Where(hd => hd.ThoiGianThanhToan.HasValue &&
-				hd.ThoiGianThanhToan.Value.Date == targetDate.ToDateTime(TimeOnly.MinValue).Date)
-	.GroupBy(hd => hd.ThoiGianThanhToan.Value.Hour)
+					.Where(hd => hd.ThoiGianThanhToan.HasValue &&
+								 hd.ThoiGianThanhToan.Value.Date == targetDate.ToDateTime(TimeOnly.MinValue).Date)
+					.GroupBy(hd => hd.ThoiGianThanhToan.Value.Hour)
 					.Select(g => new
 					{
 						Gio = g.Key,
@@ -317,6 +300,106 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				{
 					Ngay = targetDate,
 					DoanhThuTheoGio = doanhThuTheoGio
+				});
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
+			}
+		}
+
+		// New endpoint: Revenue by Category
+		[HttpGet("DoanhThuTheoDanhMuc")]
+		public async Task<IActionResult> GetDoanhThuTheoDanhMuc([FromQuery] DateOnly? tuNgay, [FromQuery] DateOnly? denNgay)
+		{
+			try
+			{
+				var startDate = tuNgay ?? DateOnly.FromDateTime(DateTime.Now.AddDays(-30));
+				var endDate = denNgay ?? DateOnly.FromDateTime(DateTime.Now);
+
+				var doanhThuTheoDanhMuc = await _context.Chitietdondatmons
+					.Include(ct => ct.MaMonNavigation)
+					.Include(ct => ct.MaDatMonNavigation)
+					.Where(ct => ct.MaDatMonNavigation!.ThoiGianDat >= startDate.ToDateTime(TimeOnly.MinValue) &&
+								 ct.MaDatMonNavigation.ThoiGianDat <= endDate.ToDateTime(TimeOnly.MaxValue))
+					.GroupBy(ct => ct.MaMonNavigation!.TenMon)
+					.Select(g => new
+					{
+						DanhMuc = g.Key ?? "Không xác định",
+						TongDoanhThu = g.Sum(ct => ct.TongTien ?? 0),
+						SoLuongBan = g.Sum(ct => ct.SoLuong)
+					})
+					.OrderByDescending(x => x.TongDoanhThu)
+					.ToListAsync();
+
+				var tongDoanhThu = doanhThuTheoDanhMuc.Sum(x => x.TongDoanhThu);
+				var danhMucData = doanhThuTheoDanhMuc.Select(x => new
+				{
+					x.DanhMuc,
+					x.TongDoanhThu,
+					x.SoLuongBan,
+					Percentage = tongDoanhThu > 0
+	? Math.Round((double)x.TongDoanhThu / (double)tongDoanhThu * 100, 1)
+	: 0
+
+				}).ToList();
+
+				return Ok(new
+				{
+					TuNgay = startDate,
+					DenNgay = endDate,
+					TongDoanhThu = tongDoanhThu,
+					ChiTietDanhMuc = danhMucData
+				});
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
+			}
+		}
+
+		// New endpoint: Revenue by Payment Method (assuming Hoadonthanhtoans has PhuongThucThanhToan)
+		[HttpGet("DoanhThuTheoPhuongThucThanhToan")]
+		public async Task<IActionResult> GetDoanhThuTheoPhuongThucThanhToan([FromQuery] DateOnly? tuNgay, [FromQuery] DateOnly? denNgay)
+		{
+			try
+			{
+				var startDate = tuNgay ?? DateOnly.FromDateTime(DateTime.Now.AddDays(-30));
+				var endDate = denNgay ?? DateOnly.FromDateTime(DateTime.Now);
+
+				var doanhThuTheoPhuongThuc = await _context.Hoadonthanhtoans
+					.Where(hd => hd.ThoiGianThanhToan.HasValue &&
+								 hd.ThoiGianThanhToan.Value.Date >= startDate.ToDateTime(TimeOnly.MinValue).Date &&
+								 hd.ThoiGianThanhToan.Value.Date <= endDate.ToDateTime(TimeOnly.MaxValue).Date)
+					.GroupBy(hd => hd.PhuongThucThanhToan ?? "Không xác định")
+					.Select(g => new
+					{
+						PhuongThuc = g.Key,
+						TongDoanhThu = g.Sum(hd => hd.TongTien),
+						SoHoaDon = g.Count()
+					})
+					.OrderByDescending(x => x.TongDoanhThu)
+					.ToListAsync();
+
+				var tongDoanhThu = doanhThuTheoPhuongThuc.Sum(x => x.TongDoanhThu);
+				var phuongThucData = doanhThuTheoPhuongThuc.Select(x => new
+				{
+					x.PhuongThuc,
+					x.TongDoanhThu,
+					x.SoHoaDon,
+					Percentage = (tongDoanhThu ?? 0) > 0
+	? Math.Round(
+		(double)(x.TongDoanhThu ?? 0) / (double)(tongDoanhThu ?? 1) * 100, 1)
+	: 0
+
+				}).ToList();
+
+				return Ok(new
+				{
+					TuNgay = startDate,
+					DenNgay = endDate,
+					TongDoanhThu = tongDoanhThu,
+					ChiTietPhuongThuc = phuongThucData
 				});
 			}
 			catch (Exception ex)

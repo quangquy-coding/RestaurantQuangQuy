@@ -25,7 +25,7 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [total, setTotal] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState("cash"); // Mặc định là tiền mặt
+  const [paymentMethod, setPaymentMethod] = useState("Tiền mặt"); // Mặc định là tiền mặt
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null);
   const [userLoading, setUserLoading] = useState(false);
@@ -190,7 +190,7 @@ const CheckoutPage = () => {
       const maBanAn = datMonRes.data?.maBanAn;
 
       // 3. Xử lý thanh toán
-      if (paymentMethod === "cash") {
+      if (paymentMethod === "Tiền mặt") {
         // Thanh toán tiền mặt
         const hoaDonDTO = {
           MaHoaDon: "",
@@ -201,7 +201,7 @@ const CheckoutPage = () => {
           ThoiGianThanhToan: new Date().toISOString(),
           MaKhuyenMai: "KM001",
           TongTien: total,
-          PhuongThucThanhToan: "cash",
+          PhuongThucThanhToan: "Tiền mặt",
           TrangThaiThanhToan: "processing",
           MaNhanVien: "NV001",
           GhiChu: customerInfo.note || "",
@@ -231,7 +231,7 @@ const CheckoutPage = () => {
         const vnpayRequest = {
           OrderId: maDatMon,
           Amount: total,
-          OrderDescription: `Thanh toan don hang ${maDatMon} tai Restaurant Quang Quy`,
+          OrderDescription: `Thanh toán đơn hàng ${maDatMon} tại Restaurant Quang Quý`,
           CustomerName: customerInfo.name,
           CustomerEmail: customerInfo.email,
           CustomerPhone: customerInfo.phone,
@@ -448,7 +448,7 @@ const CheckoutPage = () => {
                     value={customerInfo.email}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    required={paymentMethod !== "cash"}
+                    required={paymentMethod !== "Tiền mặt"}
                   />
                 </div>
 
@@ -487,15 +487,15 @@ const CheckoutPage = () => {
                     <div>
                       <input
                         type="radio"
-                        id="cash"
+                        id="Tiền mặt"
                         name="paymentMethod"
-                        value="cash"
-                        checked={paymentMethod === "cash"}
-                        onChange={() => setPaymentMethod("cash")}
+                        value="Tiền mặt"
+                        checked={paymentMethod === "Tiền mặt"}
+                        onChange={() => setPaymentMethod("Tiền mặt")}
                         className="sr-only peer"
                       />
                       <label
-                        htmlFor="cash"
+                        htmlFor="Tiền mặt"
                         className="flex flex-col items-center justify-between rounded-md border-2 border-gray-200 p-4 cursor-pointer hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50"
                       >
                         <BanknoteIcon className="mb-2 h-6 w-6 text-gray-700 peer-checked:text-blue-600" />
@@ -508,7 +508,7 @@ const CheckoutPage = () => {
                         type="radio"
                         id="vnpay"
                         name="paymentMethod"
-                        value="vnpay"
+                        value="VNPay"
                         checked={paymentMethod === "vnpay"}
                         onChange={() => setPaymentMethod("vnpay")}
                         className="sr-only peer"
@@ -534,7 +534,7 @@ const CheckoutPage = () => {
                       <Clock className="animate-spin mr-2 h-5 w-5" />
                       Đang xử lý...
                     </>
-                  ) : paymentMethod === "cash" ? (
+                  ) : paymentMethod === "Tiền mặt" ? (
                     "Hoàn tất đặt hàng"
                   ) : (
                     "Tiến hành thanh toán VNPay"

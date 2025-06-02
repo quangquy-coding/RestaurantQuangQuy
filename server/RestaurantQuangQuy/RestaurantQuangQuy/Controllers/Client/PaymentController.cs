@@ -138,7 +138,7 @@ namespace RestaurantQuangQuy.Controllers
 					ThoiGianThanhToan = result.PaymentDate,
 					MaKhuyenMai = "KM001",
 					TongTien = result.Amount, // Convert VNPay amount to VND
-					PhuongThucThanhToan = "vnpay",
+					PhuongThucThanhToan = "VNPay",
 					TrangThaiThanhToan = "completed",
 					MaNhanVien = "NV001",
 					GhiChu = datMon.GhiChu
