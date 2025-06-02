@@ -18,35 +18,29 @@ namespace RestaurantQuangQuy.Controllers.Admin
 
         // Lấy tất cả đơn hàng cho admin
         [HttpGet("all")]
-        public async Task<IActionResult> GetAllOrders()
-        {
-            try
-            {
+		public async Task<IActionResult> GetAllOrders()
+		{
+			try
+			{
 				var orders = await _context.Hoadonthanhtoans
 					.Select(h => new
 					{
 						id = h.MaHoaDon,
+						customerId = h.MaKhachHang, // Added customerId
 						customerName = _context.Khachhangs
 							.Where(k => k.MaKhachHang == h.MaKhachHang)
 							.Select(k => k.TenKhachHang)
 							.FirstOrDefault() ?? "Khách vãng lai",
-
 						tableNumber = _context.Banans
 							.Where(b => b.MaBan == h.MaBanAn)
 							.Select(b => b.TenBan)
 							.FirstOrDefault() ?? "",
-
 						tableId = h.MaBanAn ?? "",
 						orderDate = h.ThoiGianDat,
-
 						status = h.TrangThaiThanhToan,
-
-
 						total = h.TongTien ?? 0,
-
 						paymentMethod = h.PhuongThucThanhToan == "Tiền mặt" ? "cash" :
-										h.PhuongThucThanhToan == "VNPay" ? "card" : "ewallet",
-
+							h.PhuongThucThanhToan == "VNPay" ? "VNPay" : "cash",
 						items = _context.Chitietdondatmons
 							.Where(ct => ct.MaDatMon == h.MaDatMon)
 							.Select(ct => new
@@ -59,21 +53,24 @@ namespace RestaurantQuangQuy.Controllers.Admin
 								quantity = ct.SoLuong,
 								price = ct.Gia
 							}).ToList(),
-
-                        orderInfo = _context.Dondatmons
+						orderInfo = _context.Dondatmons
 							.Where(d => d.MaBanAn == h.MaBanAn)
+							.OrderByDescending(d => d.ThoiGianDat)
 							.Select(d => new
 							{
 								maDatMon = d.MaDatMon,
 								soDienThoai = d.SoDienThoai,
-								trangThai = d.TrangThai,
+								trangThai = d.TrangThai == null ? "pending" :
+									d.TrangThai.Trim() == "Chờ xử lí" ? "pending" :
+									d.TrangThai.Trim() == "Đang xử lí" ? "processing" :
+									d.TrangThai.Trim() == "Hoàn thành" ? "completed" :
+									d.TrangThai.Trim() == "Đã hủy" ? "cancelled" : d.TrangThai.ToLower(),
 								soLuong = d.SoLuong,
 								tongTien = d.TongTien,
 								ghiChu = d.GhiChu
 							})
 							.FirstOrDefault(),
-
-                        bookingInfo = _context.Datbans
+						bookingInfo = _context.Datbans
 							.Where(db => db.MaBanAn == h.MaBanAn)
 							.Select(db => new
 							{
@@ -86,32 +83,30 @@ namespace RestaurantQuangQuy.Controllers.Admin
 							})
 							.FirstOrDefault(),
 						tables = (
-								from dbba in _context.DatBanBanAns
-								join b in _context.Banans on dbba.MaBanAn equals b.MaBan
-								where dbba.MaDatBan == h.MaBanAn
-								select new
-								{
-									maBan = b.MaBan,
-									tenBan = b.TenBan,
-									viTri = b.ViTri,
-									soChoNgoi = b.SoChoNgoi,
-									ghiChu = b.GhiChu
-								}
-							).ToList()
-
+							from dbba in _context.DatBanBanAns
+							join b in _context.Banans on dbba.MaBanAn equals b.MaBan
+							where dbba.MaDatBan == h.MaBanAn
+							select new
+							{
+								maBan = b.MaBan,
+								tenBan = b.TenBan,
+								viTri = b.ViTri,
+								soChoNgoi = b.SoChoNgoi,
+								ghiChu = b.GhiChu
+							}
+						).ToList()
 					})
-                    .OrderByDescending(h => h.orderDate)
-                    .ToListAsync();
+					.OrderByDescending(h => h.orderDate)
+					.ToListAsync();
 
-                return Ok(orders);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = "Lỗi khi lấy danh sách đơn hàng", error = ex.Message });
-            }
-        }
-
-        [HttpGet("customer/{customerId}")]
+				return Ok(orders);
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { message = "Lỗi khi lấy danh sách đơn hàng", error = ex.Message });
+			}
+		}
+		[HttpGet("customer/{customerId}")]
         public async Task<IActionResult> GetOrdersByCustomer(string customerId)
         {
             try
@@ -143,7 +138,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
                         total = h.TongTien ?? 0,
 
                         paymentMethod = h.PhuongThucThanhToan == "Tiền mặt" ? "cash" :
-                                        h.PhuongThucThanhToan == "VNPay" ? "card" : "ewallet",
+                                        h.PhuongThucThanhToan == "VNPay" ? "VNPay" : "cash",
 
                         items = _context.Chitietdondatmons
                             .Where(ct => ct.MaDatMon == h.MaDatMon)
@@ -391,7 +386,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 					MaDatMon = maDatMon,
 					MaKhachHang = request.CustomerId ?? "KH001",
 					ThoiGianDat = DateTime.Now,
-					TrangThai = "Đã xác nhận",
+					TrangThai = "Chờ xử lí",
 					GhiChu = request.Notes
 				};
 
@@ -420,8 +415,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				var vietnamesePayment = request.PaymentMethod switch
 				{
 					"cash" => "Tiền mặt",
-					"card" => "VNPay",
-					"ewallet" => "Ví điện tử",
+					"vnpay" => "VNPay",
 					_ => "Tiền mặt"
 				};
 
@@ -507,8 +501,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				var vietnamesePayment = request.PaymentMethod switch
 				{
 					"cash" => "Tiền mặt",
-					"card" => "VNPay",
-					"ewallet" => "Ví điện tử",
+					"vnpay" => "VNPay",
 					_ => "Tiền mặt"
 				};
 

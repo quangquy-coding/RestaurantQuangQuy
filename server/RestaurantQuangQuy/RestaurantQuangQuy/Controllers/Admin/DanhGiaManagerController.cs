@@ -15,7 +15,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			_context = context;
 		}
 
-		// GET: api/DanhGiaManager
+		// Existing actions (GetAllDanhGia, GetDanhGiaById, ThemDanhGia, SuaDanhGia, XoaDanhGia, ThongKeDanhGia, LocTheoXepHang) remain unchanged
 		[HttpGet]
 		public async Task<IActionResult> GetAllDanhGia()
 		{
@@ -47,7 +47,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// GET: api/DanhGiaManager/{id}
 		[HttpGet("{id}")]
 		public async Task<IActionResult> GetDanhGiaById(string id)
 		{
@@ -82,7 +81,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// POST: api/DanhGiaManager
 		[HttpPost]
 		public async Task<IActionResult> ThemDanhGia([FromBody] DanhGiaDto dto)
 		{
@@ -91,23 +89,19 @@ namespace RestaurantQuangQuy.Controllers.Admin
 
 			try
 			{
-				// Kiểm tra khách hàng tồn tại
 				var khachHang = await _context.Khachhangs.FindAsync(dto.MaKhachHang);
 				if (khachHang == null)
 					return NotFound("Khách hàng không tồn tại.");
 
-				// Kiểm tra hóa đơn tồn tại
 				var hoaDon = await _context.Hoadonthanhtoans.FindAsync(dto.MaHoaDon);
 				if (hoaDon == null)
 					return NotFound("Hóa đơn không tồn tại.");
 
-				// Kiểm tra đã đánh giá chưa
 				var danhGiaCu = await _context.Danhgia
 					.FirstOrDefaultAsync(dg => dg.MaHoaDon == dto.MaHoaDon);
 				if (danhGiaCu != null)
 					return BadRequest("Hóa đơn này đã được đánh giá.");
 
-				// Tạo mã đánh giá mới
 				var lastDanhGia = await _context.Danhgia
 					.OrderByDescending(dg => dg.MaDanhGia)
 					.FirstOrDefaultAsync();
@@ -145,7 +139,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// PUT: api/DanhGiaManager/{id}
 		[HttpPut("{id}")]
 		public async Task<IActionResult> SuaDanhGia(string id, [FromBody] DanhGiaDto dto)
 		{
@@ -170,7 +163,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// DELETE: api/DanhGiaManager/{id}
 		[HttpDelete("{id}")]
 		public async Task<IActionResult> XoaDanhGia(string id)
 		{
@@ -191,7 +183,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// GET: api/DanhGiaManager/ThongKe
 		[HttpGet("ThongKe")]
 		public async Task<IActionResult> ThongKeDanhGia()
 		{
@@ -239,7 +230,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// GET: api/DanhGiaManager/LocTheoXepHang/{xepHang}
 		[HttpGet("LocTheoXepHang/{xepHang}")]
 		public async Task<IActionResult> LocTheoXepHang(int xepHang)
 		{
@@ -264,6 +254,23 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				});
 
 				return Ok(result);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
+			}
+		}
+
+		// New endpoint to fetch customers
+		[HttpGet("KhachHangs")]
+		public async Task<IActionResult> GetAllKhachHangs()
+		{
+			try
+			{
+				var khachHangs = await _context.Khachhangs
+					.Select(kh => new { kh.MaKhachHang, kh.TenKhachHang })
+					.ToListAsync();
+				return Ok(khachHangs);
 			}
 			catch (Exception ex)
 			{

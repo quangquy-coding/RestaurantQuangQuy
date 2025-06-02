@@ -172,7 +172,7 @@ const CheckoutPage = () => {
         MaKhachHang: customerInfo.maKhachHang,
         SoDienThoai: customerInfo.phone,
         ThoiGianDat: new Date().toISOString(),
-        TrangThai: "Chờ xác nhận",
+        TrangThai: "Chờ xử lí",
         SoLuong: cartItems.reduce((total, item) => total + item.quantity, 0),
         TongTien: total,
         GhiChu: customerInfo.note,

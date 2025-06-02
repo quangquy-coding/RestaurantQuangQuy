@@ -279,7 +279,7 @@ const OrdersPage = () => {
     switch (method) {
       case "cash":
         return "Tiền mặt";
-      case "card":
+      case "VNPay":
         return "VNPay";
       // case "ewallet":
       //   return "Ví điện tử";
@@ -308,16 +308,23 @@ const OrdersPage = () => {
   const handleUpdateFoodStatus = async (orderId, newStatus) => {
     try {
       await updateOrderFoodStatus(orderId, newStatus);
-      await fetchData();
-
-      // Update current order if it's open in the modal
-      if (currentOrder && currentOrder.id === orderId) {
-        setCurrentOrder({ ...currentOrder, status: newStatus });
+      await fetchData(); // Cập nhật lại danh sách đơn hàng
+      // Nếu đang mở modal, cập nhật lại currentOrder
+      if (
+        currentOrder &&
+        currentOrder.orderInfo &&
+        currentOrder.orderInfo.maDatMon === orderId
+      ) {
+        setCurrentOrder({
+          ...currentOrder,
+          orderInfo: {
+            ...currentOrder.orderInfo,
+            trangThai: newStatus,
+          },
+        });
       }
-
       alert("Cập nhật trạng thái thành công!");
     } catch (error) {
-      console.error("Error updating status:", error);
       alert("Lỗi khi cập nhật trạng thái");
     }
   };
@@ -345,42 +352,28 @@ const OrdersPage = () => {
 
   const handleSaveEditedOrder = async () => {
     try {
-      // Kiểm tra dữ liệu trước khi gửi
-      if (!editingOrder.customerName) {
-        alert("Vui lòng nhập tên khách hàng");
-        return;
-      }
-
-      if (editingOrder.items.length === 0) {
-        alert("Đơn hàng phải có ít nhất một món");
-        return;
-      }
-
-      const orderData = {
-        customerName: editingOrder.customerName,
-        orderTableId: editingOrder.tableId || "", // Sửa lại truyền đúng trường bookingCode
-        tableId: (editingOrder.tableIds || []).filter(Boolean),
-        status: editingOrder.status,
-        paymentMethod: editingOrder.paymentMethod,
-        notes: editingOrder.notes || "",
-        items: editingOrder.items.map((item) => ({
-          id: item.id.toString(),
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
+      // Gửi dữ liệu cập nhật lên API
+      await updateOrder(editingOrder.id, {
+        CustomerName: editingOrder.customerName,
+        OrderTableId: editingOrder.tableId,
+        TableId: editingOrder.tableIds,
+        Status: editingOrder.status,
+        StatusOrderFood: editingOrder.orderInfo.trangThai,
+        PaymentMethod: editingOrder.paymentMethod,
+        Notes: editingOrder.ghiChu || editingOrder.bookingInfo.ghiChu || "",
+        Guest: editingOrder.guestCount,
+        Items: editingOrder.items.map((item) => ({
+          Id: item.id,
+          Name: item.name,
+          Quantity: item.quantity,
+          Price: item.price,
         })),
-        guest: editingOrder.guestCount,
-        statusOrderFood: editingOrder.orderInfo.trangThai,
-      };
-
-      console.log("Sending update order data:", JSON.stringify(orderData));
-      await updateOrder(editingOrder.id, orderData);
-      await fetchData();
+      });
+      await fetchData(); // Cập nhật lại danh sách đơn hàng
       setIsEditModalOpen(false);
       alert("Cập nhật đơn hàng thành công!");
     } catch (error) {
-      console.error("Error updating order:", error);
-      alert(`Lỗi khi cập nhật đơn hàng: ${error.message}`);
+      alert("Lỗi khi cập nhật đơn hàng");
     }
   };
 
@@ -1232,7 +1225,7 @@ const OrdersPage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cash">Tiền mặt</option>
-                    <option value="card">VNPay</option>
+                    <option value="vnpay">VNPay</option>
                     {/* <option value="ewallet">Ví điện tử</option> */}
                   </select>
                 </div>
@@ -1625,7 +1618,7 @@ const OrdersPage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cash">Tiền mặt</option>
-                    <option value="card">VNPay</option>
+                    <option value="VNPay">VNPay</option>
                     {/* <option value="ewallet">Ví điện tử</option> */}
                   </select>
                 </div>
