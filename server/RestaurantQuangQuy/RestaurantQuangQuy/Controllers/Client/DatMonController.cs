@@ -176,7 +176,7 @@ namespace RestaurantQuangQuy.Controllers.Client
                     MaKhachHang = datMonAnDTO.MaKhachHang,
                     SoDienThoai = datMonAnDTO.SoDienThoai,
                     ThoiGianDat = DateTime.Now,
-                    TrangThai = "Chờ xử lý",
+                    TrangThai = "pending",
                     SoLuong = datMonAnDTO.SoLuong,
                     TongTien = datMonAnDTO.TongTien,
                     GhiChu = datMonAnDTO.GhiChu

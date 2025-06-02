@@ -300,7 +300,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-        [HttpPut("{orderId}/status")]
+        [HttpPut("{orderId}/Foodstatus")]
         public async Task<IActionResult> UpdateOrderFoodStatus(string orderId, [FromBody] UpdateStatusRequest request)
         {
             try
@@ -315,7 +315,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
                     _context.Dondatmons.Update(donDatMonUpdate);
                     await _context.SaveChangesAsync();
                 }
-				return Ok();
+                return Ok(new { message = "Cập nhật trạng thái thành công" });
             }
             catch (Exception ex)
             {

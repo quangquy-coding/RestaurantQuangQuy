@@ -927,8 +927,7 @@ const OrdersPage = () => {
               </div>
 
               {/* Status update buttons */}
-              {currentOrder.bookingInfo !== "completed" &&
-                currentOrder.orderInfo.trangThai !== "cancelled" && (
+              {currentOrder.orderInfo.trangThai !== "cancelled" && (
                   <div className="flex flex-wrap gap-3">
                     {currentOrder.orderInfo.trangThai === "pending" && (
                       <button
