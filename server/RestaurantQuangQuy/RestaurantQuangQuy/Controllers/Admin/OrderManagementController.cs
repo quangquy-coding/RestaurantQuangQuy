@@ -22,59 +22,70 @@ namespace RestaurantQuangQuy.Controllers.Admin
         {
             try
             {
-                var orders = await _context.Hoadonthanhtoans
-                    .Select(h => new
-                    {
-                        id = h.MaHoaDon,
-                        customerName = _context.Khachhangs
-                            .Where(k => k.MaKhachHang == h.MaKhachHang)
-                            .Select(k => k.TenKhachHang)
-                            .FirstOrDefault() ?? "Khách vãng lai",
+				var orders = await _context.Hoadonthanhtoans
+					.Select(h => new
+					{
+						id = h.MaHoaDon,
+						customerName = _context.Khachhangs
+							.Where(k => k.MaKhachHang == h.MaKhachHang)
+							.Select(k => k.TenKhachHang)
+							.FirstOrDefault() ?? "Khách vãng lai",
 
-                        tableNumber = _context.Banans
-                            .Where(b => b.MaBan == h.MaBanAn)
-                            .Select(b => b.TenBan)
-                            .FirstOrDefault() ?? "",
+						tableNumber = _context.Banans
+							.Where(b => b.MaBan == h.MaBanAn)
+							.Select(b => b.TenBan)
+							.FirstOrDefault() ?? "",
 
-                        tableId = h.MaBanAn ?? "",
-                        orderDate = h.ThoiGianDat,
+						tableId = h.MaBanAn ?? "",
+						orderDate = h.ThoiGianDat,
 
-                        status = h.TrangThaiThanhToan == "Chờ xử lí" ? "pending" :
-                                 h.TrangThaiThanhToan == "Đang xử lí" ? "processing" :
-                                 h.TrangThaiThanhToan == "Hoàn thành" ? "completed" :
-                                 h.TrangThaiThanhToan == "Đã hủy" ? "cancelled" : "pending",
+						status = h.TrangThaiThanhToan,
 
-                        total = h.TongTien ?? 0,
 
-                        paymentMethod = h.PhuongThucThanhToan == "Tiền mặt" ? "cash" :
-                                        h.PhuongThucThanhToan == "Thẻ" ? "card" : "ewallet",
+						total = h.TongTien ?? 0,
 
-                        items = _context.Chitietdondatmons
-                            .Where(ct => ct.MaDatMon == h.MaDatMon)
-                            .Select(ct => new
-                            {
-                                id = ct.MaMon,
-                                name = _context.Monans
-                                    .Where(m => m.MaMon == ct.MaMon)
-                                    .Select(m => m.TenMon)
-                                    .FirstOrDefault(),
-                                quantity = ct.SoLuong,
-                                price = ct.Gia
-                            }).ToList(),
+						paymentMethod = h.PhuongThucThanhToan == "Tiền mặt" ? "cash" :
+										h.PhuongThucThanhToan == "Thẻ" ? "card" : "ewallet",
+
+						items = _context.Chitietdondatmons
+							.Where(ct => ct.MaDatMon == h.MaDatMon)
+							.Select(ct => new
+							{
+								id = ct.MaMon,
+								name = _context.Monans
+									.Where(m => m.MaMon == ct.MaMon)
+									.Select(m => m.TenMon)
+									.FirstOrDefault(),
+								quantity = ct.SoLuong,
+								price = ct.Gia
+							}).ToList(),
+
+                        orderInfo = _context.Dondatmons
+							.Where(d => d.MaBanAn == h.MaBanAn)
+							.Select(d => new
+							{
+								maDatMon = d.MaDatMon,
+								soDienThoai = d.SoDienThoai,
+								trangThai = d.TrangThai,
+								soLuong = d.SoLuong,
+								tongTien = d.TongTien,
+								ghiChu = d.GhiChu
+							})
+							.FirstOrDefault(),
 
                         bookingInfo = _context.Datbans
-                            .Where(db => db.MaBanAn == h.MaBanAn)
-                            .Select(db => new
-                            {
-                                maDatBan = db.MaBanAn,
-                                soLuongKhach = db.SoLuongKhach,
-                                thoiGianDat = db.ThoiGianDat,
-                                thoiGianDen = db.ThoiGianDen,
-                                trangThai = db.TrangThai,
-                                ghiChu = db.GhiChu
-                            })
-                            .FirstOrDefault(),
-                        tables = (
+							.Where(db => db.MaBanAn == h.MaBanAn)
+							.Select(db => new
+							{
+								maDatBan = db.MaBanAn,
+								soLuongKhach = db.SoLuongKhach,
+								thoiGianDat = db.ThoiGianDat,
+								thoiGianDen = db.ThoiGianDen,
+								trangThai = db.TrangThai,
+								ghiChu = db.GhiChu
+							})
+							.FirstOrDefault(),
+						tables = (
 								from dbba in _context.DatBanBanAns
 								join b in _context.Banans on dbba.MaBanAn equals b.MaBan
 								where dbba.MaDatBan == h.MaBanAn
@@ -88,7 +99,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 								}
 							).ToList()
 
-                    })
+					})
                     .OrderByDescending(h => h.orderDate)
                     .ToListAsync();
 
@@ -272,18 +283,10 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				}
 
 				// Convert status
-				var vietnameseStatus = request.Status switch
-				{
-					"pending" => "Chờ xử lí",
-					"processing" => "Đang xử lí",
-					"completed" => "Hoàn thành",
-					"cancelled" => "Đã hủy",
-					_ => request.Status
-				};
 
-				order.TrangThaiThanhToan = vietnameseStatus;
+				order.TrangThaiThanhToan = request.Status;
 
-				if (vietnameseStatus == "Hoàn thành" || vietnameseStatus == "Đã hủy")
+				if (request.Status == "completed" || request.Status == "cancelled")
 				{
 					order.ThoiGianThanhToan = DateTime.Now;
 				}
@@ -297,8 +300,31 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// Gán bàn cho đơn hàng
-		[HttpPut("{orderId}/assign-table")]
+        [HttpPut("{orderId}/status")]
+        public async Task<IActionResult> UpdateOrderFoodStatus(string orderId, [FromBody] UpdateStatusRequest request)
+        {
+            try
+            {
+              	//cập nhật đơn đặt món 
+				var donDatMonUpdate = await _context.Dondatmons
+                    .FirstOrDefaultAsync(d => d.MaDatMon == orderId);
+
+				if (donDatMonUpdate != null)
+				{
+					donDatMonUpdate.TrangThai = request.Status;
+                    _context.Dondatmons.Update(donDatMonUpdate);
+                    await _context.SaveChangesAsync();
+                }
+				return Ok();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Lỗi khi cập nhật trạng thái", error = ex.Message });
+            }
+        }
+
+        // Gán bàn cho đơn hàng
+        [HttpPut("{orderId}/assign-table")]
 		public async Task<IActionResult> AssignTable(string orderId, [FromBody] AssignTableRequest request)
 		{
 			try
@@ -389,14 +415,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 
 				// Tạo hóa đơn
 				var maHoaDon = "HD" + DateTime.Now.ToString("yyyyMMddHHmmss");
-				var vietnameseStatus = request.Status switch
-				{
-					"pending" => "Chờ xử lí",
-					"processing" => "Đang xử lí",
-					"completed" => "Hoàn thành",
-					"cancelled" => "Đã hủy",
-					_ => "Chờ xử lí"
-				};
+				var vietnameseStatus = request.Status;
 
 				var vietnamesePayment = request.PaymentMethod switch
 				{
@@ -483,14 +502,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				}
 
 				// Cập nhật thông tin đơn hàng
-				var vietnameseStatus = request.Status switch
-				{
-					"pending" => "Chờ xử lí",
-					"processing" => "Đang xử lí",
-					"completed" => "Hoàn thành",
-					"cancelled" => "Đã hủy",
-					_ => "Chờ xử lí"
-				};
+				var vietnameseStatus = request.Status;
 
 				var vietnamesePayment = request.PaymentMethod switch
 				{
@@ -565,6 +577,17 @@ namespace RestaurantQuangQuy.Controllers.Admin
                     await _context.SaveChangesAsync();
                 }
 
+				//cập nhật đơn đặt món 
+				var donDatMonUpdate = await _context.Dondatmons
+                    .FirstOrDefaultAsync(d => d.MaDatMon == order.MaDatMon);
+
+				if (donDatMonUpdate != null)
+				{
+					donDatMonUpdate.TrangThai = request.StatusOrderFood;
+                    _context.Dondatmons.Update(donDatMonUpdate);
+                    await _context.SaveChangesAsync();
+                }
+            
                 // Xóa chi tiết cũ
                 var oldDetails = await _context.Chitietdondatmons
 					.Where(ct => ct.MaDatMon == order.MaDatMon)
@@ -690,7 +713,8 @@ namespace RestaurantQuangQuy.Controllers.Admin
 		public string CustomerName { get; set; } = null!;
         public string? OrderTableId { get; set; }
         public List<string> TableId { get; set; } = new();
-        public string Status { get; set; } = "pending";
+        public string Status { get; set; } = "processing";
+		public string StatusOrderFood { get; set; } = "pending";
 		public string PaymentMethod { get; set; } = "cash";
 		public string? Notes { get; set; }
 		public int Guest { get; set; }

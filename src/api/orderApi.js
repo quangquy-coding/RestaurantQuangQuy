@@ -93,6 +93,32 @@ export const updateOrderStatus = async (orderId, status) => {
   }
 };
 
+export const updateOrderFoodStatus = async (orderId, status) => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/OrderManagement/${orderId}/Foodstatus`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: status,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to update order status");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    throw error;
+  }
+};
+
 // Gán bàn cho đơn hàng
 export const assignTableToOrder = async (orderId, tableId) => {
   try {

@@ -180,6 +180,8 @@ const CheckoutPage = () => {
       maDatMon = datMonRes.data?.maDatMon;
       const maBanAn = datMonRes.data?.maBanAn;
 
+      const statusPay = paymentMethod === "cash" ? "processing" : "completed";
+
       // 3. Gửi hóa đơn
       const hoaDonDTO = {
         MaHoaDon: "",
@@ -191,7 +193,7 @@ const CheckoutPage = () => {
         MaKhuyenMai: "KM001",
         TongTien: total,
         PhuongThucThanhToan: paymentMethod,
-        TrangThaiThanhToan: "Đã thanh toán",
+        TrangThaiThanhToan: statusPay,
         MaNhanVien: "NV001",
         GhiChu: customerInfo.note || "",
       };
