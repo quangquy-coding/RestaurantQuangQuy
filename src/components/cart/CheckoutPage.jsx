@@ -4,33 +4,45 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
-  Users,
-  Wallet,
+  Tag,
+  XCircle,
 } from "lucide-react";
+import React from "react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { orderService } from "../../api/orderApi";
-import React from "react";
+import { toast } from "react-hot-toast";
 
 const USER_API_URL = "http://localhost:5080/api/NguoiDungManager";
 const PAYMENT_API_URL = "http://localhost:5080/api/Payment";
+const PROMO_API_URL = "http://localhost:5080/api/KhuyenMaiManager";
 
 const api = {
   getUserById: (userId) => axios.get(`${USER_API_URL}/${userId}`),
   createVNPayPayment: (data) =>
     axios.post(`${PAYMENT_API_URL}/create-payment`, data),
+  getActivePromotions: () => axios.get(`${PROMO_API_URL}/KhuyenMaiHoatDong`),
+  checkPromotion: (maKhuyenMai, tongTien) =>
+    axios.get(
+      `${PROMO_API_URL}/KiemTraKhuyenMai/${maKhuyenMai}?tongTien=${tongTien}`
+    ),
 };
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [total, setTotal] = useState(0);
-  const [paymentMethod, setPaymentMethod] = useState("Tiền mặt"); // Mặc định là tiền mặt
+  const [discount, setDiscount] = useState(0);
+  const [finalTotal, setFinalTotal] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState("Tiền mặt");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null);
   const [userLoading, setUserLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [redirecting, setRedirecting] = useState(false); // Trạng thái chuyển hướng VNPay
+  const [redirecting, setRedirecting] = useState(false);
+  const [promotions, setPromotions] = useState([]);
+  const [selectedPromo, setSelectedPromo] = useState(null);
+  const [showPromoModal, setShowPromoModal] = useState(false);
 
   const [customerInfo, setCustomerInfo] = useState({
     maDatBan: "",
@@ -46,7 +58,18 @@ const CheckoutPage = () => {
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState(null);
 
-  // Initialize user data
+  // Format date
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(date);
+  };
+
+  // Initialize user data and fetch promotions
   useEffect(() => {
     const token = localStorage.getItem("token");
     const uid = localStorage.getItem("usersId");
@@ -62,11 +85,13 @@ const CheckoutPage = () => {
         maKhachHang: "GUEST_" + Date.now(),
       }));
     }
+
+    // Fetch active promotions
+    fetchPromotions();
   }, []);
 
   const fetchUserData = async (uid) => {
     setUserLoading(true);
-
     try {
       const response = await api.getUserById(uid);
       const userData = response.data;
@@ -96,54 +121,76 @@ const CheckoutPage = () => {
       });
     } catch (err) {
       console.error("❌ Lỗi lấy thông tin người dùng:", err);
-
-      if (err.response) {
-        const status = err.response.status;
-        if (status === 404) {
-          setError(
-            "Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại."
-          );
-        } else {
-          setError(
-            "Lỗi tải thông tin người dùng: " +
-              (err.response.data?.message || "Unknown error")
-          );
-        }
-      } else {
-        setError("Không thể kết nối đến server để lấy thông tin người dùng.");
-      }
-
-      // Fallback: sử dụng uid làm maKhachHang
+      setError(
+        err.response?.data?.message ||
+          "Lỗi tải thông tin người dùng. Vui lòng thử lại."
+      );
       setCustomerInfo((prev) => ({
         ...prev,
         maKhachHang: uid,
       }));
-
-      console.log("🔄 Sử dụng fallback maKhachHang:", uid);
     } finally {
       setUserLoading(false);
     }
   };
 
+  const fetchPromotions = async () => {
+    try {
+      const response = await api.getActivePromotions();
+      setPromotions(response.data);
+    } catch (err) {
+      console.error("❌ Lỗi lấy khuyến mãi:", err);
+      toast.error("Không thể tải danh sách khuyến mãi.");
+    }
+  };
+
+  const applyPromotion = async (promo) => {
+    try {
+      const response = await api.checkPromotion(promo.maKhuyenMai, total);
+      const result = response.data;
+      if (result.hopLe) {
+        setSelectedPromo(promo);
+        setDiscount(result.tienGiam);
+        setFinalTotal(result.tongTienSauGiam);
+        toast.success(
+          `Đã áp dụng mã ${
+            promo.maKhuyenMai
+          }! Giảm ${result.tienGiam.toLocaleString()} VNĐ`
+        );
+        setShowPromoModal(false);
+      } else {
+        toast.error("Mã khuyến mãi không hợp lệ.");
+      }
+    } catch (err) {
+      console.error("❌ Lỗi kiểm tra khuyến mãi:", err);
+      toast.error("Số tiền không đủ để áp dụng mã, vui lòng thử lại.");
+    }
+  };
+
+  const removePromotion = () => {
+    setSelectedPromo(null);
+    setDiscount(0);
+    setFinalTotal(total);
+    toast.success("Đã xóa mã khuyến mãi.");
+  };
+
   useEffect(() => {
-    // Load các món được chọn từ localStorage
+    // Load cart items
     const savedCheckoutItems = localStorage.getItem("checkoutItems");
     if (savedCheckoutItems) {
       const parsedItems = JSON.parse(savedCheckoutItems);
       setCartItems(parsedItems);
-
-      // Tính tổng tiền
       const sum = parsedItems.reduce(
         (acc, item) => acc + item.price * item.quantity,
         0
       );
       setTotal(sum);
+      setFinalTotal(sum); // Initialize final total
     } else {
-      // Nếu không có món nào, quay lại giỏ hàng
       navigate("/cart");
     }
 
-    // Load thông tin khách hàng nếu có
+    // Load customer info
     const savedCustomerInfo = localStorage.getItem("customerInfo");
     if (savedCustomerInfo) {
       setCustomerInfo(JSON.parse(savedCustomerInfo));
@@ -163,10 +210,10 @@ const CheckoutPage = () => {
     setLoading(true);
     setError(null);
 
-    let maDatMon = null; // Để rollback nếu lỗi
+    let maDatMon = null;
 
     try {
-      // 1. Tạo DTO đặt món
+      // Create order DTO
       const datMonDTO = {
         MaBanAn: customerInfo.tableNumber,
         MaKhachHang: customerInfo.maKhachHang,
@@ -174,7 +221,7 @@ const CheckoutPage = () => {
         ThoiGianDat: new Date().toISOString(),
         TrangThai: "Chờ xử lí",
         SoLuong: cartItems.reduce((total, item) => total + item.quantity, 0),
-        TongTien: total,
+        TongTien: finalTotal,
         GhiChu: customerInfo.note,
         ChiTietDatMonAns: cartItems.map((item) => ({
           MaMon: item.id,
@@ -184,14 +231,13 @@ const CheckoutPage = () => {
         })),
       };
 
-      // 2. Gửi đơn đặt món
+      // Submit order
       const datMonRes = await orderService.createDatMon(datMonDTO);
       maDatMon = datMonRes.data?.maDatMon;
       const maBanAn = datMonRes.data?.maBanAn;
 
-      // 3. Xử lý thanh toán
+      // Process payment
       if (paymentMethod === "Tiền mặt") {
-        // Thanh toán tiền mặt
         const hoaDonDTO = {
           MaHoaDon: "",
           MaDatMon: maDatMon,
@@ -199,8 +245,8 @@ const CheckoutPage = () => {
           MaKhachHang: customerInfo.maKhachHang,
           ThoiGianDat: new Date().toISOString(),
           ThoiGianThanhToan: new Date().toISOString(),
-          MaKhuyenMai: "KM001",
-          TongTien: total,
+          MaKhuyenMai: selectedPromo?.maKhuyenMai || null,
+          TongTien: finalTotal,
           PhuongThucThanhToan: "Tiền mặt",
           TrangThaiThanhToan: "processing",
           MaNhanVien: "NV001",
@@ -208,13 +254,12 @@ const CheckoutPage = () => {
         };
 
         const res = await orderService.createHoaDon(hoaDonDTO);
-        const maHoaDon = res.data?.data?.maHoaDon || "HD" + Date.now();
+        const maHoaDon = res.data?.maHoaDon || "HD" + Date.now();
 
-        // Thành công
         setOrderId(maHoaDon);
         setOrderComplete(true);
 
-        // Dọn dữ liệu localStorage
+        // Clean up localStorage
         localStorage.removeItem("checkoutItems");
         localStorage.removeItem("customerInfo");
 
@@ -227,10 +272,10 @@ const CheckoutPage = () => {
           new CustomEvent("cartUpdated", { detail: { cart: remainingItems } })
         );
       } else {
-        // Thanh toán VNPay
+        // VNPay payment
         const vnpayRequest = {
           OrderId: maDatMon,
-          Amount: total,
+          Amount: finalTotal,
           OrderDescription: `Thanh toán đơn hàng ${maDatMon} tại Restaurant Quang Quý`,
           CustomerName: customerInfo.name,
           CustomerEmail: customerInfo.email,
@@ -239,22 +284,21 @@ const CheckoutPage = () => {
 
         const vnpayRes = await api.createVNPayPayment(vnpayRequest);
         if (vnpayRes.data.success) {
-          // Lưu thông tin hóa đơn vào localStorage để sử dụng sau khi quay lại từ VNPay
           localStorage.setItem(
             "pendingHoaDon",
             JSON.stringify({
               MaDatMon: maDatMon,
               MaBanAn: maBanAn,
               MaKhachHang: customerInfo.maKhachHang,
-              TongTien: total,
+              TongTien: finalTotal,
+              MaKhuyenMai: selectedPromo?.maKhuyenMai || null,
               GhiChu: customerInfo.note,
             })
           );
-          // Chuyển hướng đến URL thanh toán VNPay
           setRedirecting(true);
           setTimeout(() => {
             window.location.href = vnpayRes.data.paymentUrl;
-          }, 1000); // Đợi 1 giây để hiển thị UI chuyển hướng
+          }, 1000);
         } else {
           throw new Error(
             vnpayRes.data.message || "Lỗi tạo URL thanh toán VNPay"
@@ -267,7 +311,7 @@ const CheckoutPage = () => {
         err.message || "Đã xảy ra lỗi khi xử lý đơn hàng. Vui lòng thử lại."
       );
 
-      // Rollback đơn đặt món nếu có lỗi
+      // Rollback order if error
       if (maDatMon) {
         try {
           await orderService.deleteDatMon(maDatMon);
@@ -302,7 +346,7 @@ const CheckoutPage = () => {
       <div className="min-h-screen bg-red-50 p-4 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
           <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Đặt hàng thành công!</h1>
+          <h1 className="text-2xl font-bold mb-2">Đặt món thành công!</h1>
           <p className="text-gray-600 mb-4">
             Cảm ơn bạn đã đặt món tại nhà hàng chúng tôi
           </p>
@@ -357,12 +401,11 @@ const CheckoutPage = () => {
         <h1 className="text-2xl font-bold mb-6">Thanh toán</h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Tóm tắt đơn hàng */}
+          {/* Order Summary */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="p-4 border-b">
               <h2 className="font-semibold">Tóm tắt đơn hàng</h2>
             </div>
-
             <ul className="divide-y divide-gray-200 max-h-64 overflow-y-auto">
               {cartItems.map((item) => (
                 <li key={item.id} className="p-4 flex items-center">
@@ -373,14 +416,12 @@ const CheckoutPage = () => {
                       className="h-full w-full object-cover object-center"
                     />
                   </div>
-
                   <div className="ml-4 flex-1">
                     <h3 className="font-medium text-sm">{item.name}</h3>
                     <p className="text-gray-500 text-xs">
                       {item.quantity} x {item.price.toLocaleString("vi-VN")} ₫
                     </p>
                   </div>
-
                   <div className="text-right">
                     <p className="font-medium">
                       {(item.price * item.quantity).toLocaleString("vi-VN")} ₫
@@ -389,25 +430,29 @@ const CheckoutPage = () => {
                 </li>
               ))}
             </ul>
-
             <div className="p-4 bg-gray-50">
               <div className="flex justify-between mb-2">
                 <span>Tạm tính:</span>
                 <span>{total.toLocaleString("vi-VN")} ₫</span>
               </div>
+              {selectedPromo && (
+                <div className="flex justify-between mb-2 text-green-600">
+                  <span>Giảm giá ({selectedPromo.maKhuyenMai}):</span>
+                  <span>-{discount.toLocaleString("vi-VN")} ₫</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-lg">
                 <span>Tổng cộng:</span>
-                <span>{total.toLocaleString("vi-VN")} ₫</span>
+                <span>{finalTotal.toLocaleString("vi-VN")} ₫</span>
               </div>
             </div>
           </div>
 
-          {/* Form thanh toán */}
+          {/* Payment Form */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="p-4 border-b">
               <h2 className="font-semibold">Thông tin thanh toán</h2>
             </div>
-
             <form onSubmit={handleSubmit} className="p-4">
               <div className="grid grid-cols-1 gap-4">
                 <div>
@@ -419,11 +464,11 @@ const CheckoutPage = () => {
                     name="name"
                     value={customerInfo.name}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
                     required
+                    readOnly
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Số điện thoại
@@ -435,9 +480,9 @@ const CheckoutPage = () => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
+                    readOnly
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Email
@@ -449,12 +494,12 @@ const CheckoutPage = () => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required={paymentMethod !== "Tiền mặt"}
+                    readOnly
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Số bàn
+                    Mã bàn đặt
                   </label>
                   <input
                     type="text"
@@ -463,9 +508,40 @@ const CheckoutPage = () => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                     required
+                    readOnly
                   />
                 </div>
-
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mã khuyến mãi
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={selectedPromo?.maKhuyenMai || ""}
+                      readOnly
+                      placeholder="Chọn mã khuyến mãi"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                    />
+                    {selectedPromo ? (
+                      <button
+                        type="button"
+                        onClick={removePromotion}
+                        className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                      >
+                        Xóa
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowPromoModal(true)}
+                        className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                      >
+                        Chọn
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Ghi chú
@@ -478,7 +554,6 @@ const CheckoutPage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                   ></textarea>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Phương thức thanh toán
@@ -502,15 +577,14 @@ const CheckoutPage = () => {
                         <span className="text-sm">Tiền mặt</span>
                       </label>
                     </div>
-
                     <div>
                       <input
                         type="radio"
                         id="vnpay"
                         name="paymentMethod"
                         value="VNPay"
-                        checked={paymentMethod === "vnpay"}
-                        onChange={() => setPaymentMethod("vnpay")}
+                        checked={paymentMethod === "VNPay"}
+                        onChange={() => setPaymentMethod("VNPay")}
                         className="sr-only peer"
                       />
                       <label
@@ -523,7 +597,6 @@ const CheckoutPage = () => {
                     </div>
                   </div>
                 </div>
-
                 <button
                   type="submit"
                   disabled={loading || userLoading || redirecting}
@@ -535,7 +608,7 @@ const CheckoutPage = () => {
                       Đang xử lý...
                     </>
                   ) : paymentMethod === "Tiền mặt" ? (
-                    "Hoàn tất đặt hàng"
+                    "Hoàn tất đặt món"
                   ) : (
                     "Tiến hành thanh toán VNPay"
                   )}
@@ -544,6 +617,55 @@ const CheckoutPage = () => {
             </form>
           </div>
         </div>
+
+        {/* Promotions Modal */}
+        {showPromoModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Chọn Mã Khuyến Mãi
+                </h3>
+                <button
+                  onClick={() => setShowPromoModal(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <XCircle className="h-6 w-6" />
+                </button>
+              </div>
+              {promotions.length === 0 ? (
+                <p className="text-gray-600 text-center">
+                  Không có mã khuyến mãi nào đang hoạt động.
+                </p>
+              ) : (
+                <ul className="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                  {promotions.map((promo) => (
+                    <li
+                      key={promo.maKhuyenMai}
+                      className="p-4 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => applyPromotion(promo)}
+                    >
+                      <div className="flex items-center">
+                        <Tag className="h-5 w-5 text-blue-600 mr-2" />
+                        <div>
+                          <h4 className="font-medium">{promo.tenKhuyenMai}</h4>
+                          <p className="text-sm text-gray-600">
+                            Mã: {promo.maKhuyenMai} | Giảm: {promo.tyLeGiamGia}%
+                            | Tối thiểu:{" "}
+                            {promo.mucTienToiThieu.toLocaleString()} VNĐ
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            Hết hạn: {formatDate(promo.ngayKetThuc)}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

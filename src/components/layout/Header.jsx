@@ -44,23 +44,28 @@ const Header = () => {
 
   // Listen for cart updates
   useEffect(() => {
+    // Tính số loại sản phẩm khác nhau trong giỏ hàng (không phải tổng quantity)
     const updateCartCount = (cart) => {
       if (cart && Array.isArray(cart)) {
-        const count = cart.reduce((acc, item) => acc + item.quantity, 0);
+        // Đếm số loại sản phẩm khác nhau (mỗi id là 1 loại)
+        const count = cart.length;
         setCartCount(count);
       } else {
         setCartCount(0);
       }
     };
 
+    // Lắng nghe sự kiện thêm vào giỏ hàng (custom event 'cartUpdated')
     const handleCartUpdated = (e) => {
       const updatedCart = e.detail.cart;
       updateCartCount(updatedCart);
     };
 
+    // Lấy cart từ localStorage khi load trang
     const savedCart = JSON.parse(localStorage.getItem("cart"));
     updateCartCount(savedCart);
 
+    // Lắng nghe thay đổi localStorage (các tab khác)
     const handleStorage = () => {
       const latestCart = JSON.parse(localStorage.getItem("cart"));
       updateCartCount(latestCart);
@@ -162,7 +167,7 @@ const Header = () => {
             >
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center font-bold border border-white">
                   {cartCount}
                 </span>
               )}

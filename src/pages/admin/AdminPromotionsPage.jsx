@@ -237,46 +237,46 @@ const AdminPromotionsPage = () => {
   );
 
   // Dữ liệu biểu đồ
-  const chartData = {
-    labels: filteredPromotions.map((p) => p.tenKhuyenMai),
-    datasets: [
-      {
-        label: "Số hóa đơn sử dụng",
-        data: filteredPromotions.map((p) => p.soHoaDonSuDung),
-        backgroundColor: "rgba(54, 162, 235, 0.6)",
-        borderColor: "rgba(54, 162, 235, 1)",
-        borderWidth: 1,
-      },
-    ],
-  };
+  // const chartData = {
+  //   labels: filteredPromotions.map((p) => p.tenKhuyenMai),
+  //   datasets: [
+  //     {
+  //       label: "Số hóa đơn sử dụng",
+  //       data: filteredPromotions.map((p) => p.soHoaDonSuDung),
+  //       backgroundColor: "rgba(54, 162, 235, 0.6)",
+  //       borderColor: "rgba(54, 162, 235, 1)",
+  //       borderWidth: 1,
+  //     },
+  //   ],
+  // };
 
-  const chartOptions = {
-    scales: {
-      y: {
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: "Số hóa đơn",
-        },
-      },
-      x: {
-        title: {
-          display: true,
-          text: "Khuyến mãi",
-        },
-      },
-    },
-    plugins: {
-      legend: {
-        display: true,
-        position: "top",
-      },
-      title: {
-        display: true,
-        text: "Số lượng hóa đơn sử dụng theo khuyến mãi",
-      },
-    },
-  };
+  // const chartOptions = {
+  //   scales: {
+  //     y: {
+  //       beginAtZero: true,
+  //       title: {
+  //         display: true,
+  //         text: "Số hóa đơn",
+  //       },
+  //     },
+  //     x: {
+  //       title: {
+  //         display: true,
+  //         text: "Khuyến mãi",
+  //       },
+  //     },
+  //   },
+  //   plugins: {
+  //     legend: {
+  //       display: true,
+  //       position: "top",
+  //     },
+  //     title: {
+  //       display: true,
+  //       text: "Số lượng hóa đơn sử dụng theo khuyến mãi",
+  //     },
+  //   },
+  // };
 
   if (loading) {
     return (
@@ -392,14 +392,14 @@ const AdminPromotionsPage = () => {
       </div>
 
       {/* Promotions Chart */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      {/* <div className="bg-white rounded-lg shadow-md p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">
           Thống kê sử dụng khuyến mãi
         </h3>
         <div className="h-96">
           <Bar data={chartData} options={chartOptions} />
         </div>
-      </div>
+      </div> */}
 
       {/* Promotions Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -430,9 +430,9 @@ const AdminPromotionsPage = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Thời gian
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Sử dụng
-                </th>
+                </th> */}
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Trạng thái
                 </th>
@@ -480,11 +480,11 @@ const AdminPromotionsPage = () => {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  {/* <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
                       {promotion.soHoaDonSuDung}
                     </div>
-                  </td>
+                  </td> */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${
