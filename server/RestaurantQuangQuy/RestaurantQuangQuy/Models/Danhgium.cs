@@ -12,8 +12,10 @@ public partial class Danhgium
     public string MaHoaDon { get; set; } = null!;
 
     public string? NoiDungPhanHoi { get; set; }
+    public string? PhanHoiDanhGia { get; set; }
+    public string? HinhAnhDanhGia { get; set; }
 
-    public DateOnly NgayDanhGia { get; set; }
+	public DateOnly NgayDanhGia { get; set; }
 
     public int? XepHang { get; set; }
 

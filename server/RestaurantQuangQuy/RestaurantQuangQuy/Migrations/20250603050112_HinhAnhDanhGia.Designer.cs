@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RestaurantQuangQuy.Models;
 
@@ -11,9 +12,11 @@ using RestaurantQuangQuy.Models;
 namespace RestaurantQuangQuy.Migrations
 {
     [DbContext(typeof(RestaurantManagementContext))]
-    partial class RestaurantManagementContextModelSnapshot : ModelSnapshot
+    [Migration("20250603050112_HinhAnhDanhGia")]
+    partial class HinhAnhDanhGia
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -165,9 +168,6 @@ namespace RestaurantQuangQuy.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(10)")
                         .HasColumnName("maDanhGia");
-
-                    b.Property<string>("HinhAnhDanhGia")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("MaHoaDon")
                         .IsRequired()

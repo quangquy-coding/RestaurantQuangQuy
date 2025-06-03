@@ -6,10 +6,17 @@ export const getAllDanhGia = async () => {
     },
   });
   if (!response.ok) {
-    const errorData = await response.json();
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch {
+      errorData = {
+        message: response.statusText || "Lỗi khi lấy danh sách đánh giá",
+      };
+    }
     throw new Error(errorData.message || "Lỗi khi lấy danh sách đánh giá");
   }
-  return response.json();
+  return await response.json();
 };
 
 export const themDanhGia = async (danhGia) => {
@@ -21,8 +28,13 @@ export const themDanhGia = async (danhGia) => {
     body: JSON.stringify(danhGia),
   });
   if (!response.ok) {
-    const errorData = await response.json();
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch {
+      errorData = { message: response.statusText || "Lỗi khi gửi đánh giá" };
+    }
     throw new Error(errorData.message || "Lỗi khi gửi đánh giá");
   }
-  return response.json();
+  return await response.json();
 };

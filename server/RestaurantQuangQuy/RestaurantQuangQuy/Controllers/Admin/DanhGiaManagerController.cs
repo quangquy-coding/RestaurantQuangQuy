@@ -9,13 +9,15 @@ namespace RestaurantQuangQuy.Controllers.Admin
 	public class DanhGiaManagerController : ControllerBase
 	{
 		private readonly RestaurantManagementContext _context;
+		private readonly IWebHostEnvironment _environment;
 
-		public DanhGiaManagerController(RestaurantManagementContext context)
+
+		public DanhGiaManagerController(RestaurantManagementContext context, IWebHostEnvironment environment)
 		{
 			_context = context;
+			_environment = environment;
 		}
 
-		// Existing actions (GetAllDanhGia, GetDanhGiaById, ThemDanhGia, SuaDanhGia, XoaDanhGia, ThongKeDanhGia, LocTheoXepHang) remain unchanged
 		[HttpGet]
 		public async Task<IActionResult> GetAllDanhGia()
 		{
@@ -23,6 +25,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			{
 				var danhGias = await _context.Danhgia
 					.Include(dg => dg.MaKhachHangNavigation)
+						.ThenInclude(kh => kh.MaTaiKhoanNavigation)
 					.Include(dg => dg.MaHoaDonNavigation)
 					.OrderByDescending(dg => dg.NgayDanhGia)
 					.ToListAsync();
@@ -31,12 +34,17 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				{
 					dg.MaDanhGia,
 					dg.MaKhachHang,
-					TenKhachHang = dg.MaKhachHangNavigation?.TenKhachHang,
+					TenKhachHang = dg.MaKhachHangNavigation != null ? dg.MaKhachHangNavigation.TenKhachHang : null,
+					Email = dg.MaKhachHangNavigation != null ? dg.MaKhachHangNavigation.Email : null,
+					Avatar = dg.MaKhachHangNavigation != null && dg.MaKhachHangNavigation.MaTaiKhoanNavigation != null
+						? dg.MaKhachHangNavigation.MaTaiKhoanNavigation.HinhAnh : null,
 					dg.MaHoaDon,
 					dg.NoiDungPhanHoi,
 					dg.NgayDanhGia,
 					dg.XepHang,
-					TongTienHoaDon = dg.MaHoaDonNavigation?.TongTien
+					dg.PhanHoiDanhGia,
+					dg.HinhAnhDanhGia,
+					TongTienHoaDon = dg.MaHoaDonNavigation != null ? dg.MaHoaDonNavigation.TongTien : null
 				});
 
 				return Ok(result);
@@ -54,6 +62,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			{
 				var danhGia = await _context.Danhgia
 					.Include(dg => dg.MaKhachHangNavigation)
+						.ThenInclude(kh => kh.MaTaiKhoanNavigation)
 					.Include(dg => dg.MaHoaDonNavigation)
 					.FirstOrDefaultAsync(dg => dg.MaDanhGia == id);
 
@@ -64,13 +73,17 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				{
 					danhGia.MaDanhGia,
 					danhGia.MaKhachHang,
-					TenKhachHang = danhGia.MaKhachHangNavigation?.TenKhachHang,
-					Email = danhGia.MaKhachHangNavigation?.Email,
+					TenKhachHang = danhGia.MaKhachHangNavigation != null ? danhGia.MaKhachHangNavigation.TenKhachHang : null,
+					Email = danhGia.MaKhachHangNavigation != null ? danhGia.MaKhachHangNavigation.Email : null,
+					Avatar = danhGia.MaKhachHangNavigation != null && danhGia.MaKhachHangNavigation.MaTaiKhoanNavigation != null
+						? danhGia.MaKhachHangNavigation.MaTaiKhoanNavigation.HinhAnh : null,
 					danhGia.MaHoaDon,
 					danhGia.NoiDungPhanHoi,
 					danhGia.NgayDanhGia,
 					danhGia.XepHang,
-					TongTienHoaDon = danhGia.MaHoaDonNavigation?.TongTien
+					danhGia.PhanHoiDanhGia,
+					danhGia.HinhAnhDanhGia,
+					TongTienHoaDon = danhGia.MaHoaDonNavigation != null ? danhGia.MaHoaDonNavigation.TongTien : null
 				};
 
 				return Ok(result);
@@ -106,17 +119,9 @@ namespace RestaurantQuangQuy.Controllers.Admin
 					.OrderByDescending(dg => dg.MaDanhGia)
 					.FirstOrDefaultAsync();
 
-				string newMaDanhGia;
-				if (lastDanhGia == null)
-				{
-					newMaDanhGia = "DG001";
-				}
-				else
-				{
-					string lastCode = lastDanhGia.MaDanhGia.Substring(2);
-					int nextNumber = int.Parse(lastCode) + 1;
-					newMaDanhGia = "DG" + nextNumber.ToString("D3");
-				}
+				string newMaDanhGia = lastDanhGia == null
+					? "DG001"
+					: $"DG{(int.Parse(lastDanhGia.MaDanhGia.Substring(2)) + 1):D3}";
 
 				var danhGia = new Danhgium
 				{
@@ -125,7 +130,8 @@ namespace RestaurantQuangQuy.Controllers.Admin
 					MaHoaDon = dto.MaHoaDon,
 					NoiDungPhanHoi = dto.NoiDungPhanHoi,
 					NgayDanhGia = DateOnly.FromDateTime(DateTime.Now),
-					XepHang = dto.XepHang
+					XepHang = dto.XepHang,
+					HinhAnhDanhGia = dto.HinhAnhDanhGia
 				};
 
 				_context.Danhgia.Add(danhGia);
@@ -153,6 +159,8 @@ namespace RestaurantQuangQuy.Controllers.Admin
 
 				danhGia.NoiDungPhanHoi = dto.NoiDungPhanHoi;
 				danhGia.XepHang = dto.XepHang;
+				danhGia.PhanHoiDanhGia = dto.PhanHoiDanhGia;
+				danhGia.HinhAnhDanhGia = dto.HinhAnhDanhGia;
 
 				await _context.SaveChangesAsync();
 				return Ok(new { Message = "Cập nhật đánh giá thành công." });
@@ -204,24 +212,30 @@ namespace RestaurantQuangQuy.Controllers.Admin
 
 				var danhGiaMoiNhat = await _context.Danhgia
 					.Include(dg => dg.MaKhachHangNavigation)
+						.ThenInclude(kh => kh.MaTaiKhoanNavigation)
 					.OrderByDescending(dg => dg.NgayDanhGia)
 					.Take(5)
-					.Select(dg => new
-					{
-						dg.MaDanhGia,
-						TenKhachHang = dg.MaKhachHangNavigation!.TenKhachHang,
-						dg.XepHang,
-						dg.NoiDungPhanHoi,
-						dg.NgayDanhGia
-					})
 					.ToListAsync();
+
+				var danhGiaMoiNhatResult = danhGiaMoiNhat.Select(dg => new
+				{
+					dg.MaDanhGia,
+					TenKhachHang = dg.MaKhachHangNavigation != null ? dg.MaKhachHangNavigation.TenKhachHang : null,
+					Avatar = dg.MaKhachHangNavigation != null && dg.MaKhachHangNavigation.MaTaiKhoanNavigation != null
+						? dg.MaKhachHangNavigation.MaTaiKhoanNavigation.HinhAnh : null,
+					dg.XepHang,
+					dg.NoiDungPhanHoi,
+					dg.NgayDanhGia,
+					dg.PhanHoiDanhGia,
+					dg.HinhAnhDanhGia
+				});
 
 				return Ok(new
 				{
 					TongDanhGia = tongDanhGia,
 					DiemTrungBinh = Math.Round(diemTrungBinh, 1),
 					ThongKeTheoSao = thongKeTheoSao,
-					DanhGiaMoiNhat = danhGiaMoiNhat
+					DanhGiaMoiNhat = danhGiaMoiNhatResult
 				});
 			}
 			catch (Exception ex)
@@ -237,6 +251,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			{
 				var danhGias = await _context.Danhgia
 					.Include(dg => dg.MaKhachHangNavigation)
+						.ThenInclude(kh => kh.MaTaiKhoanNavigation)
 					.Include(dg => dg.MaHoaDonNavigation)
 					.Where(dg => dg.XepHang == xepHang)
 					.OrderByDescending(dg => dg.NgayDanhGia)
@@ -246,11 +261,16 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				{
 					dg.MaDanhGia,
 					dg.MaKhachHang,
-					TenKhachHang = dg.MaKhachHangNavigation?.TenKhachHang,
+					TenKhachHang = dg.MaKhachHangNavigation != null ? dg.MaKhachHangNavigation.TenKhachHang : null,
+					Email = dg.MaKhachHangNavigation != null ? dg.MaKhachHangNavigation.Email : null,
+					Avatar = dg.MaKhachHangNavigation != null && dg.MaKhachHangNavigation.MaTaiKhoanNavigation != null
+						? dg.MaKhachHangNavigation.MaTaiKhoanNavigation.HinhAnh : null,
 					dg.MaHoaDon,
 					dg.NoiDungPhanHoi,
 					dg.NgayDanhGia,
-					dg.XepHang
+					dg.XepHang,
+					dg.PhanHoiDanhGia,
+					dg.HinhAnhDanhGia
 				});
 
 				return Ok(result);
@@ -261,20 +281,96 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// New endpoint to fetch customers
 		[HttpGet("KhachHangs")]
 		public async Task<IActionResult> GetAllKhachHangs()
 		{
 			try
 			{
 				var khachHangs = await _context.Khachhangs
-					.Select(kh => new { kh.MaKhachHang, kh.TenKhachHang })
+					.Include(kh => kh.MaTaiKhoanNavigation)
 					.ToListAsync();
-				return Ok(khachHangs);
+
+				var result = khachHangs.Select(kh => new
+				{
+					kh.MaKhachHang,
+					kh.TenKhachHang,
+					Avatar = kh.MaTaiKhoanNavigation != null ? kh.MaTaiKhoanNavigation.HinhAnh : null
+				});
+
+				return Ok(result);
 			}
 			catch (Exception ex)
 			{
 				return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
+			}
+		}
+
+		[HttpGet("search")]
+		public async Task<IActionResult> SearchDanhGia(string query)
+		{
+			try
+			{
+				var danhGias = await _context.Danhgia
+					.Include(dg => dg.MaKhachHangNavigation)
+						.ThenInclude(kh => kh.MaTaiKhoanNavigation)
+					.Include(dg => dg.MaHoaDonNavigation)
+					.Where(dg =>
+						(dg.MaKhachHangNavigation != null && dg.MaKhachHangNavigation.TenKhachHang.Contains(query)) ||
+						(dg.NoiDungPhanHoi != null && dg.NoiDungPhanHoi.Contains(query)))
+					.OrderByDescending(dg => dg.NgayDanhGia)
+					.ToListAsync();
+
+				var result = danhGias.Select(dg => new
+				{
+					dg.MaDanhGia,
+					dg.MaKhachHang,
+					TenKhachHang = dg.MaKhachHangNavigation != null ? dg.MaKhachHangNavigation.TenKhachHang : null,
+					Email = dg.MaKhachHangNavigation != null ? dg.MaKhachHangNavigation.Email : null,
+					Avatar = dg.MaKhachHangNavigation != null && dg.MaKhachHangNavigation.MaTaiKhoanNavigation != null
+						? dg.MaKhachHangNavigation.MaTaiKhoanNavigation.HinhAnh : null,
+					dg.MaHoaDon,
+					dg.NoiDungPhanHoi,
+					dg.NgayDanhGia,
+					dg.XepHang,
+					dg.PhanHoiDanhGia,
+					dg.HinhAnhDanhGia,
+					TongTienHoaDon = dg.MaHoaDonNavigation != null ? dg.MaHoaDonNavigation.TongTien : null
+				});
+
+				return Ok(result);
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Lỗi hệ thống: {ex.Message}");
+			}
+
+		}
+		[HttpPost("UploadImage")]
+		public async Task<IActionResult> UploadImage(IFormFile file)
+		{
+			if (file == null || file.Length == 0)
+				return BadRequest("No file uploaded.");
+
+			try
+			{
+				var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+				if (!Directory.Exists(uploadsFolder))
+					Directory.CreateDirectory(uploadsFolder);
+
+				var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+				var filePath = Path.Combine(uploadsFolder, fileName);
+
+				using (var stream = new FileStream(filePath, FileMode.Create))
+				{
+					await file.CopyToAsync(stream);
+				}
+
+				var fileUrl = $"{Request.Scheme}://{Request.Host}/Uploads/{fileName}";
+				return Ok(new { url = fileUrl });
+			}
+			catch (Exception ex)
+			{
+				return StatusCode(500, $"Error uploading file: {ex.Message}");
 			}
 		}
 	}
@@ -285,5 +381,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 		public string MaHoaDon { get; set; } = null!;
 		public string? NoiDungPhanHoi { get; set; }
 		public int? XepHang { get; set; }
+		public string? PhanHoiDanhGia { get; set; }
+		public string? HinhAnhDanhGia { get; set; }
 	}
 }

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { Star as StarIcon } from "lucide-react";
 import {
+  Star,
   Search,
   Eye,
   CheckCircle,
@@ -10,8 +10,8 @@ import {
   Calendar,
   CreditCard,
   MapPin,
-  Star,
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import { getAllOrders, updateOrderFoodStatus } from "../../api/orderApi";
 import { getAllDanhGia, themDanhGia } from "../../api/danhGiaApi";
 
@@ -31,11 +31,15 @@ const AdminOrdersPage = () => {
     maHoaDon: "",
     noiDungPhanHoi: "",
     xepHang: 5,
+    hinhAnhDanhGia: "",
+    preview: "", // Added for image preview
   });
+  const [imageFile, setImageFile] = useState(null);
+
   const StarDisplay = ({ value }) => (
     <div className="flex">
       {[1, 2, 3, 4, 5].map((star) => (
-        <StarIcon
+        <Star
           key={star}
           fill={value >= star ? "#facc15" : "none"}
           stroke="#facc15"
@@ -44,27 +48,25 @@ const AdminOrdersPage = () => {
       ))}
     </div>
   );
-  const StarRating = ({ value, onChange }) => {
-    // value: số sao hiện tại (1, 2, 3, 4, 5)
-    // onChange: hàm nhận giá trị mới khi chọn
-    return (
-      <div className="flex">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <span
-            key={star}
-            style={{ cursor: "pointer" }}
-            onClick={() => onChange(star)}
-          >
-            <StarIcon
-              fill={value >= star ? "#facc15" : "none"}
-              stroke="#facc15"
-              style={{ width: 24, height: 24 }}
-            />
-          </span>
-        ))}
-      </div>
-    );
-  };
+
+  const StarRating = ({ value, onChange }) => (
+    <div className="flex">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span
+          key={star}
+          style={{ cursor: "pointer" }}
+          onClick={() => onChange(star)}
+        >
+          <Star
+            fill={value >= star ? "#facc15" : "none"}
+            stroke="#facc15"
+            style={{ width: 24, height: 24 }}
+          />
+        </span>
+      ))}
+    </div>
+  );
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -81,12 +83,25 @@ const AdminOrdersPage = () => {
         getAllOrders(),
         getAllDanhGia(),
       ]);
-      setOrders(ordersData);
-      setFilteredOrders(ordersData);
+      // Map orders to match expected structure
+      const mappedOrders = ordersData.map((order) => ({
+        id: order.maHoaDon || order.id,
+        customerName: order.tenKhachHang || order.customerName,
+        customerId: order.maKhachHang || order.customerId,
+        orderDate: order.ngayDat || order.orderDate,
+        total: order.tongTien || order.total,
+        paymentMethod: order.phuongThucThanhToan || order.paymentMethod,
+        status: order.trangThai || order.status,
+        tables: order.banList || order.tables || [],
+        items: order.chiTietDonHang || order.items || [],
+      }));
+      setOrders(mappedOrders);
+      setFilteredOrders(mappedOrders);
       setReviews(reviewsData);
     } catch (error) {
       console.error("Error fetching data:", error);
       setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+      toast.error("Lỗi tải dữ liệu!");
       setOrders([]);
       setFilteredOrders([]);
       setReviews([]);
@@ -104,15 +119,13 @@ const AdminOrdersPage = () => {
           order.customerName
             ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          order.tableNumber?.toLowerCase().includes(searchTerm.toLowerCase())
+          order.tables?.some((table) =>
+            table.tenBan?.toLowerCase().includes(searchTerm.toLowerCase())
+          )
       );
     }
     if (selectedStatus) {
-      filtered = filtered.filter(
-        (order) =>
-          order.status === selectedStatus ||
-          (order.orderInfo && order.orderInfo.trangThai === selectedStatus)
-      );
+      filtered = filtered.filter((order) => order.status === selectedStatus);
     }
     setFilteredOrders(filtered);
   };
@@ -124,7 +137,7 @@ const AdminOrdersPage = () => {
 
   const openReviewModal = (order) => {
     if (!order.customerId) {
-      alert("Không thể đánh giá: Đơn hàng không có thông tin khách hàng.");
+      toast.error("Không thể đánh giá: Thiếu thông tin khách hàng.");
       return;
     }
     setCurrentOrder(order);
@@ -133,49 +146,105 @@ const AdminOrdersPage = () => {
       maHoaDon: order.id,
       noiDungPhanHoi: "",
       xepHang: 5,
+      hinhAnhDanhGia: "",
+      preview: "",
     });
+    setImageFile(null);
     setIsReviewModalOpen(true);
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+      toast.error("Không có file được chọn.");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Vui lòng chọn một file hình ảnh hợp lệ.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "demo_preset"); // Replace with your Cloudinary preset
+
+    try {
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/dlozjvjhf/image/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+      const data = await res.json();
+      if (data.secure_url) {
+        setReviewForm((prev) => ({
+          ...prev,
+          hinhAnhDanhGia: data.secure_url,
+          preview: data.secure_url,
+        }));
+        setImageFile(file);
+      } else {
+        toast.error(
+          "Lỗi upload ảnh lên Cloudinary: " +
+            (data.error?.message || "Unknown error")
+        );
+      }
+    } catch (err) {
+      toast.error("Lỗi upload ảnh lên Cloudinary");
+      console.error("Cloudinary upload error:", err);
+    }
   };
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!reviewForm.maKhachHang) {
-      alert("Không thể gửi đánh giá: Thiếu thông tin khách hàng.");
+      toast.error("Thiếu thông tin khách hàng.");
       return;
     }
     if (!reviewForm.maHoaDon) {
-      alert("Không thể gửi đánh giá: Mã hóa đơn không hợp lệ.");
+      toast.error("Mã hóa đơn không hợp lệ.");
       return;
     }
     try {
-      await themDanhGia(reviewForm);
-      alert("Gửi đánh giá thành công!");
+      const reviewData = {
+        maKhachHang: reviewForm.maKhachHang,
+        maHoaDon: reviewForm.maHoaDon,
+        noiDungPhanHoi: reviewForm.noiDungPhanHoi,
+        xepHang: parseInt(reviewForm.xepHang), // Ensure xepHang is an integer
+        hinhAnhDanhGia: reviewForm.hinhAnhDanhGia || null, // Send null if no image
+      };
+      await themDanhGia(reviewData);
+      toast.success("Gửi đánh giá thành công!");
       setIsReviewModalOpen(false);
       setReviewForm({
         maKhachHang: "",
         maHoaDon: "",
         noiDungPhanHoi: "",
         xepHang: 5,
+        hinhAnhDanhGia: "",
+        preview: "",
       });
-      fetchData();
+      setImageFile(null);
+      await fetchData();
     } catch (error) {
       console.error("Error submitting review:", error);
-      alert(`Lỗi khi gửi đánh giá: ${error.message}`);
+      toast.error(`Lỗi khi gửi đánh giá: ${error.message}`);
     }
   };
 
   const handleCancelOrder = async (order) => {
-    if (!order.orderInfo?.maDatMon) {
-      alert("Không thể hủy đơn: Thiếu mã đơn đặt món.");
+    if (!order.id) {
+      toast.error("Không thể hủy đơn: Thiếu mã đơn hàng.");
       return;
     }
     try {
-      await updateOrderFoodStatus(order.orderInfo.maDatMon, "cancelled");
-      alert("Hủy đơn thành công!");
-      fetchData();
+      await updateOrderFoodStatus(order.id, "cancelled");
+      toast.success("Hủy đơn thành công!");
+      await fetchData();
     } catch (error) {
       console.error("Error cancelling order:", error);
-      alert(`Hủy đơn thất bại: ${error.message}`);
+      toast.error(`Hủy đơn thất bại: ${error.message}`);
     }
   };
 
@@ -221,18 +290,18 @@ const AdminOrdersPage = () => {
           </span>
         );
       default:
-        return null;
+        return <span className="text-gray-500">Không xác định</span>;
     }
   };
 
   const getPaymentMethodText = (method) => {
-    switch (method) {
+    switch (method?.toLowerCase()) {
       case "cash":
         return "Tiền mặt";
-      case "VNPay":
+      case "vnpay":
         return "VNPay";
       default:
-        return method;
+        return method || "Không xác định";
     }
   };
 
@@ -353,9 +422,9 @@ const AdminOrdersPage = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      {getStatusBadge(order.orderInfo?.trangThai)}
+                      {getStatusBadge(order.status)}
                       <div className="text-xl font-bold text-gray-900 mt-2">
-                        {order.total.toLocaleString("vi-VN")} ₫
+                        {order.total?.toLocaleString("vi-VN")} VNĐ
                       </div>
                       {review && (
                         <div className="flex items-center justify-end mt-2">
@@ -370,8 +439,8 @@ const AdminOrdersPage = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div className="flex items-center text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 mr-1.5 text-indigo-500" />
-                      {order.tables && order.tables.length > 0 ? (
+                      <MapPin className="h-4 w-4 mr-1.5 text-indigo-600" />
+                      {order.tables?.length > 0 ? (
                         order.tables.map((table) => table.tenBan).join(", ")
                       ) : (
                         <span className="text-amber-600 italic">
@@ -380,20 +449,20 @@ const AdminOrdersPage = () => {
                       )}
                     </div>
                     <div className="flex items-center text-sm text-gray-600">
-                      <CreditCard className="h-4 w-4 mr-1.5 text-indigo-500" />
+                      <CreditCard className="h-4 w-4 mr-1.5 text-indigo-600" />
                       <span>{getPaymentMethodText(order.paymentMethod)}</span>
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-100 pt-4">
+                  <div className="border-t border-gray-200 pt-4">
                     <div className="flex justify-between items-center">
                       <div>
                         <span className="text-sm text-gray-600">
-                          {order.items.length} món •{" "}
-                          {order.items.reduce(
-                            (sum, item) => sum + item.quantity,
+                          {order.items?.length || 0} món •{" "}
+                          {order.items?.reduce(
+                            (sum, item) => sum + (item.quantity || 0),
                             0
-                          )}{" "}
+                          ) || 0}{" "}
                           phần
                         </span>
                       </div>
@@ -405,9 +474,10 @@ const AdminOrdersPage = () => {
                           <Eye className="h-4 w-4 mr-2" />
                           Xem chi tiết
                         </button>
-                        {order.orderInfo?.trangThai === "pending" && (
+                        {order.status === "pending" && (
                           <button
                             onClick={() => handleCancelOrder(order)}
+                            type="button"
                             className="flex items-center px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
                           >
                             <XCircle className="h-4 w-4 mr-2" />
@@ -417,6 +487,7 @@ const AdminOrdersPage = () => {
                         {order.status === "completed" && !review && (
                           <button
                             onClick={() => openReviewModal(order)}
+                            type="button"
                             className="flex items-center px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-colors"
                           >
                             <Star className="h-4 w-4 mr-2" />
@@ -461,8 +532,7 @@ const AdminOrdersPage = () => {
                       </div>
                       <div className="flex items-center mb-3">
                         <MapPin className="h-4 w-4 text-indigo-500 mr-2" />
-                        {currentOrder.tables &&
-                        currentOrder.tables.length > 0 ? (
+                        {currentOrder.tables?.length > 0 ? (
                           currentOrder.tables
                             .map((table) => table.tenBan)
                             .join(", ")
@@ -476,7 +546,7 @@ const AdminOrdersPage = () => {
                         <span className="font-medium text-gray-700 mr-2">
                           Trạng thái:
                         </span>
-                        {getStatusBadge(currentOrder.orderInfo?.trangThai)}
+                        {getStatusBadge(currentOrder.status)}
                       </div>
                     </div>
                   </div>
@@ -497,7 +567,7 @@ const AdminOrdersPage = () => {
                       <div className="flex items-center">
                         <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
                         <span className="font-bold text-xl text-gray-900">
-                          {currentOrder.total.toLocaleString("vi-VN")} ₫
+                          {currentOrder.total?.toLocaleString("vi-VN")} VNĐ
                         </span>
                       </div>
                     </div>
@@ -526,22 +596,29 @@ const AdminOrdersPage = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {currentOrder.items.map((item) => (
-                        <tr key={item.id} className="hover:bg-gray-100">
+                      {currentOrder.items?.map((item) => (
+                        <tr
+                          key={item.id || item.maMon}
+                          className="hover:bg-gray-100"
+                        >
                           <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                            {item.name}
+                            {item.name || item.tenMon}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600 text-center">
-                            {item.quantity}
+                            {item.quantity || item.soLuong}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600 text-right">
-                            {item.price.toLocaleString("vi-VN")} ₫
-                          </td>
-                          <td className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">
-                            {(item.price * item.quantity).toLocaleString(
+                            {(item.price || item.donGia)?.toLocaleString(
                               "vi-VN"
                             )}{" "}
-                            ₫
+                            VNĐ
+                          </td>
+                          <td className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">
+                            {(
+                              (item.quantity || item.soLuong) *
+                              (item.price || item.donGia)
+                            )?.toLocaleString("vi-VN")}{" "}
+                            VNĐ
                           </td>
                         </tr>
                       ))}
@@ -555,7 +632,7 @@ const AdminOrdersPage = () => {
                           Tổng cộng:
                         </td>
                         <td className="px-6 py-4 text-sm font-bold text-gray-900 text-right">
-                          {currentOrder.total.toLocaleString("vi-VN")} ₫
+                          {currentOrder.total?.toLocaleString("vi-VN")} VNĐ
                         </td>
                       </tr>
                     </tfoot>
@@ -569,26 +646,70 @@ const AdminOrdersPage = () => {
                     </h3>
                     <div className="bg-gray-50 p-6 rounded-xl">
                       <div className="flex items-center mb-3">
-                        <StarDisplay
-                          value={getOrderReview(currentOrder.id).xepHang}
-                        />
-                        <span className="font-medium ml-2">
-                          {getOrderReview(currentOrder.id).xepHang} / 5
-                        </span>
+                        {getOrderReview(currentOrder.id).avatar ? (
+                          <img
+                            src={getOrderReview(currentOrder.id).avatar}
+                            alt="Customer avatar"
+                            className="w-10 h-10 rounded-full mr-3 object-cover"
+                            onError={(e) => {
+                              e.target.src = "https://via.placeholder.com/40";
+                            }}
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3">
+                            <span className="text-gray-600 text-sm">
+                              {getOrderReview(currentOrder.id)
+                                .tenKhachHang?.[0] || "K"}
+                            </span>
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex items-center">
+                            <StarDisplay
+                              value={getOrderReview(currentOrder.id).xepHang}
+                            />
+                            <span className="font-medium ml-2">
+                              {getOrderReview(currentOrder.id).xepHang} / 5
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Đánh giá bởi:{" "}
+                            {getOrderReview(currentOrder.id).tenKhachHang}
+                          </div>
+                        </div>
                       </div>
                       <p className="text-sm text-gray-600">
                         {getOrderReview(currentOrder.id).noiDungPhanHoi}
                       </p>
+                      {getOrderReview(currentOrder.id).hinhAnhDanhGia && (
+                        <img
+                          src={getOrderReview(currentOrder.id).hinhAnhDanhGia}
+                          alt="Review image"
+                          className="mt-3 w-32 h-32 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.target.src = "https://via.placeholder.com/150";
+                          }}
+                        />
+                      )}
                       <div className="text-sm text-gray-500 mt-2">
-                        Đánh giá bởi:{" "}
-                        {getOrderReview(currentOrder.id).tenKhachHang}
-                      </div>
-                      <div className="text-sm text-gray-500">
                         Ngày:{" "}
                         {formatDate(
                           getOrderReview(currentOrder.id).ngayDanhGia
                         )}
                       </div>
+                      {getOrderReview(currentOrder.id).phanHoiDanhGia && (
+                        <div className="mt-4 border-t border-gray-200 pt-4">
+                          <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                            Phản hồi từ nhà hàng
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {getOrderReview(currentOrder.id).phanHoiDanhGia}
+                          </p>
+                          <div className="text-sm text-gray-500 mt-2">
+                            Ngày: {formatDate(new Date().toISOString())}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -659,7 +780,32 @@ const AdminOrdersPage = () => {
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
                     rows="5"
                     placeholder="Nhập nội dung đánh giá..."
-                  ></textarea>
+                  />
+                </div>
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Hình ảnh (tùy chọn)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl"
+                  />
+                  {reviewForm.preview && (
+                    <div className="mt-2">
+                      <img
+                        src={reviewForm.preview}
+                        alt="Preview"
+                        className="w-32 h-32 object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+                  {imageFile && (
+                    <div className="mt-2 text-sm text-gray-600">
+                      Đã chọn: {imageFile.name}
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-end gap-3">
                   <button
