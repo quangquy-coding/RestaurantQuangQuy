@@ -11,6 +11,7 @@ import UserLayout from "./components/layout/UserLayout";
 import AdminLayout from "./layouts/AdminLayout";
 
 // User Pages
+import PromotionsPage from "./pages/promotions/PromotionsPage";
 import HomePage from "./pages/home/HomePage";
 import VerifyOTPPage from "./pages/VerifyOTPPage";
 import PaymentReturnPage from "./components/cart/PaymentReturnPage";
@@ -132,6 +133,10 @@ const router = createBrowserRouter([
         element: <AccountSettingsPage />,
       },
 
+      {
+        path: "promotions",
+        element: <PromotionsPage />,
+      },
       {
         path: "orders",
         element: <UserOrdersPage />,

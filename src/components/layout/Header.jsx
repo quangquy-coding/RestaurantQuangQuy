@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from "react"
-import { Link, useLocation } from "react-router-dom"
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   ShoppingCart,
+  Tag,
   Home,
   Menu,
   Users,
@@ -13,95 +14,108 @@ import {
   Settings,
   Trophy,
   History,
-} from "lucide-react"
-import Logo from "../../assets/logo.png"
+} from "lucide-react";
+import Logo from "../../assets/logo.png";
 
 const Header = () => {
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [cartCount, setCartCount] = useState(0)
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
-  const dropdownRef = useRef(null)
-  const location = useLocation()
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const location = useLocation();
 
   // Listen for login state (token in localStorage)
   useEffect(() => {
     const checkLogin = () => {
-      const token = localStorage.getItem("token")
-      setIsLoggedIn(!!token)
-    }
+      const token = localStorage.getItem("token");
+      setIsLoggedIn(!!token);
+    };
 
-    checkLogin()
-    window.addEventListener("storage", checkLogin)
-    window.addEventListener("loginSuccess", checkLogin) // listen for manual login event
+    checkLogin();
+    window.addEventListener("storage", checkLogin);
+    window.addEventListener("loginSuccess", checkLogin); // listen for manual login event
 
     return () => {
-      window.removeEventListener("storage", checkLogin)
-      window.removeEventListener("loginSuccess", checkLogin)
-    }
-  }, [])
+      window.removeEventListener("storage", checkLogin);
+      window.removeEventListener("loginSuccess", checkLogin);
+    };
+  }, []);
 
   // Listen for cart updates
   useEffect(() => {
     const updateCartCount = (cart) => {
       if (cart && Array.isArray(cart)) {
-        const count = cart.reduce((acc, item) => acc + item.quantity, 0)
-        setCartCount(count)
+        const count = cart.reduce((acc, item) => acc + item.quantity, 0);
+        setCartCount(count);
       } else {
-        setCartCount(0)
+        setCartCount(0);
       }
-    }
+    };
 
     const handleCartUpdated = (e) => {
-      const updatedCart = e.detail.cart
-      updateCartCount(updatedCart)
-    }
+      const updatedCart = e.detail.cart;
+      updateCartCount(updatedCart);
+    };
 
-    const savedCart = JSON.parse(localStorage.getItem("cart"))
-    updateCartCount(savedCart)
+    const savedCart = JSON.parse(localStorage.getItem("cart"));
+    updateCartCount(savedCart);
 
     const handleStorage = () => {
-      const latestCart = JSON.parse(localStorage.getItem("cart"))
-      updateCartCount(latestCart)
-    }
+      const latestCart = JSON.parse(localStorage.getItem("cart"));
+      updateCartCount(latestCart);
+    };
 
-    window.addEventListener("cartUpdated", handleCartUpdated)
-    window.addEventListener("storage", handleStorage)
+    window.addEventListener("cartUpdated", handleCartUpdated);
+    window.addEventListener("storage", handleStorage);
 
     return () => {
-      window.removeEventListener("cartUpdated", handleCartUpdated)
-      window.removeEventListener("storage", handleStorage)
-    }
-  }, [])
+      window.removeEventListener("cartUpdated", handleCartUpdated);
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
 
   // Hide dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false)
+        setIsDropdownOpen(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    window.dispatchEvent(new Event("loginSuccess")) // trigger update
-    setIsLoggedIn(false)
-    window.location.href = "/login"
-  }
+    localStorage.removeItem("token");
+    window.dispatchEvent(new Event("loginSuccess")); // trigger update
+    setIsLoggedIn(false);
+    window.location.href = "/login";
+  };
 
-  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen)
+  const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
   const navItems = [
     { name: "Trang chủ", path: "/", icon: <Home className="h-5 w-5" /> },
-    { name: "Đặt bàn", path: "/reservation", icon: <Users className="h-5 w-5" /> },
+    {
+      name: "Đặt bàn",
+      path: "/reservation",
+      icon: <Users className="h-5 w-5" />,
+    },
     { name: "Danh mục", path: "/menu", icon: <Menu className="h-5 w-5" /> },
+    {
+      name: "Khuyến mãi",
+      path: "/promotions",
+      icon: <Tag className="h-5 w-5" />,
+    },
     { name: "Giới thiệu", path: "/about", icon: <Info className="h-5 w-5" /> },
     { name: "Liên hệ", path: "/contact", icon: <Phone className="h-5 w-5" /> },
-    { name: "Blog ẩm thực", path: "/blog", icon: <Newspaper className="h-5 w-5" /> },
-  ]
+    {
+      name: "Blog ẩm thực",
+      path: "/blog",
+      icon: <Newspaper className="h-5 w-5" />,
+    },
+  ];
 
   return (
     <header
@@ -218,7 +232,7 @@ const Header = () => {
         </div>
       </div>
     </header>
-  )
-}
+  );
+};
 
-export default Header
+export default Header;
