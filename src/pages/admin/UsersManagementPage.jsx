@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { toast } from "react-hot-toast";
+import Swal from "sweetalert2";
 import { saveAs } from "file-saver";
 import {
   getUsers,
@@ -33,7 +34,9 @@ const UsersManagementPage = () => {
     key: "maTaiKhoan",
     direction: "asc",
   });
+  const role = localStorage.getItem("role");
 
+  // const isAdmin = role === "Admin" || role === "Q001";
   const usersPerPage = 5;
   const statusOptions = ["Tất cả", "Hoạt động", "Không hoạt động", "Bị chặn"];
   const roleOptions = ["Tất cả", "Khách hàng", "Nhân viên", "Quản trị viên"];
@@ -200,7 +203,16 @@ const UsersManagementPage = () => {
 
   const handleUpdateUser = async (e) => {
     e.preventDefault();
+    // const isAdmin =
+    //   role === "Admin" ||
+    //   role === "admin" ||
+    //   role === "Q001" ||
+    //   role === "Quản trị viên";
 
+    // if (!isAdmin) {
+    //   toast.error("Bạn không có quyền chỉnh sửa người dùng");
+    //   return;
+    // }
     // Validate form
     const errors = {};
     if (!editingUser.tenTaiKhoan?.trim())
@@ -284,6 +296,27 @@ const UsersManagementPage = () => {
   };
 
   const handleDeleteUser = (user) => {
+    const isAdmin =
+      role === "Admin" ||
+      role === "admin" ||
+      role === "Q001" ||
+      role === "Quản trị viên";
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Bạn không có quyền xóa người dùng.",
+        showCancelButton: false,
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+        customClass: {
+          title: "text-lg font-semibold",
+          popup: "rounded-xl shadow-md",
+          confirmButton: "bg-red-600",
+        },
+      });
+      return;
+    }
     setUserToDelete(user);
     setIsDeleteModalOpen(true);
   };
@@ -330,6 +363,28 @@ const UsersManagementPage = () => {
   };
 
   const handleEditUser = (user) => {
+    const isAdmin =
+      role === "Admin" ||
+      role === "admin" ||
+      role === "Q001" ||
+      role === "Quản trị viên";
+
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Bạn không có quyền chỉnh sửa người dùng.",
+        showCancelButton: false,
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+        customClass: {
+          title: "text-lg font-semibold",
+          popup: "rounded-xl shadow-md",
+          confirmButton: "bg-red-600",
+        },
+      });
+      return;
+    }
     setEditingUser({ ...user });
     setIsEditUserModalOpen(true);
   };
@@ -351,6 +406,16 @@ const UsersManagementPage = () => {
   };
 
   const handleEditInputChange = (e) => {
+    // const isAdmin =
+    //   role === "Admin" ||
+    //   role === "admin" ||
+    //   role === "Q001" ||
+    //   role === "Quản trị viên";
+
+    // if (!isAdmin) {
+    //   toast.error("Bạn không có quyền chỉnh sửa người dùng");
+    //   return;
+    // }
     const { name, value } = e.target;
     setEditingUser((prev) => ({
       ...prev,
@@ -510,6 +575,28 @@ const UsersManagementPage = () => {
   };
 
   const handleExportExcel = () => {
+    const isAdmin =
+      role === "Admin" ||
+      role === "admin" ||
+      role === "Q001" ||
+      role === "Quản trị viên";
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Bạn không có quyền xuất danh sách người dùng.",
+        showCancelButton: false,
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+        customClass: {
+          title: "text-lg font-semibold",
+          popup: "rounded-xl shadow-md",
+          confirmButton: "bg-red-600",
+        },
+      });
+      return;
+    }
+
     const exportData = users.map((user, index) => ({
       STT: index + 1,
       "Mã tài khoản": user.maTaiKhoan,
@@ -604,29 +691,9 @@ const UsersManagementPage = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-sl font-bold">Quản lý người dùng</h1>
-
-        <button
-          onClick={() => setIsAddUserModalOpen(true)}
-          className="flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
-          disabled={isLoading}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-            />
-          </svg>
-          Thêm người dùng
-        </button>
+        <h1 className="text-2xl font-bold  w-full mb-6 text-center">
+          Quản lý người dùng
+        </h1>
       </div>
 
       {/* Filters */}
@@ -737,6 +804,50 @@ const UsersManagementPage = () => {
                 />
               </svg>
               Xuất Excel
+            </button>
+            <button
+              onClick={() => {
+                const isAdmin =
+                  role === "Admin" ||
+                  role === "admin" ||
+                  role === "Q001" ||
+                  role === "Quản trị viên";
+                if (!isAdmin) {
+                  Swal.fire({
+                    icon: "warning",
+                    title: "⚠️ Cảnh báo",
+                    text: "Bạn không có quyền thêm người dùng.",
+                    showCancelButton: false,
+                    confirmButtonColor: "#d33",
+                    confirmButtonText: "Tôi đã hiểu",
+                    customClass: {
+                      title: "text-lg font-semibold",
+                      popup: "rounded-xl shadow-md",
+                      confirmButton: "bg-red-600",
+                    },
+                  });
+                  return;
+                }
+                setIsAddUserModalOpen(true);
+              }}
+              className="flex items-center px-4 py-2 text-white bg-green-600 hover:bg-green-700 border border-green-600 rounded-lg"
+              disabled={isLoading}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                />
+              </svg>
+              Thêm người dùng
             </button>
           </div>
         </div>

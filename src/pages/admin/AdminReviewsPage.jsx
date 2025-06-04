@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 import { useDebounce } from "use-debounce";
-
+import Swal from "sweetalert2";
 const API_BASE_URL = "http://localhost:5080/api/DanhGiaManager";
 
 const AdminReviewsPage = () => {
@@ -18,7 +18,12 @@ const AdminReviewsPage = () => {
   const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery] = useDebounce(searchQuery, 500);
-
+  const role = localStorage.getItem("role");
+  const isAdmin =
+    role === "Admin" ||
+    role === "admin" ||
+    role === "Q001" ||
+    role === "Quản trị viên";
   useEffect(() => {
     fetchReviews();
   }, [filterRating, debouncedSearchQuery]);
@@ -86,17 +91,49 @@ const AdminReviewsPage = () => {
     );
   };
 
+  // ...existing code...
   const handleDeleteReview = async (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa đánh giá này?")) {
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Chỉ quản trị viên mới được xóa đánh giá",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+      });
+      return;
+    }
+    const result = await Swal.fire({
+      title: "Bạn có chắc chắn muốn xóa đánh giá này?",
+      text: "Hành động này không thể hoàn tác!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    });
+    if (result.isConfirmed) {
       try {
         await axios.delete(`${API_BASE_URL}/${id}`);
         setReviews((prev) => prev.filter((review) => review.id !== id));
-        toast.success("Đã xóa đánh giá thành công!");
+        Swal.fire({
+          icon: "success",
+          title: "Đã xóa!",
+          text: "Đã xóa đánh giá thành công!",
+          timer: 1500,
+          showConfirmButton: false,
+        });
       } catch (error) {
-        toast.error("Lỗi khi xóa đánh giá: " + error.message);
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: "Lỗi khi xóa đánh giá: " + error.message,
+        });
       }
     }
   };
+  // ...existing code...
 
   const handleOpenReplyModal = (review) => {
     setSelectedReview(review);
@@ -180,7 +217,9 @@ const AdminReviewsPage = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Quản lý đánh giá</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-6 w-full text-center">
+          Quản lý đánh giá
+        </h1>
       </div>
 
       {/* Filters */}
@@ -351,13 +390,15 @@ const AdminReviewsPage = () => {
 
                     {/* Actions */}
                     <div className="mt-4 flex space-x-3">
-                      <button
-                        onClick={() => handleOpenReplyModal(review)}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-800"
-                      >
-                        {review.reply ? "Chỉnh sửa phản hồi" : "Phản hồi"}
-                      </button>
-                      {review.status === "published" ? (
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleOpenReplyModal(review)}
+                          className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                        >
+                          {review.reply ? "Chỉnh sửa phản hồi" : "Phản hồi"}
+                        </button>
+                      )}
+                      {isAdmin && review.status === "published" && (
                         <button
                           onClick={() =>
                             handleStatusChange(review.id, "hidden")
@@ -366,7 +407,8 @@ const AdminReviewsPage = () => {
                         >
                           Ẩn đánh giá
                         </button>
-                      ) : review.status === "hidden" ? (
+                      )}
+                      {isAdmin && review.status === "hidden" && (
                         <button
                           onClick={() =>
                             handleStatusChange(review.id, "published")
@@ -375,7 +417,8 @@ const AdminReviewsPage = () => {
                         >
                           Hiện đánh giá
                         </button>
-                      ) : (
+                      )}
+                      {isAdmin && review.status === "pending" && (
                         <>
                           <button
                             onClick={() =>
@@ -395,12 +438,14 @@ const AdminReviewsPage = () => {
                           </button>
                         </>
                       )}
-                      <button
-                        onClick={() => handleDeleteReview(review.id)}
-                        className="text-sm font-medium text-red-600 hover:text-red-800"
-                      >
-                        Xóa
-                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDeleteReview(review.id)}
+                          className="text-sm font-medium text-red-600 hover:text-red-800"
+                        >
+                          Xóa
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

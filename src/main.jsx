@@ -10,6 +10,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import UserLayout from "./components/layout/UserLayout";
 import AdminLayout from "./layouts/AdminLayout";
 
+// not found
 // User Pages
 import PromotionsPage from "./pages/promotions/PromotionsPage";
 import HomePage from "./pages/home/HomePage";
@@ -59,36 +60,34 @@ import BlogPostDetailPage from "./pages/blog/BlogPostDetailPage";
 import AdminCustomerAnalyticsPage from "./pages/admin/AdminCustomerAnalyticsPage";
 import AdminPromotionsPage from "./pages/admin/AdminPromotionsPage";
 import AdminReviewsPage from "./pages/admin/AdminReviewsPage";
-
+import RoleGuard from "./components/common/RoleGuard";
 import "./index.css";
 import "./App.css";
+import Forbidden from "./pages/error/forbidden";
 
 const router = createBrowserRouter([
   {
+    path: "/errorstaff",
+    element: <Forbidden />,
+  },
+  {
     path: "/",
-    element: <UserLayout />,
+
+    element: (
+      <RoleGuard blockRoles={["Staff", "staff", "N001", "Nhân viên"]}>
+        <UserLayout />
+      </RoleGuard>
+    ),
     children: [
       {
         index: true,
         element: <HomePage />,
       },
 
-      // {
-      //   path: "order",
-      //   element: <OrderPage />,
-      // },
-      // {
-      //   path: "order",
-      //   element: <OrderPage />,
-      // },
       {
         path: "review",
         element: <ReviewPage />,
       },
-      // {
-      //   path: "order/:id",
-      //   element: <OrderDetailPage />,
-      // },
 
       {
         path: "cart",
@@ -102,10 +101,7 @@ const router = createBrowserRouter([
         path: "payment-return",
         element: <PaymentReturnPage />,
       },
-      // {
-      //   path: "reservation",
-      //   element: <ReservationPage />,
-      // },
+
       {
         path: "about",
         element: <AboutPage />,
@@ -122,11 +118,6 @@ const router = createBrowserRouter([
         path: "menu/:id",
         element: <DishDetailPage />,
       },
-
-      // {
-      //   path: "categories-management",
-      //   element: <CategoriesManagementPage />,
-      // },
 
       {
         path: "account-settings",
@@ -177,7 +168,11 @@ const router = createBrowserRouter([
       },
       {
         path: "/blog",
-        element: <BlogPage />,
+        element: (
+          <RoleGuard blockRoles={["Staff", "staff", "N001", "Nhân viên"]}>
+            <BlogPage />
+          </RoleGuard>
+        ),
       },
       {
         path: "/blog/:id",

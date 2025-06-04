@@ -1,7 +1,7 @@
-import React from  "react"
+import React from "react";
 
-import { useState } from "react"
-import { MapPin, Phone, Mail, Clock, Send, CheckCircle } from "lucide-react"
+import { useState } from "react";
+import { MapPin, Phone, Mail, Clock, Send, CheckCircle } from "lucide-react";
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -9,38 +9,38 @@ const ContactPage = () => {
     email: "",
     subject: "",
     message: "",
-  })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }))
-  }
+    }));
+  };
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    e.preventDefault();
+    setIsSubmitting(true);
 
     // Simulate API call
     setTimeout(() => {
-      setIsSubmitting(false)
-      setIsSuccess(true)
+      setIsSubmitting(false);
+      setIsSuccess(true);
       // Reset form after 3 seconds
       setTimeout(() => {
-        setIsSuccess(false)
+        setIsSuccess(false);
         setFormData({
           name: "",
           email: "",
           subject: "",
           message: "",
-        })
-      }, 3000)
-    }, 1500)
-  }
+        });
+      }, 3000);
+    }, 1500);
+  };
 
   return (
     <div className="py-16 bg-red-50 min-h-screen">
@@ -49,8 +49,8 @@ const ContactPage = () => {
           <div className="text-center mb-12">
             <h1 className="text-3xl font-bold mb-4">Liên hệ với chúng tôi</h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Chúng tôi luôn sẵn sàng lắng nghe ý kiến của bạn. Hãy liên hệ với chúng tôi nếu bạn có bất kỳ câu hỏi hoặc
-              góp ý nào.
+              Chúng tôi luôn sẵn sàng lắng nghe ý kiến của bạn. Hãy liên hệ với
+              chúng tôi nếu bạn có bất kỳ câu hỏi hoặc góp ý nào.
             </p>
           </div>
 
@@ -62,7 +62,9 @@ const ContactPage = () => {
                 </div>
                 <div>
                   <h3 className="font-bold">Địa chỉ</h3>
-                  <p className="text-gray-600">106 Phạm Nhữ Tăng, Hòa Khê, Thanh Khê, Đà Nẵng</p>
+                  <p className="text-gray-600">
+                    106 Phạm Nhữ Tăng, Hòa Khê, Thanh Khê, Đà Nẵng
+                  </p>
                 </div>
               </div>
             </div>
@@ -122,7 +124,10 @@ const ContactPage = () => {
 
             <div className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-bold mb-4">Đặt bàn & Sự kiện</h2>
-              <p className="text-gray-600 mb-4">Để đặt bàn hoặc tổ chức sự kiện, vui lòng liên hệ với chúng tôi qua:</p>
+              <p className="text-gray-600 mb-4">
+                Để đặt bàn hoặc tổ chức sự kiện, vui lòng liên hệ với chúng tôi
+                qua:
+              </p>
               <div className="space-y-3">
                 <div className="flex items-center">
                   <Phone className="h-5 w-5 text-gray-400 mr-2" />
@@ -140,8 +145,7 @@ const ContactPage = () => {
             <div>
               <div className="bg-white rounded-lg shadow-lg overflow-hidden h-full">
                 <iframe
-                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d979751.8921115289!2d107.06262818368174!3d16.41691041534859!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31421900b4c28c77%3A0xee39653b5da4b40!2zMTA2IFBo4bqhbSBOaOG7ryBUxINuZywgSMOyYSBLaMOqLCBUaGFuaCBLaMOqLCDEkMOgIE7hurVuZyA1NTAwMDAsIFZp4buHdCBOYW0!5e0!3m2!1svi!2s!4v1744515229143!5m2!1svi!2s" 
-                
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d979751.8921115289!2d107.06262818368174!3d16.41691041534859!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31421900b4c28c77%3A0xee39653b5da4b40!2zMTA2IFBo4bqhbSBOaOG7ryBUxINuZywgSMOyYSBLaMOqLCBUaGFuaCBLaMOqLCDEkMOgIE7hurVuZyA1NTAwMDAsIFZp4buHdCBOYW0!5e0!3m2!1svi!2s!4v1744515229143!5m2!1svi!2s"
                   width="100%"
                   height="100%"
                   style={{ border: 0, minHeight: "400px" }}
@@ -153,7 +157,9 @@ const ContactPage = () => {
             </div>
 
             <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold mb-4">Gửi tin nhắn cho chúng tôi</h2>
+              <h2 className="text-xl font-bold mb-4">
+                Gửi tin nhắn cho chúng tôi
+              </h2>
 
               {isSuccess ? (
                 <div className="text-center py-8">
@@ -162,14 +168,17 @@ const ContactPage = () => {
                   </div>
                   <h3 className="text-xl font-bold mb-2">Cảm ơn bạn!</h3>
                   <p className="text-gray-600">
-                    Chúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi trong thời gian sớm nhất.
+                    Chúng tôi đã nhận được tin nhắn của bạn và sẽ phản hồi trong
+                    thời gian sớm nhất.
                   </p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit}>
                   <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Họ tên *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Họ tên *
+                      </label>
                       <input
                         type="text"
                         name="name"
@@ -181,7 +190,9 @@ const ContactPage = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email *
+                      </label>
                       <input
                         type="email"
                         name="email"
@@ -193,7 +204,9 @@ const ContactPage = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tiêu đề *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tiêu đề *
+                      </label>
                       <input
                         type="text"
                         name="subject"
@@ -205,7 +218,9 @@ const ContactPage = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tin nhắn *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Tin nhắn *
+                      </label>
                       <textarea
                         name="message"
                         value={formData.message}
@@ -262,7 +277,7 @@ const ContactPage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ContactPage
+export default ContactPage;

@@ -1,8 +1,7 @@
-import React from "react"
+import React from "react";
 
-
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   TrendingUp,
   TrendingDown,
@@ -13,7 +12,7 @@ import {
   Calendar,
   Clock,
   AlertCircle,
-} from "lucide-react"
+} from "lucide-react";
 
 // Mock data for dashboard
 const mockSummaryData = {
@@ -37,7 +36,7 @@ const mockSummaryData = {
     previous: 60,
     percentChange: 6.67,
   },
-}
+};
 
 const mockRecentOrders = [
   {
@@ -80,7 +79,7 @@ const mockRecentOrders = [
     status: "Đã hủy",
     time: "1.5 giờ trước",
   },
-]
+];
 
 const mockLowStockItems = [
   {
@@ -107,7 +106,7 @@ const mockLowStockItems = [
     minStock: 2,
     unit: "chai",
   },
-]
+];
 
 const mockPopularDishes = [
   {
@@ -138,57 +137,57 @@ const mockPopularDishes = [
     rating: 4.5,
     image: "/placeholder.svg?height=40&width=40",
   },
-]
+];
 
 const DashboardPage = () => {
-  const [summaryData, setSummaryData] = useState(null)
-  const [recentOrders, setRecentOrders] = useState([])
-  const [lowStockItems, setLowStockItems] = useState([])
-  const [popularDishes, setPopularDishes] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [summaryData, setSummaryData] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [lowStockItems, setLowStockItems] = useState([]);
+  const [popularDishes, setPopularDishes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // In a real app, you would fetch data from an API
     // For now, we'll use mock data
     setTimeout(() => {
-      setSummaryData(mockSummaryData)
-      setRecentOrders(mockRecentOrders)
-      setLowStockItems(mockLowStockItems)
-      setPopularDishes(mockPopularDishes)
-      setLoading(false)
-    }, 500)
-  }, [])
+      setSummaryData(mockSummaryData);
+      setRecentOrders(mockRecentOrders);
+      setLowStockItems(mockLowStockItems);
+      setPopularDishes(mockPopularDishes);
+      setLoading(false);
+    }, 500);
+  }, []);
 
   const formatCurrency = (value) => {
-    return value.toLocaleString("vi-VN") + " ₫"
-  }
+    return value.toLocaleString("vi-VN") + " ₫";
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
       case "Đang chuẩn bị":
-        return "bg-yellow-100 text-yellow-800"
+        return "bg-yellow-100 text-yellow-800";
       case "Đang giao":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "Hoàn thành":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       case "Đã hủy":
-        return "bg-red-100 text-red-800"
+        return "bg-red-100 text-red-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Tổng quan</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center">Tổng quan</h1>
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -196,10 +195,14 @@ const DashboardPage = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm text-gray-500 mb-1">Tổng doanh thu</p>
-              <h2 className="text-2xl font-bold">{formatCurrency(summaryData.revenue.current)}</h2>
+              <h2 className="text-2xl font-bold">
+                {formatCurrency(summaryData.revenue.current)}
+              </h2>
               <div
                 className={`flex items-center mt-2 text-sm ${
-                  summaryData.revenue.percentChange >= 0 ? "text-green-600" : "text-red-600"
+                  summaryData.revenue.percentChange >= 0
+                    ? "text-green-600"
+                    : "text-red-600"
                 }`}
               >
                 {summaryData.revenue.percentChange >= 0 ? (
@@ -207,7 +210,9 @@ const DashboardPage = () => {
                 ) : (
                   <TrendingDown className="h-4 w-4 mr-1" />
                 )}
-                <span>{Math.abs(summaryData.revenue.percentChange).toFixed(1)}%</span>
+                <span>
+                  {Math.abs(summaryData.revenue.percentChange).toFixed(1)}%
+                </span>
                 <span className="text-gray-500 ml-1">so với kỳ trước</span>
               </div>
             </div>
@@ -221,10 +226,14 @@ const DashboardPage = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm text-gray-500 mb-1">Tổng đơn hàng</p>
-              <h2 className="text-2xl font-bold">{summaryData.orders.current}</h2>
+              <h2 className="text-2xl font-bold">
+                {summaryData.orders.current}
+              </h2>
               <div
                 className={`flex items-center mt-2 text-sm ${
-                  summaryData.orders.percentChange >= 0 ? "text-green-600" : "text-red-600"
+                  summaryData.orders.percentChange >= 0
+                    ? "text-green-600"
+                    : "text-red-600"
                 }`}
               >
                 {summaryData.orders.percentChange >= 0 ? (
@@ -232,7 +241,9 @@ const DashboardPage = () => {
                 ) : (
                   <TrendingDown className="h-4 w-4 mr-1" />
                 )}
-                <span>{Math.abs(summaryData.orders.percentChange).toFixed(1)}%</span>
+                <span>
+                  {Math.abs(summaryData.orders.percentChange).toFixed(1)}%
+                </span>
                 <span className="text-gray-500 ml-1">so với kỳ trước</span>
               </div>
             </div>
@@ -246,10 +257,14 @@ const DashboardPage = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm text-gray-500 mb-1">Tổng khách hàng</p>
-              <h2 className="text-2xl font-bold">{summaryData.customers.current}</h2>
+              <h2 className="text-2xl font-bold">
+                {summaryData.customers.current}
+              </h2>
               <div
                 className={`flex items-center mt-2 text-sm ${
-                  summaryData.customers.percentChange >= 0 ? "text-green-600" : "text-red-600"
+                  summaryData.customers.percentChange >= 0
+                    ? "text-green-600"
+                    : "text-red-600"
                 }`}
               >
                 {summaryData.customers.percentChange >= 0 ? (
@@ -257,7 +272,9 @@ const DashboardPage = () => {
                 ) : (
                   <TrendingDown className="h-4 w-4 mr-1" />
                 )}
-                <span>{Math.abs(summaryData.customers.percentChange).toFixed(1)}%</span>
+                <span>
+                  {Math.abs(summaryData.customers.percentChange).toFixed(1)}%
+                </span>
                 <span className="text-gray-500 ml-1">so với kỳ trước</span>
               </div>
             </div>
@@ -271,10 +288,14 @@ const DashboardPage = () => {
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm text-gray-500 mb-1">Tổng món ăn</p>
-              <h2 className="text-2xl font-bold">{summaryData.dishes.current}</h2>
+              <h2 className="text-2xl font-bold">
+                {summaryData.dishes.current}
+              </h2>
               <div
                 className={`flex items-center mt-2 text-sm ${
-                  summaryData.dishes.percentChange >= 0 ? "text-green-600" : "text-red-600"
+                  summaryData.dishes.percentChange >= 0
+                    ? "text-green-600"
+                    : "text-red-600"
                 }`}
               >
                 {summaryData.dishes.percentChange >= 0 ? (
@@ -282,7 +303,9 @@ const DashboardPage = () => {
                 ) : (
                   <TrendingDown className="h-4 w-4 mr-1" />
                 )}
-                <span>{Math.abs(summaryData.dishes.percentChange).toFixed(1)}%</span>
+                <span>
+                  {Math.abs(summaryData.dishes.percentChange).toFixed(1)}%
+                </span>
                 <span className="text-gray-500 ml-1">so với kỳ trước</span>
               </div>
             </div>
@@ -300,7 +323,10 @@ const DashboardPage = () => {
           <div className="p-6 border-b">
             <div className="flex justify-between items-center">
               <h2 className="text-lg font-semibold">Đơn hàng gần đây</h2>
-              <Link to="/admin/orders" className="text-sm text-blue-600 hover:underline">
+              <Link
+                to="/admin/orders"
+                className="text-sm text-blue-600 hover:underline"
+              >
                 Xem tất cả
               </Link>
             </div>
@@ -351,21 +377,27 @@ const DashboardPage = () => {
                 {recentOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-blue-600">#{order.id}</div>
+                      <div className="text-sm font-medium text-blue-600">
+                        #{order.id}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{order.customer}</div>
+                      <div className="text-sm text-gray-900">
+                        {order.customer}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-500">{order.items}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{formatCurrency(order.total)}</div>
+                      <div className="text-sm text-gray-900">
+                        {formatCurrency(order.total)}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                          order.status,
+                          order.status
                         )}`}
                       >
                         {order.status}
@@ -387,15 +419,22 @@ const DashboardPage = () => {
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Cảnh báo hàng tồn kho thấp</h2>
-                <Link to="/admin/inventory" className="text-sm text-blue-600 hover:underline">
+                <h2 className="text-lg font-semibold">
+                  Cảnh báo hàng tồn kho thấp
+                </h2>
+                <Link
+                  to="/admin/inventory"
+                  className="text-sm text-blue-600 hover:underline"
+                >
                   Xem tất cả
                 </Link>
               </div>
             </div>
             <div className="p-6">
               {lowStockItems.length === 0 ? (
-                <p className="text-gray-500 text-center">Không có cảnh báo nào</p>
+                <p className="text-gray-500 text-center">
+                  Không có cảnh báo nào
+                </p>
               ) : (
                 <div className="space-y-4">
                   {lowStockItems.map((item) => (
@@ -406,7 +445,8 @@ const DashboardPage = () => {
                       <div className="ml-3">
                         <h3 className="text-sm font-medium">{item.name}</h3>
                         <p className="text-sm text-gray-500">
-                          Còn lại: {item.currentStock} {item.unit} (Tối thiểu: {item.minStock} {item.unit})
+                          Còn lại: {item.currentStock} {item.unit} (Tối thiểu:{" "}
+                          {item.minStock} {item.unit})
                         </p>
                       </div>
                     </div>
@@ -421,7 +461,10 @@ const DashboardPage = () => {
             <div className="p-6 border-b">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-semibold">Món ăn phổ biến</h2>
-                <Link to="/admin/dishes" className="text-sm text-blue-600 hover:underline">
+                <Link
+                  to="/admin/dishes"
+                  className="text-sm text-blue-600 hover:underline"
+                >
                   Xem tất cả
                 </Link>
               </div>
@@ -482,7 +525,9 @@ const DashboardPage = () => {
                     <Clock className="h-5 w-5 text-gray-400" />
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium">10:00 - Kiểm tra hàng tồn kho</p>
+                    <p className="text-sm font-medium">
+                      10:00 - Kiểm tra hàng tồn kho
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start">
@@ -498,7 +543,9 @@ const DashboardPage = () => {
                     <Clock className="h-5 w-5 text-gray-400" />
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm font-medium">16:30 - Cập nhật thực đơn</p>
+                    <p className="text-sm font-medium">
+                      16:30 - Cập nhật thực đơn
+                    </p>
                   </div>
                 </div>
               </div>
@@ -507,7 +554,7 @@ const DashboardPage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default DashboardPage
+export default DashboardPage;

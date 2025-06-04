@@ -43,11 +43,27 @@ const LoginPage = () => {
 
       const data = await response.json();
       localStorage.setItem("token", data.user.Token);
-      
+      localStorage.setItem("role", data.user.quyen);
       localStorage.setItem("usersId", data.user.maTaiKhoan);
 
-      window.dispatchEvent(new Event("loginSuccess"))
-      navigate("/");
+      window.dispatchEvent(new Event("loginSuccess"));
+      // navigate("/");
+      if (data.user.quyen === "Admin" || data.user.quyen === "Q001") {
+        // localStorage.setItem("role", data.user.quyen);
+        navigate("/admin");
+      } else if (
+        data.user.quyen === "Nhân viên" ||
+        data.user.quyen === "Q003"
+      ) {
+        // localStorage.setItem("role", data.user.quyen);
+        navigate("/admin");
+      } else if (
+        data.user.quyen === "Khách hàng" ||
+        data.user.quyen === "Q006"
+      ) {
+        // localStorage.setItem("role", data.user.quyen);
+        navigate("/");
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -55,15 +71,18 @@ const LoginPage = () => {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const response = await fetch("http://localhost:5080/api/login/google-login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          idToken: credentialResponse.credential,
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:5080/api/login/google-login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            idToken: credentialResponse.credential,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errData = await response.json();
@@ -98,7 +117,7 @@ const LoginPage = () => {
               htmlFor="tenTaiKhoan"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              Tên tài khoản 
+              Tên tài khoản
             </label>
             <input
               type="text"

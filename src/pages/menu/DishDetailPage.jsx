@@ -1,79 +1,84 @@
-"use client"
-import React from "react"
-import {toast} from "react-hot-toast"
-import { useState, useEffect } from "react"
-import { useParams, Link } from "react-router-dom"
-import { ArrowLeft, Star, Plus, Minus, ShoppingCart } from "lucide-react"
-import { getDishDetail, getAllDishes } from "../../api/menuApi"
+"use client";
+import React from "react";
+import { toast } from "react-hot-toast";
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
+import { ArrowLeft, Star, Plus, Minus, ShoppingCart } from "lucide-react";
+import { getDishDetail, getAllDishes } from "../../api/menuApi";
 
 const DishDetailPage = () => {
-  const { id } = useParams()
-  const [dish, setDish] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [quantity, setQuantity] = useState(1)
-  const [selectedImage, setSelectedImage] = useState(0)
-  const [relatedDishes, setRelatedDishes] = useState([])
+  const { id } = useParams();
+  const [dish, setDish] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [relatedDishes, setRelatedDishes] = useState([]);
 
   useEffect(() => {
     const fetchDishDetail = async () => {
       try {
-        setLoading(true)
+        setLoading(true);
 
         // Fetch dish detail
-        const dishData = await getDishDetail(id)
-        setDish(dishData)
+        const dishData = await getDishDetail(id);
+        setDish(dishData);
 
         // Fetch related dishes (same category)
         if (dishData.maDanhMuc) {
-          const allDishes = await getAllDishes()
+          const allDishes = await getAllDishes();
           const related = allDishes
-            .filter((d) => d.maDanhMuc === dishData.maDanhMuc && d.maMon !== dishData.maMon)
-            .slice(0, 4) // Limit to 4 related dishes
-          setRelatedDishes(related)
+            .filter(
+              (d) =>
+                d.maDanhMuc === dishData.maDanhMuc && d.maMon !== dishData.maMon
+            )
+            .slice(0, 4); // Limit to 4 related dishes
+          setRelatedDishes(related);
         }
       } catch (error) {
-        console.error("Error fetching dish detail:", error)
+        console.error("Error fetching dish detail:", error);
         toast.error("Lỗi khi tải thông tin món ăn", {
-  duration: 3000,
-  position: "top-right",
-  style: {
-    backgroundColor: "#f44336", // đỏ
-    color: "#fff",
-    fontSize: "16px",
-    padding: "12px 16px",
-    borderRadius: "8px",
-  },
-});
+          duration: 3000,
+          position: "top-right",
+          style: {
+            backgroundColor: "#f44336", // đỏ
+            color: "#fff",
+            fontSize: "16px",
+            padding: "12px 16px",
+            borderRadius: "8px",
+          },
+        });
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
     if (id) {
-      fetchDishDetail()
+      fetchDishDetail();
     }
-  }, [id])
+  }, [id]);
 
   const handleQuantityChange = (value) => {
-    const newQuantity = quantity + value
+    const newQuantity = quantity + value;
     if (newQuantity >= 1) {
-      setQuantity(newQuantity)
+      setQuantity(newQuantity);
     }
-  }
+  };
 
   const addToCart = () => {
-    if (!dish) return
+    if (!dish) return;
 
     // Get current cart from localStorage
-    const savedCart = localStorage.getItem("cart")
-    const cart = savedCart ? JSON.parse(savedCart) : []
+    const savedCart = localStorage.getItem("cart");
+    const cart = savedCart ? JSON.parse(savedCart) : [];
 
     // Check if item already exists in cart
-    const existingItemIndex = cart.findIndex((cartItem) => cartItem.id === dish.maMon)
+    const existingItemIndex = cart.findIndex(
+      (cartItem) => cartItem.id === dish.maMon
+    );
 
     if (existingItemIndex !== -1) {
       // Increment quantity if item already exists
-      cart[existingItemIndex].quantity += quantity
+      cart[existingItemIndex].quantity += quantity;
     } else {
       // Add new item to cart
       cart.push({
@@ -82,59 +87,59 @@ const DishDetailPage = () => {
         price: dish.gia,
         image: dish.hinhAnh,
         quantity: quantity,
-      })
+      });
     }
 
     // Save updated cart to localStorage
-    localStorage.setItem("cart", JSON.stringify(cart))
-    window.dispatchEvent(new CustomEvent("cartUpdated", { detail: { cart } }))
+    localStorage.setItem("cart", JSON.stringify(cart));
+    window.dispatchEvent(new CustomEvent("cartUpdated", { detail: { cart } }));
 
     // Show success message
     toast.success(`Đã thêm ${quantity} ${dish.tenMon} vào giỏ hàng!`, {
-  duration: 2000,
-  position: "top-right",
-  style: {
-    backgroundColor: "#4CAF50",
-    color: "#fff",
-    fontSize: "16px",
-    padding: "12px 16px",
-    borderRadius: "8px",
-  },
-});
-  }
+      duration: 2000,
+      position: "top-right",
+      style: {
+        backgroundColor: "#4CAF50",
+        color: "#fff",
+        fontSize: "16px",
+        padding: "12px 16px",
+        borderRadius: "8px",
+      },
+    });
+  };
 
   const parseIngredients = (ingredientsString) => {
-    if (!ingredientsString) return []
-    return ingredientsString.split(",").map((item) => item.trim())
-  }
+    if (!ingredientsString) return [];
+    return ingredientsString.split(",").map((item) => item.trim());
+  };
 
   const parseNutrition = (nutritionString) => {
-    if (!nutritionString) return {}
+    if (!nutritionString) return {};
     try {
       // Assuming nutrition is stored as JSON string or comma-separated values
-      const parts = nutritionString.split(",")
+      const parts = nutritionString.split(",");
       return {
         calories: parts[0] || "N/A",
         protein: parts[1] || "N/A",
         carbs: parts[2] || "N/A",
         fat: parts[3] || "N/A",
-      }
+      };
     } catch {
-      return { calories: "N/A", protein: "N/A", carbs: "N/A", fat: "N/A" }
+      return { calories: "N/A", protein: "N/A", carbs: "N/A", fat: "N/A" };
     }
-  }
+  };
 
   const parseAllergens = (allergensString) => {
-    if (!allergensString) return []
-    return allergensString.split(",").map((item) => item.trim())
-  }
+    if (!allergensString) return [];
+    return allergensString.split(",").map((item) => item.trim());
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
-    )
+    );
   }
 
   if (!dish) {
@@ -145,21 +150,26 @@ const DishDetailPage = () => {
           Quay lại thực đơn
         </Link>
       </div>
-    )
+    );
   }
 
-  const ingredients = parseIngredients(dish.thanhPhan)
-  const nutrition = parseNutrition(dish.dinhDuong)
-  const allergens = parseAllergens(dish.diUng)
+  const ingredients = parseIngredients(dish.thanhPhan);
+  const nutrition = parseNutrition(dish.dinhDuong);
+  const allergens = parseAllergens(dish.diUng);
 
   // Create multiple images array (for demo, using same image)
-  const images = dish.hinhAnh ? [dish.hinhAnh, dish.hinhAnh, dish.hinhAnh] : ["/placeholder.svg"]
+  const images = dish.hinhAnh
+    ? [dish.hinhAnh, dish.hinhAnh, dish.hinhAnh]
+    : ["/placeholder.svg"];
 
   return (
     <div className="min-h-screen bg-red-50 py-8">
       <div className="max-w-7xl mx-auto px-4">
         {/* Back button */}
-        <Link to="/menu" className="inline-flex items-center text-blue-600 hover:underline mb-6">
+        <Link
+          to="/menu"
+          className="inline-flex items-center text-blue-600 hover:underline mb-6"
+        >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Quay lại thực đơn
         </Link>
@@ -174,7 +184,7 @@ const DishDetailPage = () => {
                   alt={dish.tenMon}
                   className="w-full h-full object-cover"
                   onError={(e) => {
-                    e.target.src = "/placeholder.svg"
+                    e.target.src = "/placeholder.svg";
                   }}
                 />
                 {dish.tinhTrang === "Món đặc biệt" && (
@@ -196,7 +206,9 @@ const DishDetailPage = () => {
                     key={index}
                     onClick={() => setSelectedImage(index)}
                     className={`h-20 w-20 rounded-md overflow-hidden flex-shrink-0 border-2 ${
-                      selectedImage === index ? "border-blue-500" : "border-transparent"
+                      selectedImage === index
+                        ? "border-blue-500"
+                        : "border-transparent"
                     }`}
                   >
                     <img
@@ -204,7 +216,7 @@ const DishDetailPage = () => {
                       alt={`${dish.tenMon} ${index + 1}`}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.target.src = "/placeholder.svg"
+                        e.target.src = "/placeholder.svg";
                       }}
                     />
                   </button>
@@ -225,10 +237,14 @@ const DishDetailPage = () => {
 
               <div className="text-sm text-gray-500 mb-4">
                 {dish.tenDanhMuc} •{" "}
-                {dish.thoiGianMon ? `${dish.thoiGianMon} phút chuẩn bị` : "Thời gian chuẩn bị: 15 phút"}
+                {dish.thoiGianMon
+                  ? `${dish.thoiGianMon} phút chuẩn bị`
+                  : "Thời gian chuẩn bị: 15 phút"}
               </div>
 
-              <p className="text-2xl font-bold text-blue-600 mb-6">{dish.gia.toLocaleString("vi-VN")} ₫</p>
+              <p className="text-2xl font-bold text-blue-600 mb-6">
+                {dish.gia.toLocaleString("vi-VN")} ₫
+              </p>
 
               <div className="mb-6">
                 <h2 className="text-lg font-semibold mb-2">Mô tả</h2>
@@ -240,7 +256,10 @@ const DishDetailPage = () => {
                   <h2 className="text-lg font-semibold mb-2">Thành phần</h2>
                   <div className="flex flex-wrap gap-2">
                     {ingredients.map((ingredient, index) => (
-                      <span key={index} className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                      <span
+                        key={index}
+                        className="bg-gray-100 px-3 py-1 rounded-full text-sm"
+                      >
                         {ingredient}
                       </span>
                     ))}
@@ -250,7 +269,9 @@ const DishDetailPage = () => {
 
               {dish.dinhDuong && (
                 <div className="mb-6">
-                  <h2 className="text-lg font-semibold mb-2">Thông tin dinh dưỡng</h2>
+                  <h2 className="text-lg font-semibold mb-2">
+                    Thông tin dinh dưỡng
+                  </h2>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-gray-50 p-3 rounded-md">
                       <div className="text-sm text-gray-500">Calories</div>
@@ -277,7 +298,10 @@ const DishDetailPage = () => {
                   <h2 className="text-lg font-semibold mb-2">Chứa dị ứng</h2>
                   <div className="flex flex-wrap gap-2">
                     {allergens.map((allergen, index) => (
-                      <span key={index} className="bg-red-50 text-red-700 px-3 py-1 rounded-full text-sm">
+                      <span
+                        key={index}
+                        className="bg-red-50 text-red-700 px-3 py-1 rounded-full text-sm"
+                      >
                         {allergen}
                       </span>
                     ))}
@@ -294,7 +318,9 @@ const DishDetailPage = () => {
                   >
                     <Minus className="h-4 w-4" />
                   </button>
-                  <span className="mx-4 font-medium text-lg w-8 text-center">{quantity}</span>
+                  <span className="mx-4 font-medium text-lg w-8 text-center">
+                    {quantity}
+                  </span>
                   <button
                     onClick={() => handleQuantityChange(1)}
                     className="h-10 w-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
@@ -314,7 +340,9 @@ const DishDetailPage = () => {
                     }`}
                   >
                     <ShoppingCart className="h-5 w-5 mr-2" />
-                    {dish.tinhTrang === "Hết hàng" ? "Hết hàng" : "Thêm vào giỏ hàng"}
+                    {dish.tinhTrang === "Hết hàng"
+                      ? "Hết hàng"
+                      : "Thêm vào giỏ hàng"}
                   </button>
                 </div>
               </div>
@@ -339,7 +367,7 @@ const DishDetailPage = () => {
                       alt={relatedDish.tenMon}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.target.src = "/placeholder.svg"
+                        e.target.src = "/placeholder.svg";
                       }}
                     />
                     {relatedDish.tinhTrang === "Món đặc biệt" && (
@@ -349,10 +377,16 @@ const DishDetailPage = () => {
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-bold text-lg mb-1">{relatedDish.tenMon}</h3>
-                    <p className="text-gray-600 text-sm mb-2 line-clamp-2">{relatedDish.moTa}</p>
+                    <h3 className="font-bold text-lg mb-1">
+                      {relatedDish.tenMon}
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+                      {relatedDish.moTa}
+                    </p>
                     <div className="flex justify-between items-center mt-2">
-                      <span className="font-bold">{relatedDish.gia.toLocaleString("vi-VN")} ₫</span>
+                      <span className="font-bold">
+                        {relatedDish.gia.toLocaleString("vi-VN")} ₫
+                      </span>
                       <div className="flex items-center">
                         <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                         <span className="ml-1 text-sm">4.5</span>
@@ -366,7 +400,7 @@ const DishDetailPage = () => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default DishDetailPage
+export default DishDetailPage;

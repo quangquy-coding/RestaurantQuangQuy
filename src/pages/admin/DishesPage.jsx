@@ -1,32 +1,53 @@
-"use client"
+"use client";
 import { toast } from "react-hot-toast";
 import axios from "axios";
+import Swal from "sweetalert2";
 import { saveAs } from "file-saver";
-import { ChevronLeft, ChevronRight, Download, Edit, Eye, Plus, Search, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Edit,
+  Eye,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
-import { addDish, deleteDish, getCategories, getDishes, updateDish } from "../../api/dishApi.js";
+import {
+  addDish,
+  deleteDish,
+  getCategories,
+  getDishes,
+  updateDish,
+} from "../../api/dishApi.js";
 
 const DishesPage = () => {
-  const [categories, setCategories] = useState([])
-  const [dishes, setDishes] = useState([])
-  const [filteredDishes, setFilteredDishes] = useState([])
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("")
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false)
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
-  const [currentDish, setCurrentDish] = useState(null)
-  const [selectedDishes, setSelectedDishes] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [categories, setCategories] = useState([]);
+  const [dishes, setDishes] = useState([]);
+  const [filteredDishes, setFilteredDishes] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [currentDish, setCurrentDish] = useState(null);
+  const [selectedDishes, setSelectedDishes] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Pagination
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const role = localStorage.getItem("role");
+  const isAdmin =
+    role === "Admin" ||
+    role === "admin" ||
+    role === "Q001" ||
+    role === "Quản trị viên";
   const [newDish, setNewDish] = useState({
     tenMon: "",
     maDanhMuc: "",
@@ -40,35 +61,41 @@ const DishesPage = () => {
     isAvailable: true,
     isSpecial: false,
     isNew: false,
-  })
+  });
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value, type, checked } = e.target;
     setNewDish((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-    }))
-  }
+    }));
+  };
 
   function getSafeImageSrc(src) {
-    if (!src) return "/placeholder.svg"
-    return src
+    if (!src) return "/placeholder.svg";
+    return src;
   }
 
   const handleAddDish = async () => {
-    if (!newDish.tenMon || !newDish.maDanhMuc || !newDish.gia || !newDish.moTa || !newDish.hinhAnh) {
-     toast("Vui lòng điền đầy đủ thông tin bắt buộc", {
-  duration: 3000,
-  position: "top-right",
-  style: {
-    backgroundColor: "#f44336", // đỏ cảnh báo
-    color: "#fff",
-    fontSize: "16px",
-    fontWeight: "bold",
-  },
-});
+    if (
+      !newDish.tenMon ||
+      !newDish.maDanhMuc ||
+      !newDish.gia ||
+      !newDish.moTa ||
+      !newDish.hinhAnh
+    ) {
+      toast("Vui lòng điền đầy đủ thông tin bắt buộc", {
+        duration: 3000,
+        position: "top-right",
+        style: {
+          backgroundColor: "#f44336", // đỏ cảnh báo
+          color: "#fff",
+          fontSize: "16px",
+          fontWeight: "bold",
+        },
+      });
 
-      return
+      return;
     }
 
     const dishToAdd = {
@@ -84,20 +111,20 @@ const DishesPage = () => {
       tinhTrang: newDish.isSpecial
         ? "Món đặc biệt"
         : newDish.isNew
-          ? "Món mới"
-          : newDish.isAvailable
-            ? "Còn hàng"
-            : "Hết hàng",
-    }
+        ? "Món mới"
+        : newDish.isAvailable
+        ? "Còn hàng"
+        : "Hết hàng",
+    };
 
     try {
-      setIsLoading(true)
-      await addDish(dishToAdd)
+      setIsLoading(true);
+      await addDish(dishToAdd);
       // Gọi lại API lấy danh sách món ăn mới nhất
-      const res = await getDishes()
-      setDishes(res.data)
-      applyFiltersAndPagination(res.data, searchTerm, selectedCategory)
-      toast.success("Thêm món ăn "+newDish.tenMon+" thành công!")
+      const res = await getDishes();
+      setDishes(res.data);
+      applyFiltersAndPagination(res.data, searchTerm, selectedCategory);
+      toast.success("Thêm món ăn " + newDish.tenMon + " thành công!");
 
       setNewDish({
         tenMon: "",
@@ -112,23 +139,28 @@ const DishesPage = () => {
         isAvailable: true,
         isSpecial: false,
         isNew: false,
-      })
+      });
 
-      setIsAddModalOpen(false)
+      setIsAddModalOpen(false);
     } catch (err) {
-      toast.error("Lỗi khi thêm món ăn: " + JSON.stringify(err.response?.data?.errors || err.response?.data || err.message))
-      console.error(err)
+      toast.error(
+        "Lỗi khi thêm món ăn: " +
+          JSON.stringify(
+            err.response?.data?.errors || err.response?.data || err.message
+          )
+      );
+      console.error(err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleNewDishImageUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('');
-    const extension = file.name.split('.').pop();
+    const fileNameWithoutExtension = file.name.split(".").slice(0, -1).join("");
+    const extension = file.name.split(".").pop();
 
     const customName = `${Date.now()}_${fileNameWithoutExtension}`; // ví dụ: 1716542511_monan
 
@@ -159,73 +191,73 @@ const DishesPage = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        setIsLoading(true)
-        const res = await getCategories()
-        setCategories(res.data)
+        setIsLoading(true);
+        const res = await getCategories();
+        setCategories(res.data);
       } catch (err) {
         // alert("Lỗi khi lấy danh mục món ăn")
-        console.error(err)
+        console.error(err);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-    fetchCategories()
-  }, [])
+    };
+    fetchCategories();
+  }, []);
 
   // getDishes
   useEffect(() => {
     const fetchDishes = async () => {
       try {
-        setIsLoading(true)
-        const res = await getDishes()
-        setDishes(res.data)
-        applyFiltersAndPagination(res.data, searchTerm, selectedCategory)
+        setIsLoading(true);
+        const res = await getDishes();
+        setDishes(res.data);
+        applyFiltersAndPagination(res.data, searchTerm, selectedCategory);
       } catch (err) {
         // alert("Lỗi khi lấy danh sách món ăn")
-        console.error(err)
+        console.error(err);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-    fetchDishes()
-  }, [])
+    };
+    fetchDishes();
+  }, []);
 
   // Hàm áp dụng bộ lọc và phân trang
   const applyFiltersAndPagination = (dishesData, search, category) => {
-    let filtered = dishesData
+    let filtered = dishesData;
 
     if (search) {
       filtered = filtered.filter(
         (dish) =>
           dish.tenMon?.toLowerCase().includes(search.toLowerCase()) ||
-          dish.moTa?.toLowerCase().includes(search.toLowerCase()),
-      )
+          dish.moTa?.toLowerCase().includes(search.toLowerCase())
+      );
     }
 
     if (category) {
-      filtered = filtered.filter((dish) => dish.maDanhMuc === category)
+      filtered = filtered.filter((dish) => dish.maDanhMuc === category);
     }
 
-    setFilteredDishes(filtered)
-    setTotalPages(Math.ceil(filtered.length / itemsPerPage))
+    setFilteredDishes(filtered);
+    setTotalPages(Math.ceil(filtered.length / itemsPerPage));
 
     // Reset về trang 1 khi thay đổi bộ lọc
-    setCurrentPage(1)
-  }
+    setCurrentPage(1);
+  };
 
   // Lọc và phân trang khi thay đổi bộ lọc
   useEffect(() => {
-    applyFiltersAndPagination(dishes, searchTerm, selectedCategory)
-  }, [searchTerm, selectedCategory, dishes, itemsPerPage])
+    applyFiltersAndPagination(dishes, searchTerm, selectedCategory);
+  }, [searchTerm, selectedCategory, dishes, itemsPerPage]);
 
   // Cập nhật món ăn
   const handleEditDishInputChange = (e) => {
-    const { name, value, type, checked } = e.target
+    const { name, value, type, checked } = e.target;
     setCurrentDish((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-    }))
-  }
+    }));
+  };
 
   const handleEditDish = async () => {
     if (
@@ -235,118 +267,137 @@ const DishesPage = () => {
       !currentDish.moTa ||
       !currentDish.hinhAnh
     ) {
-      
-toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
-  duration: 3000,
-  position: "top-right",
-  style: {
-    backgroundColor: "#f44336", // màu đỏ cảnh báo
-    color: "#fff",
-    fontSize: "16px",
-    fontWeight: "bold",
-  },
-});
-      return
+      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
+        duration: 3000,
+        position: "top-right",
+        style: {
+          backgroundColor: "#f44336", // màu đỏ cảnh báo
+          color: "#fff",
+          fontSize: "16px",
+          fontWeight: "bold",
+        },
+      });
+      return;
     }
 
     // Xác định lại trường tinhTrang
-    let tinhTrang = "Hết hàng"
-    if (currentDish.isSpecial) tinhTrang = "Món đặc biệt"
-    else if (currentDish.isNew) tinhTrang = "Món mới"
-    else if (currentDish.isAvailable) tinhTrang = "Còn hàng"
+    let tinhTrang = "Hết hàng";
+    if (currentDish.isSpecial) tinhTrang = "Món đặc biệt";
+    else if (currentDish.isNew) tinhTrang = "Món mới";
+    else if (currentDish.isAvailable) tinhTrang = "Còn hàng";
 
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const res = await updateDish(currentDish.maMon, {
         ...currentDish,
         gia: Number(currentDish.gia),
         tinhTrang, // cập nhật trạng thái đúng
-      })
+      });
 
       // Gọi lại API lấy danh sách món ăn mới nhất để tự render lại
-      const dishesRes = await getDishes()
-      setDishes(dishesRes.data)
-      applyFiltersAndPagination(dishesRes.data, searchTerm, selectedCategory)
+      const dishesRes = await getDishes();
+      setDishes(dishesRes.data);
+      applyFiltersAndPagination(dishesRes.data, searchTerm, selectedCategory);
 
-      setCurrentDish(null)
-      setIsEditModalOpen(false)
-      toast.success("Cập nhật món ăn "+currentDish.tenMon+" thành công!")
+      setCurrentDish(null);
+      setIsEditModalOpen(false);
+      toast.success("Cập nhật món ăn " + currentDish.tenMon + " thành công!");
     } catch (err) {
-      toast.error("Lỗi khi cập nhật món ăn")
-      console.error(err)
+      toast.error("Lỗi khi cập nhật món ăn");
+      console.error(err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleDeleteDish = async () => {
-    if (!currentDish) return
+    if (!currentDish) return;
 
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       // Gọi API xóa món ăn theo mã món
-      await deleteDish(currentDish.maMon)
+      await deleteDish(currentDish.maMon);
 
       // Sau khi xóa thành công, gọi lại API lấy danh sách món ăn mới nhất
-      const res = await getDishes()
-      setDishes(res.data)
-      applyFiltersAndPagination(res.data, searchTerm, selectedCategory)
+      const res = await getDishes();
+      setDishes(res.data);
+      applyFiltersAndPagination(res.data, searchTerm, selectedCategory);
 
-      toast.success("Xóa món ăn "+currentDish.tenMon+" thành công!")
+      toast.success("Xóa món ăn " + currentDish.tenMon + " thành công!");
     } catch (err) {
-      toast.error("Lỗi khi xóa món ăn")
-      console.error(err)
+      toast.error("Lỗi khi xóa món ăn");
+      console.error(err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
       // Reset và đóng modal
-      setCurrentDish(null)
-      setIsDeleteModalOpen(false)
+      setCurrentDish(null);
+      setIsDeleteModalOpen(false);
     }
-  }
+  };
 
   // Xử lý xóa hàng loạt
   const handleBulkDelete = async () => {
-    if (selectedDishes.length === 0) return
+    if (selectedDishes.length === 0) return;
 
     try {
-      setIsLoading(true)
-      await bulkDeleteDishes(selectedDishes)
+      setIsLoading(true);
+      await bulkDeleteDishes(selectedDishes);
 
       // Sau khi xóa thành công, gọi lại API lấy danh sách món ăn mới nhất
-      const res = await getDishes()
-      setDishes(res.data)
-      applyFiltersAndPagination(res.data, searchTerm, selectedCategory)
+      const res = await getDishes();
+      setDishes(res.data);
+      applyFiltersAndPagination(res.data, searchTerm, selectedCategory);
 
-      setSelectedDishes([])
-      setIsBulkDeleteModalOpen(false)
-      toast.success(`Đã xóa ${selectedDishes.length} món ăn thành công!`)
+      setSelectedDishes([]);
+      setIsBulkDeleteModalOpen(false);
+      toast.success(`Đã xóa ${selectedDishes.length} món ăn thành công!`);
     } catch (err) {
-      toast.error("Lỗi khi xóa món ăn hàng loạt")
-      console.error(err)
+      toast.error("Lỗi khi xóa món ăn hàng loạt");
+      console.error(err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const openViewModal = (dish) => {
-    setCurrentDish(dish)
-    setIsViewModalOpen(true)
-  }
+    setCurrentDish(dish);
+    setIsViewModalOpen(true);
+  };
 
   const openEditModal = (dish) => {
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Chỉ quản trị viên mới được sửa món ăn.",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+      });
+      return;
+    }
     setCurrentDish({
       ...dish,
       isAvailable: dish.tinhTrang === "Còn hàng",
       isSpecial: dish.tinhTrang === "Món đặc biệt",
       isNew: dish.tinhTrang === "Món mới",
-    })
-    setIsEditModalOpen(true)
-  }
+    });
+    setIsEditModalOpen(true);
+  };
 
   const openDeleteModal = (dish) => {
-    setCurrentDish(dish)
-    setIsDeleteModalOpen(true)
-  }
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Chỉ quản trị viên mới được xóa món ăn.",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+      });
+      return;
+    }
+    setCurrentDish(dish);
+    setIsDeleteModalOpen(true);
+  };
 
   const handleExportExcel = () => {
     const exportData = dishes.map((e, index) => ({
@@ -357,29 +408,29 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
       "Danh mục": e.tenDanhMuc,
       Giá: e.gia?.toLocaleString("vi-VN") + " ₫" || "0 ₫",
       "Trạng thái": e.tinhTrang,
-    }))
+    }));
 
-    const worksheet = XLSX.utils.json_to_sheet(exportData)
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachMonAn")
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "DanhSachMonAn");
 
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "array",
-    })
+    });
 
     const file = new Blob([excelBuffer], {
       type: "application/octet-stream",
-    })
+    });
 
-    saveAs(file, "DanhSachMonAn.xlsx")
-  }
+    saveAs(file, "DanhSachMonAn.xlsx");
+  };
 
   const handleEditDishImageUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('');
+    const fileNameWithoutExtension = file.name.split(".").slice(0, -1).join("");
     const customName = `${Date.now()}_${fileNameWithoutExtension}`;
 
     const formData = new FormData();
@@ -410,52 +461,46 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
   // Xử lý chọn/bỏ chọn tất cả
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      const currentPageDishes = getCurrentPageDishes()
-      const ids = currentPageDishes.map((dish) => dish.maMon)
-      setSelectedDishes(ids)
+      const currentPageDishes = getCurrentPageDishes();
+      const ids = currentPageDishes.map((dish) => dish.maMon);
+      setSelectedDishes(ids);
     } else {
-      setSelectedDishes([])
+      setSelectedDishes([]);
     }
-  }
+  };
 
   // Xử lý chọn/bỏ chọn một món ăn
   const handleSelectDish = (dishId) => {
     if (selectedDishes.includes(dishId)) {
-      setSelectedDishes(selectedDishes.filter((id) => id !== dishId))
+      setSelectedDishes(selectedDishes.filter((id) => id !== dishId));
     } else {
-      setSelectedDishes([...selectedDishes, dishId])
+      setSelectedDishes([...selectedDishes, dishId]);
     }
-  }
+  };
 
   // Lấy danh sách món ăn của trang hiện tại
   const getCurrentPageDishes = () => {
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    return filteredDishes.slice(startIndex, endIndex)
-  }
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredDishes.slice(startIndex, endIndex);
+  };
 
   // Xử lý chuyển trang
   const handlePageChange = (page) => {
     if (page > 0 && page <= totalPages) {
-      setCurrentPage(page)
+      setCurrentPage(page);
     }
-  }
+  };
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-bold">Quản lý món ăn</h1>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center px-3 py-1.5 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
-          disabled={isLoading}
-        >
-          <Plus className="mr-2 h-5 w-5" />
-          Thêm món ăn
-        </button>
+        <h1 className="text-2xl font-bold mb-6 w-full text-center">
+          Quản lý món ăn
+        </h1>
       </div>
-
       {/* Search and filter */}
+
       <div className="bg-white p-4 rounded-lg shadow-md mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
@@ -485,16 +530,17 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
             </select>
           </div>
 
-          <div className="flex gap-2">
-            <button
-              className="flex items-center px-4 py-2 text-gray-700 bg-white border rounded-lg hover:bg-gray-50"
-              onClick={handleExportExcel}
-              disabled={isLoading}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Xuất Excel
-            </button>
+          <button
+            className="flex-1 flex items-center px-4 py-2 text-gray-700 bg-white border rounded-lg hover:bg-gray-50"
+            onClick={handleExportExcel}
+            disabled={isLoading}
+            style={{ minWidth: 0 }}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Xuất Excel
+          </button>
 
+          <div className="flex gap-2 flex-shrink-0">
             {selectedDishes.length > 0 && (
               <button
                 className="flex items-center px-4 py-2 text-white bg-red-600 border rounded-lg hover:bg-red-700"
@@ -505,10 +551,29 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                 Xóa đã chọn ({selectedDishes.length})
               </button>
             )}
+            <button
+              onClick={() => {
+                if (!isAdmin) {
+                  Swal.fire({
+                    icon: "warning",
+                    title: "⚠️ Cảnh báo",
+                    text: "Chỉ quản trị viên mới được thêm món ăn.",
+                    confirmButtonColor: "#d33",
+                    confirmButtonText: "Tôi đã hiểu",
+                  });
+                  return;
+                }
+                setIsAddModalOpen(true);
+              }}
+              className="flex-1 flex items-center px-4 py-2 text-white bg-green-600 hover:bg-green-700 border border-green-600 rounded-lg"
+              disabled={isLoading}
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Thêm món ăn
+            </button>
           </div>
         </div>
       </div>
-
       {/* Dishes table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         {isLoading && (
@@ -529,7 +594,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                     onChange={handleSelectAll}
                     checked={
                       getCurrentPageDishes().length > 0 &&
-                      getCurrentPageDishes().every((dish) => selectedDishes.includes(dish.maMon))
+                      getCurrentPageDishes().every((dish) =>
+                        selectedDishes.includes(dish.maMon)
+                      )
                     }
                   />
                 </th>
@@ -586,7 +653,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                     <div className="flex items-center">
                       <div className="h-10 w-10 flex-shrink-0">
                         <img
-                          src={getSafeImageSrc(dish.hinhAnh) || "/placeholder.svg"}
+                          src={
+                            getSafeImageSrc(dish.hinhAnh) || "/placeholder.svg"
+                          }
                           alt={dish.tenMon}
                           className="h-10 w-10 rounded-full object-cover"
                         />
@@ -595,13 +664,19 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                           {dish.maMon}
                         </span>
-                        <div className="text-sm font-medium text-gray-900">{dish.tenMon}</div>
-                        <div className="text-sm text-gray-500 truncate max-w-xs">{dish.moTa}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {dish.tenMon}
+                        </div>
+                        <div className="text-sm text-gray-500 truncate max-w-xs">
+                          {dish.moTa}
+                        </div>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {typeof dish.gia === "number" ? dish.gia.toLocaleString("vi-VN") + " ₫" : "0 ₫"}
+                    {typeof dish.gia === "number"
+                      ? dish.gia.toLocaleString("vi-VN") + " ₫"
+                      : "0 ₫"}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
@@ -632,20 +707,29 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                           </span>
                         ),
                       }[dish.tinhTrang] || (
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                            Hết hàng
-                          </span>
-                        )}
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                          Hết hàng
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onClick={() => openViewModal(dish)} className="text-indigo-600 hover:text-indigo-900 mr-3">
+                    <button
+                      onClick={() => openViewModal(dish)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-3"
+                    >
                       <Eye className="h-5 w-5" />
                     </button>
-                    <button onClick={() => openEditModal(dish)} className="text-blue-600 hover:text-blue-900 mr-3">
+                    <button
+                      onClick={() => openEditModal(dish)}
+                      className="text-blue-600 hover:text-blue-900 mr-3"
+                    >
                       <Edit className="h-5 w-5" />
                     </button>
-                    <button onClick={() => openDeleteModal(dish)} className="text-red-600 hover:text-red-900">
+                    <button
+                      onClick={() => openDeleteModal(dish)}
+                      className="text-red-600 hover:text-red-900"
+                    >
                       <Trash2 className="h-5 w-5" />
                     </button>
                   </td>
@@ -654,7 +738,10 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
 
               {getCurrentPageDishes().length === 0 && !isLoading && (
                 <tr>
-                  <td colSpan="7" className="px-6 py-10 text-center text-gray-500">
+                  <td
+                    colSpan="7"
+                    className="px-6 py-10 text-center text-gray-500"
+                  >
                     Không tìm thấy món ăn nào
                   </td>
                 </tr>
@@ -668,9 +755,17 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
           <div className="px-6 py-3 flex items-center justify-between border-t">
             <div className="flex items-center">
               <span className="text-sm text-gray-700">
-                Hiển thị <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> đến{" "}
-                <span className="font-medium">{Math.min(currentPage * itemsPerPage, filteredDishes.length)}</span> trong
-                tổng số <span className="font-medium">{filteredDishes.length}</span> món ăn
+                Hiển thị{" "}
+                <span className="font-medium">
+                  {(currentPage - 1) * itemsPerPage + 1}
+                </span>{" "}
+                đến{" "}
+                <span className="font-medium">
+                  {Math.min(currentPage * itemsPerPage, filteredDishes.length)}
+                </span>{" "}
+                trong tổng số{" "}
+                <span className="font-medium">{filteredDishes.length}</span> món
+                ăn
               </span>
 
               <select
@@ -689,10 +784,11 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className={`relative inline-flex items-center px-2 py-2 rounded-md border ${currentPage === 1
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
-                  }`}
+                className={`relative inline-flex items-center px-2 py-2 rounded-md border ${
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -700,35 +796,44 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
               {Array.from({ length: totalPages }, (_, i) => i + 1)
                 .filter((page) => {
                   // Hiển thị trang đầu, trang cuối, trang hiện tại và các trang xung quanh
-                  return page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1
+                  return (
+                    page === 1 ||
+                    page === totalPages ||
+                    Math.abs(page - currentPage) <= 1
+                  );
                 })
                 .map((page, index, array) => {
                   // Thêm dấu ... nếu có khoảng cách
-                  const showEllipsis = index > 0 && array[index - 1] !== page - 1
+                  const showEllipsis =
+                    index > 0 && array[index - 1] !== page - 1;
 
                   return (
                     <React.Fragment key={page}>
-                      {showEllipsis && <span className="px-2 py-2 text-gray-500">...</span>}
+                      {showEllipsis && (
+                        <span className="px-2 py-2 text-gray-500">...</span>
+                      )}
                       <button
                         onClick={() => handlePageChange(page)}
-                        className={`relative inline-flex items-center px-4 py-2 rounded-md border ${currentPage === page
-                          ? "bg-blue-50 text-blue-600 border-blue-500"
-                          : "bg-white text-gray-700 hover:bg-gray-50"
-                          }`}
+                        className={`relative inline-flex items-center px-4 py-2 rounded-md border ${
+                          currentPage === page
+                            ? "bg-blue-50 text-blue-600 border-blue-500"
+                            : "bg-white text-gray-700 hover:bg-gray-50"
+                        }`}
                       >
                         {page}
                       </button>
                     </React.Fragment>
-                  )
+                  );
                 })}
 
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className={`relative inline-flex items-center px-2 py-2 rounded-md border ${currentPage === totalPages
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
-                  }`}
+                className={`relative inline-flex items-center px-2 py-2 rounded-md border ${
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -736,7 +841,6 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
           </div>
         )}
       </div>
-
       {/* Add Dish Modal */}
       {isAddModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -748,7 +852,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên món ăn *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tên món ăn *
+                  </label>
                   <input
                     type="text"
                     name="tenMon"
@@ -760,7 +866,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Danh mục *
+                  </label>
                   <select
                     name="maDanhMuc"
                     value={newDish.maDanhMuc}
@@ -779,7 +887,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Giá (VNĐ) *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Giá (VNĐ) *
+                  </label>
                   <input
                     type="number"
                     name="gia"
@@ -790,7 +900,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian món *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Thời gian món *
+                  </label>
                   <input
                     type="text"
                     name="thoiGianMon"
@@ -802,7 +914,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Hình ảnh</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Hình ảnh
+                  </label>
 
                   <label
                     htmlFor="upload-image"
@@ -830,7 +944,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mô tả
+                  </label>
                   <textarea
                     name="moTa"
                     value={newDish.moTa}
@@ -840,7 +956,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                   ></textarea>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Thành phần</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Thành phần
+                  </label>
                   <textarea
                     name="thanhPhan"
                     value={newDish.thanhPhan}
@@ -850,7 +968,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                   ></textarea>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Dinh dưỡng</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Dinh dưỡng
+                  </label>
                   <textarea
                     name="dinhDuong"
                     value={newDish.dinhDuong}
@@ -860,7 +980,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                   ></textarea>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Chứa dị ứng</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Chứa dị ứng
+                  </label>
                   <input
                     type="text"
                     name="diUng"
@@ -872,7 +994,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Trạng thái
+                  </label>
                   <div className="flex flex-wrap gap-4">
                     <div className="flex items-center">
                       <input
@@ -883,7 +1007,10 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                         onChange={handleInputChange}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <label htmlFor="isAvailable" className="ml-2 text-sm text-gray-700">
+                      <label
+                        htmlFor="isAvailable"
+                        className="ml-2 text-sm text-gray-700"
+                      >
                         Còn hàng
                       </label>
                     </div>
@@ -897,7 +1024,10 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                         onChange={handleInputChange}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <label htmlFor="isSpecial" className="ml-2 text-sm text-gray-700">
+                      <label
+                        htmlFor="isSpecial"
+                        className="ml-2 text-sm text-gray-700"
+                      >
                         Món đặc biệt
                       </label>
                     </div>
@@ -911,7 +1041,10 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                         onChange={handleInputChange}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <label htmlFor="isNew" className="ml-2 text-sm text-gray-700">
+                      <label
+                        htmlFor="isNew"
+                        className="ml-2 text-sm text-gray-700"
+                      >
                         Món mới
                       </label>
                     </div>
@@ -939,7 +1072,6 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
           </div>
         </div>
       )}
-
       {/* Edit Dish Modal */}
       {isEditModalOpen && currentDish && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -951,7 +1083,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên món ăn *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tên món ăn *
+                  </label>
                   <input
                     type="text"
                     name="tenMon"
@@ -963,7 +1097,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Danh mục *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Danh mục *
+                  </label>
                   <select
                     name="maDanhMuc"
                     value={currentDish.maDanhMuc}
@@ -982,7 +1118,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Giá (VNĐ) *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Giá (VNĐ) *
+                  </label>
                   <input
                     type="number"
                     name="gia"
@@ -993,7 +1131,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Thời gian món</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Thời gian món
+                  </label>
                   <input
                     type="text"
                     name="thoiGianMon"
@@ -1004,7 +1144,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Hình ảnh</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Hình ảnh
+                  </label>
                   <div className="flex items-center">
                     <label className="cursor-pointer inline-block bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">
                       Sửa ảnh
@@ -1027,7 +1169,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mô tả
+                  </label>
                   <textarea
                     name="moTa"
                     value={currentDish.moTa}
@@ -1037,7 +1181,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                   ></textarea>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Thành phần</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Thành phần
+                  </label>
                   <textarea
                     name="thanhPhan"
                     value={currentDish.thanhPhan}
@@ -1047,7 +1193,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                   ></textarea>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Dinh dưỡng</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Dinh dưỡng
+                  </label>
                   <textarea
                     name="dinhDuong"
                     value={currentDish.dinhDuong}
@@ -1058,7 +1206,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Chứa dị ứng</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Chứa dị ứng
+                  </label>
                   <input
                     type="text"
                     name="diUng"
@@ -1070,7 +1220,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Trạng thái</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Trạng thái
+                  </label>
                   <div className="flex flex-wrap gap-4">
                     <div className="flex items-center">
                       <input
@@ -1081,7 +1233,10 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                         onChange={handleEditDishInputChange}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <label htmlFor="edit-isAvailable" className="ml-2 text-sm text-gray-700">
+                      <label
+                        htmlFor="edit-isAvailable"
+                        className="ml-2 text-sm text-gray-700"
+                      >
                         Còn hàng
                       </label>
                     </div>
@@ -1095,7 +1250,10 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                         onChange={handleEditDishInputChange}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <label htmlFor="edit-isSpecial" className="ml-2 text-sm text-gray-700">
+                      <label
+                        htmlFor="edit-isSpecial"
+                        className="ml-2 text-sm text-gray-700"
+                      >
                         Món đặc biệt
                       </label>
                     </div>
@@ -1109,7 +1267,10 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                         onChange={handleEditDishInputChange}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <label htmlFor="edit-isNew" className="ml-2 text-sm text-gray-700">
+                      <label
+                        htmlFor="edit-isNew"
+                        className="ml-2 text-sm text-gray-700"
+                      >
                         Món mới
                       </label>
                     </div>
@@ -1121,8 +1282,8 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
             <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
               <button
                 onClick={() => {
-                  setCurrentDish(null)
-                  setIsEditModalOpen(false)
+                  setCurrentDish(null);
+                  setIsEditModalOpen(false);
                 }}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                 disabled={isLoading}
@@ -1140,7 +1301,6 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
           </div>
         </div>
       )}
-
       {/* View Dish Modal */}
       {isViewModalOpen && currentDish && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -1148,13 +1308,24 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
             {/* Nút đóng (X) */}
             <button
               onClick={() => {
-                setCurrentDish(null)
-                setIsViewModalOpen(false)
+                setCurrentDish(null);
+                setIsViewModalOpen(false);
               }}
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
 
@@ -1168,14 +1339,18 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
               <div className="flex flex-col md:flex-row gap-6">
                 <div className="md:w-1/3">
                   <img
-                    src={getSafeImageSrc(currentDish.hinhAnh) || "/placeholder.svg"}
+                    src={
+                      getSafeImageSrc(currentDish.hinhAnh) || "/placeholder.svg"
+                    }
                     alt={currentDish.tenMon}
                     className="w-full h-48 object-cover rounded-lg"
                   />
                 </div>
 
                 <div className="md:w-2/3">
-                  <h3 className="text-xl font-bold mb-2">{currentDish.tenMon}</h3>
+                  <h3 className="text-xl font-bold mb-2">
+                    {currentDish.tenMon}
+                  </h3>
 
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
@@ -1185,7 +1360,9 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                     <div>
                       <p className="text-sm text-gray-500">Giá</p>
                       <p className="font-medium">
-                        {typeof currentDish.gia === "number" ? currentDish.gia.toLocaleString("vi-VN") + " ₫" : "0 ₫"}
+                        {typeof currentDish.gia === "number"
+                          ? currentDish.gia.toLocaleString("vi-VN") + " ₫"
+                          : "0 ₫"}
                       </p>
                     </div>
                     <div>
@@ -1232,10 +1409,10 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                         </span>
                       ),
                     }[currentDish.tinhTrang] || (
-                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
-                          Hết hàng
-                        </span>
-                      )}
+                      <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
+                        Hết hàng
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1245,8 +1422,8 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
             <div className="px-6 py-3 border-t bg-gray-50 flex justify-end">
               <button
                 onClick={() => {
-                  setCurrentDish(null)
-                  setIsViewModalOpen(false)
+                  setCurrentDish(null);
+                  setIsViewModalOpen(false);
                 }}
                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
               >
@@ -1256,9 +1433,6 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
           </div>
         </div>
       )}
-
-
-
       {/* Delete Dish Modal */}
       {isDeleteModalOpen && currentDish && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -1268,18 +1442,25 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
             </div>
 
             <div className="p-6">
-              <p className="mb-4">Bạn có chắc chắn muốn xóa món ăn này? Hành động này không thể hoàn tác.</p>
+              <p className="mb-4">
+                Bạn có chắc chắn muốn xóa món ăn này? Hành động này không thể
+                hoàn tác.
+              </p>
 
               <div className="bg-gray-50 p-4 rounded-md">
                 <div className="flex items-center">
                   <img
-                    src={getSafeImageSrc(currentDish.hinhAnh) || "/placeholder.svg"}
+                    src={
+                      getSafeImageSrc(currentDish.hinhAnh) || "/placeholder.svg"
+                    }
                     alt={currentDish.tenMon}
                     className="h-12 w-12 rounded-full object-cover mr-4"
                   />
                   <div>
                     <h3 className="font-medium">{currentDish.tenMon}</h3>
-                    <p className="text-sm text-gray-500">{currentDish.maDanhMuc}</p>
+                    <p className="text-sm text-gray-500">
+                      {currentDish.maDanhMuc}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1288,8 +1469,8 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
             <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
               <button
                 onClick={() => {
-                  setCurrentDish(null)
-                  setIsDeleteModalOpen(false)
+                  setCurrentDish(null);
+                  setIsDeleteModalOpen(false);
                 }}
                 className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                 disabled={isLoading}
@@ -1307,7 +1488,6 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
           </div>
         </div>
       )}
-
       {/* Bulk Delete Modal */}
       {isBulkDeleteModalOpen && selectedDishes.length > 0 && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -1318,14 +1498,18 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
 
             <div className="p-6">
               <p className="mb-4">
-                Bạn có chắc chắn muốn xóa <span className="font-bold">{selectedDishes.length}</span> món ăn đã chọn?
-                Hành động này không thể hoàn tác.
+                Bạn có chắc chắn muốn xóa{" "}
+                <span className="font-bold">{selectedDishes.length}</span> món
+                ăn đã chọn? Hành động này không thể hoàn tác.
               </p>
 
               <div className="bg-red-50 p-4 rounded-md text-red-700">
                 <div className="flex items-center">
                   <Trash2 className="h-5 w-5 mr-2" />
-                  <p>Tất cả dữ liệu liên quan đến các món ăn này sẽ bị xóa vĩnh viễn.</p>
+                  <p>
+                    Tất cả dữ liệu liên quan đến các món ăn này sẽ bị xóa vĩnh
+                    viễn.
+                  </p>
                 </div>
               </div>
             </div>
@@ -1343,14 +1527,16 @@ toast.error("Vui lòng điền đầy đủ thông tin bắt buộc", {
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                 disabled={isLoading}
               >
-                {isLoading ? "Đang xử lý..." : `Xóa ${selectedDishes.length} món ăn`}
+                {isLoading
+                  ? "Đang xử lý..."
+                  : `Xóa ${selectedDishes.length} món ăn`}
               </button>
             </div>
           </div>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default DishesPage
+export default DishesPage;

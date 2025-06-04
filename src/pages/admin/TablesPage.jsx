@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Swal from "sweetalert2";
 import { useState, useEffect } from "react";
 import {
   Search,
@@ -10,6 +11,7 @@ import {
   Users,
   Save,
   X,
+  Eye,
 } from "lucide-react";
 import {
   getAllTables,
@@ -26,6 +28,7 @@ const TablesPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [currentTable, setCurrentTable] = useState(null);
   const [newTable, setNewTable] = useState({
     tenBan: "",
@@ -35,7 +38,12 @@ const TablesPage = () => {
   });
   const [editingTable, setEditingTable] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const role = localStorage.getItem("role");
+  const isAdmin =
+    role === "Admin" ||
+    role === "admin" ||
+    role === "Q001" ||
+    role === "Quản trị viên";
   const locations = ["Tầng 1", "Tầng 2", "Tầng 3", "Ngoài trời"];
 
   useEffect(() => {
@@ -87,13 +95,39 @@ const TablesPage = () => {
   };
 
   const openEditModal = (table) => {
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Chỉ quản trị viên mới được sửa bàn.",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+      });
+      return;
+    }
     setEditingTable({ ...table });
     setIsEditModalOpen(true);
   };
 
   const openDeleteModal = (table) => {
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Chỉ quản trị viên mới được xóa bàn.",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+      });
+      return;
+    }
     setCurrentTable(table);
     setIsDeleteModalOpen(true);
+  };
+
+  // Hàm mở modal xem chi tiết bàn
+  const openViewModal = (table) => {
+    setCurrentTable(table);
+    setIsViewModalOpen(true);
   };
 
   const handleCreateTable = async () => {
@@ -163,11 +197,11 @@ const TablesPage = () => {
   return (
     <div className="p-6">
       <div className="flex justify-center items-center mb-6">
-        <h1 className="text-2xl font-bold">Quản lý bàn ăn</h1>
+        <h1 className="text-2xl font-bold mb-6">Quản lý bàn ăn</h1>
       </div>
 
       {/* Search and filter */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+      <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl shadow-lg mb-8 border border-blue-100">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <input
@@ -175,16 +209,16 @@ const TablesPage = () => {
               placeholder="Tìm kiếm tên bàn..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all bg-white shadow-sm"
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-blue-400" />
           </div>
 
           <div className="w-full md:w-48">
             <select
               value={selectedLocation}
               onChange={(e) => setSelectedLocation(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all bg-white shadow-sm"
             >
               <option value="">Tất cả vị trí</option>
               {locations.map((location) => (
@@ -196,8 +230,20 @@ const TablesPage = () => {
           </div>
 
           <button
-            className="flex items-center px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700"
-            onClick={openCreateModal}
+            className="flex items-center px-4 py-2 text-white bg-gradient-to-r from-green-500 to-green-600 rounded-lg hover:from-green-600 hover:to-green-700 shadow-md font-semibold"
+            onClick={() => {
+              if (!isAdmin) {
+                Swal.fire({
+                  icon: "warning",
+                  title: "⚠️ Cảnh báo",
+                  text: "Chỉ quản trị viên mới được thêm bàn.",
+                  confirmButtonColor: "#d33",
+                  confirmButtonText: "Tôi đã hiểu",
+                });
+                return;
+              }
+              openCreateModal();
+            }}
           >
             <Plus className="w-4 h-4 mr-2" />
             Thêm bàn
@@ -206,43 +252,62 @@ const TablesPage = () => {
       </div>
 
       {/* Tables grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
         {filteredTables.map((table) => (
           <div
             key={table.maBan}
-            className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+            className="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-shadow border border-blue-100 relative group"
           >
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-bold text-blue-700 group-hover:text-blue-900 transition-colors">
                 {table.tenBan}
               </h3>
               <div className="flex space-x-2">
                 <button
+                  onClick={() => openViewModal(table)}
+                  className="text-indigo-500 hover:text-indigo-700 bg-indigo-50 rounded-full p-2 transition-colors"
+                  title="Xem chi tiết"
+                >
+                  <Eye className="h-4 w-4" />
+                </button>
+                <button
                   onClick={() => openEditModal(table)}
-                  className="text-blue-600 hover:text-blue-900"
+                  className="text-blue-600 hover:text-blue-900 bg-blue-50 rounded-full p-2 transition-colors"
+                  title="Sửa bàn"
                 >
                   <Edit className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => openDeleteModal(table)}
-                  className="text-red-600 hover:text-red-900"
+                  className="text-red-600 hover:text-red-900 bg-red-50 rounded-full p-2 transition-colors"
+                  title="Xóa bàn"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center text-sm text-gray-600">
-                <MapPin className="h-4 w-4 mr-2" />
-                <span>{table.viTri}</span>
+            <div className="space-y-3">
+              <div className="flex items-center text-base text-gray-700">
+                <MapPin className="h-5 w-5 mr-2 text-blue-400" />
+                <span>
+                  Vị trí:{" "}
+                  <span className="font-semibold text-gray-900">
+                    {table.viTri}
+                  </span>
+                </span>
               </div>
-              <div className="flex items-center text-sm text-gray-600">
-                <Users className="h-4 w-4 mr-2" />
-                <span>{table.soGhe} người</span>
+              <div className="flex items-center text-base text-gray-700">
+                <Users className="h-5 w-5 mr-2 text-green-500" />
+                <span>
+                  Số ghế:{" "}
+                  <span className="font-semibold text-gray-900">
+                    {table.soGhe}
+                  </span>
+                </span>
               </div>
               {table.ghiChu && (
-                <div className="text-sm text-gray-500 mt-2">
+                <div className="text-sm text-gray-500 mt-2 italic">
                   <span className="font-medium">Ghi chú:</span> {table.ghiChu}
                 </div>
               )}
@@ -260,14 +325,14 @@ const TablesPage = () => {
       {/* Create Table Modal */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Thêm bàn mới</h2>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-2 border-blue-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-blue-700">Thêm bàn mới</h2>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-400 hover:text-gray-700"
               >
-                <X className="h-5 w-5" />
+                <X className="h-6 w-6" />
               </button>
             </div>
 
@@ -362,14 +427,16 @@ const TablesPage = () => {
       {/* Edit Table Modal */}
       {isEditModalOpen && editingTable && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Chỉnh sửa bàn</h2>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-2 border-blue-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-blue-700">
+                Chỉnh sửa bàn
+              </h2>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-400 hover:text-gray-700"
               >
-                <X className="h-5 w-5" />
+                <X className="h-6 w-6" />
               </button>
             </div>
 
@@ -462,7 +529,7 @@ const TablesPage = () => {
       {/* Delete Table Confirmation Modal */}
       {isDeleteModalOpen && currentTable && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-2 border-red-200">
             <h2 className="text-xl font-bold mb-4">Xác nhận xóa</h2>
             <p className="mb-6">
               Bạn có chắc chắn muốn xóa bàn{" "}
@@ -481,6 +548,55 @@ const TablesPage = () => {
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Xóa bàn
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Table Modal */}
+      {isViewModalOpen && currentTable && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-2 border-blue-200">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-blue-700">
+                Chi tiết bàn ăn
+              </h2>
+              <button
+                onClick={() => setIsViewModalOpen(false)}
+                className="text-gray-400 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center text-lg text-gray-800">
+                <MapPin className="h-5 w-5 mr-2 text-blue-400" />
+                <span className="font-semibold">{currentTable.viTri}</span>
+              </div>
+              <div className="flex items-center text-lg text-gray-800">
+                <Users className="h-5 w-5 mr-2 text-green-500" />
+                <span className="font-semibold">
+                  {currentTable.soGhe} người
+                </span>
+              </div>
+              <div className="flex items-center text-lg text-gray-800">
+                <span className="font-semibold">Tên bàn:</span>
+                <span className="ml-2">{currentTable.tenBan}</span>
+              </div>
+              {currentTable.ghiChu && (
+                <div className="text-base text-gray-600 italic">
+                  <span className="font-medium">Ghi chú:</span>{" "}
+                  {currentTable.ghiChu}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end mt-8">
+              <button
+                onClick={() => setIsViewModalOpen(false)}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Đóng
               </button>
             </div>
           </div>

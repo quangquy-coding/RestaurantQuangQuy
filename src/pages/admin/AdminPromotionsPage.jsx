@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
-import { Edit, Trash2, Search } from "lucide-react";
+import Swal from "sweetalert2";
+import { Edit, Trash2, Search, Eye } from "lucide-react";
 import axios from "axios";
-import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -43,6 +43,14 @@ const AdminPromotionsPage = () => {
   const [checkPromoCode, setCheckPromoCode] = useState("");
   const [checkTotalAmount, setCheckTotalAmount] = useState("");
   const [checkResult, setCheckResult] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [promotionDetail, setPromotionDetail] = useState(null);
+  const role = localStorage.getItem("role");
+  const isAdmin =
+    role === "Admin" ||
+    role === "admin" ||
+    role === "Q001" ||
+    role === "Quản trị viên";
 
   // Base URL của API
   const API_BASE_URL = "http://localhost:5080/api/KhuyenMaiManager";
@@ -88,6 +96,16 @@ const AdminPromotionsPage = () => {
 
   // Mở modal để thêm hoặc sửa khuyến mãi
   const handleOpenModal = async (promotion = null) => {
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Chỉ quản trị viên mới được thêm hoặc sửa khuyến mãi",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+      });
+      return;
+    }
     if (promotion) {
       try {
         const response = await axios.get(
@@ -144,6 +162,16 @@ const AdminPromotionsPage = () => {
   // Gửi dữ liệu thêm hoặc sửa khuyến mãi
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Chỉ quản trị viên mới được thêm hoặc sửa khuyến mãi",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+      });
+      return;
+    }
     const promotionData = {
       tenKhuyenMai: currentPromotion.tenKhuyenMai,
       mucTienToiThieu: parseFloat(currentPromotion.mucTienToiThieu) || 0,
@@ -183,15 +211,43 @@ const AdminPromotionsPage = () => {
 
   // Xóa khuyến mãi
   const handleDeletePromotion = async (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa khuyến mãi này?")) {
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Chỉ quản trị viên mới được xóa khuyến mãi",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+      });
+      return;
+    }
+    const result = await Swal.fire({
+      title: "Bạn có chắc chắn muốn xóa khuyến mãi này?",
+      text: "Hành động này không thể hoàn tác!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    });
+    if (result.isConfirmed) {
       try {
         const response = await axios.delete(`${API_BASE_URL}/${id}`);
         setPromotions((prev) => prev.filter((p) => p.maKhuyenMai !== id));
-        toast.success(response.data.message);
+        Swal.fire({
+          icon: "success",
+          title: "Đã xóa!",
+          text: response.data.message || "Xóa khuyến mãi thành công.",
+          timer: 1500,
+          showConfirmButton: false,
+        });
       } catch (error) {
-        toast.error(
-          `Lỗi: ${error.response?.data || "Xóa khuyến mãi thất bại"}`
-        );
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: error.response?.data || "Xóa khuyến mãi thất bại",
+        });
       }
     }
   };
@@ -225,6 +281,12 @@ const AdminPromotionsPage = () => {
     }
   };
 
+  // Hàm mở modal xem chi tiết khuyến mãi
+  const handleViewDetail = (promotion) => {
+    setPromotionDetail(promotion);
+    setIsDetailModalOpen(true);
+  };
+
   // Lọc khuyến mãi theo trạng thái và tìm kiếm
   const filteredPromotions = promotions.filter(
     (p) =>
@@ -236,47 +298,16 @@ const AdminPromotionsPage = () => {
         p.maKhuyenMai.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  // Dữ liệu biểu đồ
-  // const chartData = {
-  //   labels: filteredPromotions.map((p) => p.tenKhuyenMai),
-  //   datasets: [
-  //     {
-  //       label: "Số hóa đơn sử dụng",
-  //       data: filteredPromotions.map((p) => p.soHoaDonSuDung),
-  //       backgroundColor: "rgba(54, 162, 235, 0.6)",
-  //       borderColor: "rgba(54, 162, 235, 1)",
-  //       borderWidth: 1,
-  //     },
-  //   ],
-  // };
+  // Thêm state phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
-  // const chartOptions = {
-  //   scales: {
-  //     y: {
-  //       beginAtZero: true,
-  //       title: {
-  //         display: true,
-  //         text: "Số hóa đơn",
-  //       },
-  //     },
-  //     x: {
-  //       title: {
-  //         display: true,
-  //         text: "Khuyến mãi",
-  //       },
-  //     },
-  //   },
-  //   plugins: {
-  //     legend: {
-  //       display: true,
-  //       position: "top",
-  //     },
-  //     title: {
-  //       display: true,
-  //       text: "Số lượng hóa đơn sử dụng theo khuyến mãi",
-  //     },
-  //   },
-  // };
+  // Tính toán phân trang
+  const totalPages = Math.ceil(filteredPromotions.length / itemsPerPage);
+  const paginatedPromotions = filteredPromotions.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   if (loading) {
     return (
@@ -288,7 +319,7 @@ const AdminPromotionsPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-800 mb-8">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6 text-center">
         Quản lý khuyến mãi
       </h1>
 
@@ -442,7 +473,7 @@ const AdminPromotionsPage = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredPromotions.map((promotion) => (
+              {paginatedPromotions.map((promotion) => (
                 <motion.tr
                   key={promotion.maKhuyenMai}
                   initial={{ opacity: 0 }}
@@ -498,9 +529,17 @@ const AdminPromotionsPage = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
+                      onClick={() => handleViewDetail(promotion)}
+                      className="text-indigo-600 hover:text-indigo-900 mr-3 inline-flex items-center"
+                      title="Xem chi tiết"
+                    >
+                      <Eye className="w-5 h-5" />
+                    </button>
+                    <button
                       onClick={() => handleOpenModal(promotion)}
                       className="text-blue-600 hover:text-blue-900 mr-3 inline-flex items-center"
                       title="Sửa"
+                      disabled={!isAdmin}
                     >
                       <Edit className="w-5 h-5" />
                     </button>
@@ -510,6 +549,7 @@ const AdminPromotionsPage = () => {
                       }
                       className="text-red-600 hover:text-red-900 inline-flex items-center"
                       title="Xóa"
+                      disabled={!isAdmin}
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -519,6 +559,46 @@ const AdminPromotionsPage = () => {
             </tbody>
           </table>
         </div>
+        {/* Phân trang dưới bảng */}
+        {totalPages > 1 && (
+          <div className="flex justify-end items-center gap-2 px-6 py-3 border-t">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 rounded-md border ${
+                currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              &lt;
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1 rounded-md border ${
+                  page === currentPage
+                    ? "bg-blue-600 text-white font-bold"
+                    : "bg-white text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 rounded-md border ${
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              &gt;
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Promotion Modal */}
@@ -655,6 +735,102 @@ const AdminPromotionsPage = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal xem chi tiết khuyến mãi */}
+      {isDetailModalOpen && promotionDetail && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-8 relative">
+            <button
+              onClick={() => setIsDetailModalOpen(false)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+            <h2 className="text-xl font-bold mb-4 text-center text-blue-700">
+              Chi tiết khuyến mãi
+            </h2>
+            <div className="space-y-3">
+              <div>
+                <span className="font-medium text-gray-700">
+                  Tên khuyến mãi:{" "}
+                </span>
+                <span>{promotionDetail.tenKhuyenMai}</span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">
+                  Mã khuyến mãi:{" "}
+                </span>
+                <span>{promotionDetail.maKhuyenMai}</span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">
+                  Tỷ lệ giảm giá:{" "}
+                </span>
+                <span>{promotionDetail.tyLeGiamGia}%</span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">
+                  Giá trị đơn hàng tối thiểu:{" "}
+                </span>
+                <span>
+                  {promotionDetail.mucTienToiThieu.toLocaleString()} VNĐ
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">
+                  Thời gian áp dụng:{" "}
+                </span>
+                <span>
+                  {new Date(promotionDetail.ngayBatDau).toLocaleDateString(
+                    "vi-VN"
+                  )}{" "}
+                  -{" "}
+                  {new Date(promotionDetail.ngayKetThuc).toLocaleDateString(
+                    "vi-VN"
+                  )}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Trạng thái: </span>
+                <span
+                  className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    promotionDetail.trangThai === "Hoạt động"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}
+                >
+                  {promotionDetail.trangThai}
+                </span>
+              </div>
+              {/* <div>
+                <span className="font-medium text-gray-700">Số hóa đơn đã sử dụng: </span>
+                <span>{promotionDetail.soHoaDonSuDung}</span>
+              </div> */}
+            </div>
+            <div className="flex justify-end mt-8">
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}
