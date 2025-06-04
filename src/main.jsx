@@ -64,17 +64,42 @@ import RoleGuard from "./components/common/RoleGuard";
 import "./index.css";
 import "./App.css";
 import Forbidden from "./pages/error/forbidden";
-
+import AdminGuard from "./components/common/AdminGuard";
+import ForbiddenUser from "./pages/error/ForbiddenUser";
 const router = createBrowserRouter([
   {
     path: "/errorstaff",
     element: <Forbidden />,
   },
   {
-    path: "/",
+    path: "/erroruser",
+    element: <ForbiddenUser />,
+  },
+  {
+    path: "login",
+    element: <LoginPage />,
+  },
+  {
+    path: "verify",
+    element: <VerifyOTPPage />,
+  },
+  {
+    path: "register",
+    element: <RegisterPage />,
+  },
 
+  {
+    path: "forgot-password",
+    element: <ForgotPasswordPage />,
+  },
+  {
+    path: "reset-password",
+    element: <ResetPasswordPage />,
+  },
+  {
+    path: "/",
     element: (
-      <RoleGuard blockRoles={["Staff", "staff", "N001", "Nhân viên"]}>
+      <RoleGuard blockRoles={["Q003", "Nhân viên", "Staff", "staff"]}>
         <UserLayout />
       </RoleGuard>
     ),
@@ -132,27 +157,7 @@ const router = createBrowserRouter([
         path: "orders",
         element: <UserOrdersPage />,
       },
-      {
-        path: "login",
-        element: <LoginPage />,
-      },
-      {
-        path: "verify",
-        element: <VerifyOTPPage />,
-      },
-      {
-        path: "register",
-        element: <RegisterPage />,
-      },
 
-      {
-        path: "forgot-password",
-        element: <ForgotPasswordPage />,
-      },
-      {
-        path: "reset-password",
-        element: <ResetPasswordPage />,
-      },
       {
         path: "/menu",
         element: <AdvancedSearchPage />,
@@ -168,11 +173,7 @@ const router = createBrowserRouter([
       },
       {
         path: "/blog",
-        element: (
-          <RoleGuard blockRoles={["Staff", "staff", "N001", "Nhân viên"]}>
-            <BlogPage />
-          </RoleGuard>
-        ),
+        element: <BlogPage />,
       },
       {
         path: "/blog/:id",
@@ -185,9 +186,11 @@ const router = createBrowserRouter([
   {
     path: "/admin",
     element: (
-      <PrivateRoute>
-        <AdminLayout />
-      </PrivateRoute>
+      <AdminGuard>
+        <PrivateRoute>
+          <AdminLayout />
+        </PrivateRoute>
+      </AdminGuard>
     ),
     children: [
       {

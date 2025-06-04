@@ -1,8 +1,6 @@
 import React, { useState } from "react";
-
 import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-import Email from "../assets/email.png";
 
 const LoginPage = () => {
   const [credentials, setCredentials] = useState({
@@ -10,6 +8,8 @@ const LoginPage = () => {
     matKhau: "",
   });
   const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -18,6 +18,10 @@ const LoginPage = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const toggleShowPassword = () => {
+    setShowPassword((prev) => !prev);
   };
 
   const handleSubmit = async (e) => {
@@ -46,22 +50,24 @@ const LoginPage = () => {
       localStorage.setItem("role", data.user.quyen);
       localStorage.setItem("usersId", data.user.maTaiKhoan);
 
+      if (rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+      } else {
+        localStorage.removeItem("rememberMe");
+      }
+
       window.dispatchEvent(new Event("loginSuccess"));
-      // navigate("/");
       if (data.user.quyen === "Admin" || data.user.quyen === "Q001") {
-        // localStorage.setItem("role", data.user.quyen);
         navigate("/admin");
       } else if (
         data.user.quyen === "Nhân viên" ||
         data.user.quyen === "Q003"
       ) {
-        // localStorage.setItem("role", data.user.quyen);
         navigate("/admin");
       } else if (
         data.user.quyen === "Khách hàng" ||
         data.user.quyen === "Q006"
       ) {
-        // localStorage.setItem("role", data.user.quyen);
         navigate("/");
       }
     } catch (err) {
@@ -92,92 +98,219 @@ const LoginPage = () => {
       const data = await response.json();
       localStorage.setItem("token", data.user.Token);
       localStorage.setItem("usersId", data.user.maTaiKhoan);
-      navigate("/admin");
+      if (rememberMe) {
+        localStorage.setItem("rememberMe", "true");
+      } else {
+        localStorage.removeItem("rememberMe");
+      }
+      if (data.user.quyen === "Admin" || data.user.quyen === "Q001") {
+        localStorage.setItem("role", data.user.quyen);
+        navigate("/admin");
+      } else if (
+        data.user.quyen === "Nhân viên" ||
+        data.user.quyen === "Q003" ||
+        data.user.quyen === "Staff" ||
+        data.user.quyen === "staff"
+      ) {
+        localStorage.setItem("role", data.user.quyen);
+        navigate("/admin/staff");
+      } else if (
+        data.user.quyen === "Khách hàng" ||
+        data.user.quyen === "Q006"
+      ) {
+        localStorage.setItem("role", data.user.quyen);
+        navigate("/");
+      }
+      window.dispatchEvent(new Event("loginSuccess"));
     } catch (err) {
       setError(err.message);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-50 px-4 py-6">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 sm:p-10">
-        <h1 className="text-3xl sm:text-4xl font-bold text-center text-gray-800 mb-8">
-          Đăng nhập tài khoản
-        </h1>
+    <div className="min-h-screen w-full flex bg-gradient-to-br from-blue-200 via-blue-50 to-white">
+      {/* Left Side: Background Color Section */}
 
-        {error && (
-          <div className="mb-4 text-red-600 font-semibold text-center">
-            {error}
-          </div>
-        )}
+      <div className="hidden lg:flex w-[60%] h-screen items-center justify-center bg-gradient-to-br from-blue-600 via-blue-400 to-blue-200">
+        {/* Có thể thêm text hoặc icon ở đây nếu muốn */}
+      </div>
+      {/* Right Side: Form Section */}
+      <div className="flex flex-col justify-center items-center w-full lg:w-[40%] min-h-screen relative z-10">
+        <div className="w-full max-w-md p-6 sm:p-8 bg-white/90 rounded-2xl shadow-xl mx-4">
+          <h1 className="text-3xl  font-bold text-center text-gray-800 mb-8">
+            Đăng nhập tài khoản
+          </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label
-              htmlFor="tenTaiKhoan"
-              className="block text-sm font-medium text-gray-700 mb-2"
+          {error && (
+            <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg text-center font-medium animate-pulse">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-6">
+            <div>
+              <label
+                htmlFor="tenTaiKhoan"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Tên tài khoản
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  name="tenTaiKhoan"
+                  id="tenTaiKhoan"
+                  required
+                  placeholder="Nhập tên tài khoản"
+                  value={credentials.tenTaiKhoan}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 transition duration-200"
+                />
+                <svg
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="matKhau"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Mật khẩu
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="matKhau"
+                  id="matKhau"
+                  required
+                  placeholder="Nhập mật khẩu"
+                  value={credentials.matKhau}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 pl-10 pr-12 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 transition duration-200"
+                />
+                <svg
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 11c0-1.1.9-2 2-2m-2 6v-2m0 4v-2m-6-2h12a2 2 0 002-2v-2a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4"
+                  />
+                </svg>
+                <button
+                  type="button"
+                  onClick={toggleShowPassword}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label
+                htmlFor="rememberMe"
+                className="ml-2 block text-sm text-gray-700"
+              >
+                Ghi nhớ đăng nhập
+              </label>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
-              Tên tài khoản
-            </label>
-            <input
-              type="text"
-              name="tenTaiKhoan"
-              id="tenTaiKhoan"
-              required
-              placeholder="Tên tài khoản"
-              value={credentials.tenTaiKhoan}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
+              Đăng nhập
+            </button>
+          </div>
+
+          <div className="mt-6">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError("Đăng nhập Google thất bại")}
+              text="signin_with"
+              shape="rectangular"
+              theme="filled_blue"
+              width="100%"
             />
           </div>
 
-          <div>
-            <label
-              htmlFor="matKhau"
-              className="block text-sm font-medium text-gray-700 mb-2"
+          <div className="mt-6 flex justify-between text-sm text-gray-600">
+            <Link
+              to="/forgot-password"
+              className="text-blue-600 hover:text-blue-800 transition duration-200 font-medium"
             >
-              Mật khẩu
-            </label>
-            <input
-              type="password"
-              name="matKhau"
-              id="matKhau"
-              required
-              placeholder="Mật khẩu"
-              value={credentials.matKhau}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700"
-            />
+              Quên mật khẩu?
+            </Link>
+            <Link
+              to="/register"
+              className="text-blue-600 hover:text-blue-800 transition duration-200 font-medium"
+            >
+              Đăng ký ngay
+            </Link>
           </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition duration-300 shadow-md"
-          >
-            Đăng nhập
-          </button>
-        </form>
-
-        <div className="mt-6">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => setError("Đăng nhập Google thất bại")}
-          />
-        </div>
-
-        <div className="mt-6 flex justify-between text-sm text-gray-600">
-          <Link
-            to="/forgot-password"
-            className="text-blue-600 hover:text-blue-800 transition duration-200"
-          >
-            Quên mật khẩu?
-          </Link>
-          <Link
-            to="/register"
-            className="text-blue-600 hover:text-blue-800 transition duration-200"
-          >
-            Đăng ký ngay
-          </Link>
+          <div className="mt-8 text-center text-sm text-gray-500">
+            © Website Nhà hàng Quang Quý, by Nguyễn Quang Quý
+          </div>
         </div>
       </div>
     </div>
