@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
-
+import imgLogin from "../assets/imgLogin.jpg"; // Adjust the path as necessary
 const LoginPage = () => {
   const [credentials, setCredentials] = useState({
     tenTaiKhoan: "",
@@ -129,13 +129,19 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen w-full flex bg-gradient-to-br from-blue-200 via-blue-50 to-white">
-      {/* Left Side: Background Color Section */}
-
-      <div className="hidden lg:flex w-[60%] h-screen items-center justify-center bg-gradient-to-br from-blue-600 via-blue-400 to-blue-200">
-        {/* Có thể thêm text hoặc icon ở đây nếu muốn */}
+      {/* Left Side: Image Section - chiếm toàn bộ chiều ngang trừ phần login */}
+      <div
+        className=" lg:block flex-shrink-0"
+        style={{ width: "calc(100vw - 480px)", height: "100vh" }}
+      >
+        <img
+          src={imgLogin}
+          alt="Login"
+          className="w-full h-full object-cover"
+        />
       </div>
-      {/* Right Side: Form Section */}
-      <div className="flex flex-col justify-center items-center w-full lg:w-[40%] min-h-screen relative z-10">
+      {/* Right Side: Form Section - cố định chiều rộng */}
+      <div className="flex flex-col justify-center items-center w-full lg:w-[480px] min-h-screen relative z-10">
         <div className="w-full max-w-md p-6 sm:p-8 bg-white/90 rounded-2xl shadow-xl mx-4">
           <h1 className="text-3xl  font-bold text-center text-gray-800 mb-8">
             Đăng nhập tài khoản
@@ -210,7 +216,7 @@ const LoginPage = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M12 11c0-1.1.9-2 2-2m-2 6v-2m0 4v-2m-6-2h12a2 2 0 002-2v-2a2 2 0 00-2-2H6a2 2 0 00-2 2v2a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4"
+                    d="M12 17a2 2 0 100-4 2 2 0 000 4zm6-6V9a6 6 0 10-12 0v2m12 0H6a2 2 0 00-2 2v7a2 2 0 002 2h12a2 2 0 002-2v-7a2 2 0 00-2-2z"
                   />
                 </svg>
                 <button
@@ -288,7 +294,8 @@ const LoginPage = () => {
               onError={() => setError("Đăng nhập Google thất bại")}
               text="signin_with"
               shape="rectangular"
-              theme="filled_blue"
+              theme="filled_white"
+              logo_alignment="left"
               width="100%"
             />
           </div>
