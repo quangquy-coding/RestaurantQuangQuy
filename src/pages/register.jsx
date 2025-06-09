@@ -63,6 +63,7 @@ const RegisterPage = () => {
           }
         );
         const result = await response.json();
+        console.log("Register response:", { status: response.status, result });
         if (response.ok) {
           Swal.fire({
             icon: "success",
@@ -70,7 +71,11 @@ const RegisterPage = () => {
             text: result.message || "Đã gửi mã OTP. Vui lòng kiểm tra email.",
           });
           navigate("/verify", {
-            state: { email: userData.email, userData: registerData },
+            state: {
+              email: userData.email,
+              taiKhoanDTO: registerData,
+              createdAt: result.createdAt,
+            },
           });
         } else {
           Swal.fire({

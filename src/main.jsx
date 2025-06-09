@@ -66,6 +66,7 @@ import "./App.css";
 import Forbidden from "./pages/error/forbidden";
 import AdminGuard from "./components/common/AdminGuard";
 import ForbiddenUser from "./pages/error/ForbiddenUser";
+import VerifyPage from "./pages/VerifyOTPPage";
 const router = createBrowserRouter([
   {
     path: "/errorstaff",
@@ -81,7 +82,7 @@ const router = createBrowserRouter([
   },
   {
     path: "verify",
-    element: <VerifyOTPPage />,
+    element: <VerifyPage />,
   },
   {
     path: "register",

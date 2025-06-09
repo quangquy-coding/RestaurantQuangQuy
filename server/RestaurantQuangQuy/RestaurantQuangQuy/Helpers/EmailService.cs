@@ -28,36 +28,39 @@ namespace RestaurantQuangQuy.Services
 		{
 			_emailSettings = emailSettings.Value;
 		}
-
 		public async Task SendEmailAsync(string toEmail, string subject, string htmlMessage)
 		{
-			if (string.IsNullOrWhiteSpace(toEmail))
-				throw new ArgumentException("Email người nhận không được để trống hoặc null", nameof(toEmail));
-
-			if (string.IsNullOrWhiteSpace(_emailSettings.SenderEmail))
-				throw new ArgumentException("Email người gửi không được để trống hoặc null", nameof(_emailSettings.SenderEmail));
-
-			// In ra để kiểm tra
-			Console.WriteLine($"SenderEmail: {_emailSettings.SenderEmail}");
-			Console.WriteLine($"ToEmail: {toEmail}");
-
-			var message = new MailMessage();
-			message.To.Add(new MailAddress(toEmail));
-			message.Subject = subject;
-			message.Body = htmlMessage;
-			message.IsBodyHtml = true;
-			message.From = new MailAddress(_emailSettings.SenderEmail, _emailSettings.SenderName);
-
-			using var smtp = new SmtpClient(_emailSettings.SmtpServer, _emailSettings.SmtpPort)
+			try
 			{
-				Credentials = new NetworkCredential(_emailSettings.SenderEmail, _emailSettings.Password),
-				EnableSsl = true
-			};
+				if (string.IsNullOrWhiteSpace(toEmail))
+					throw new ArgumentException("Email người nhận không được để trống hoặc null", nameof(toEmail));
 
-			await smtp.SendMailAsync(message);
+				if (string.IsNullOrWhiteSpace(_emailSettings.SenderEmail))
+					throw new ArgumentException("Email người gửi không được để trống hoặc null", nameof(_emailSettings.SenderEmail));
+
+				Console.WriteLine($"Sending email to: {toEmail}, Subject: {subject}");
+
+				var message = new MailMessage();
+				message.To.Add(new MailAddress(toEmail));
+				message.Subject = subject;
+				message.Body = htmlMessage;
+				message.IsBodyHtml = true;
+				message.From = new MailAddress(_emailSettings.SenderEmail, _emailSettings.SenderName);
+
+				using var smtp = new SmtpClient(_emailSettings.SmtpServer, _emailSettings.SmtpPort)
+				{
+					Credentials = new NetworkCredential(_emailSettings.SenderEmail, _emailSettings.Password),
+					EnableSsl = true
+				};
+
+				await smtp.SendMailAsync(message);
+				Console.WriteLine($"Email sent successfully to: {toEmail}");
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Failed to send email: {ex.Message}");
+				throw;
+			}
 		}
-
-
-
 	}
 }

@@ -29,11 +29,28 @@ namespace RestaurantQuangQuy.Controllers
 			if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.TenTaiKhoan) || string.IsNullOrWhiteSpace(dto.MatKhau))
 				return BadRequest(new { message = "Vui lòng nhập đầy đủ thông tin." });
 
-			bool exists = await _context.Taikhoans.AnyAsync(x => x.TenTaiKhoan == dto.TenTaiKhoan);
-			if (exists)
+			// Validate email format
+			if (!IsValidEmail(dto.Email))
+				return BadRequest(new { message = "Email không hợp lệ." });
+
+			// Check for duplicate username
+			bool usernameExists = await _context.Taikhoans.AnyAsync(x => x.TenTaiKhoan == dto.TenTaiKhoan);
+			if (usernameExists)
 				return BadRequest(new { message = "Tên tài khoản đã tồn tại." });
 
+			// Check for duplicate email in Taikhoans
+			bool emailExistsInTaikhoan = await _context.Taikhoans.AnyAsync(x => x.Email == dto.Email);
+			if (emailExistsInTaikhoan)
+				return BadRequest(new { message = "Email đã được sử dụng" });
+
+			// Check for duplicate email in Khachhang
+			bool emailExistsInKhachhang = await _context.Khachhangs.AnyAsync(x => x.Email == dto.Email);
+			if (emailExistsInKhachhang)
+				return BadRequest(new { message = "Email đã được sử dụng trong bảng KHACHHANG." });
+
 			string otpCode = new Random().Next(100000, 999999).ToString();
+			Console.WriteLine($"Generated OTP: {otpCode} for email: {dto.Email}");
+
 			var cacheData = new
 			{
 				dto.TenTaiKhoan,
@@ -46,45 +63,94 @@ namespace RestaurantQuangQuy.Controllers
 				ExpireAt = DateTime.Now.AddMinutes(5)
 			};
 
-			_memoryCache.Set($"otp_{otpCode}", new { Email = dto.Email, Data = cacheData }, TimeSpan.FromMinutes(5));
+			_memoryCache.Set($"otp_{otpCode}", new { Email = dto.Email, Data = cacheData }, TimeSpan.FromMinutes(10));
+			Console.WriteLine($"Stored OTP in cache: otp_{otpCode}");
 
 			string emailBody = $@"
-<div style='font-family: Arial, sans-serif; background-color: #f2f4f6; padding: 40px;'>
-    <div style='max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); overflow: hidden;'>
-        <div style='background-color: #d9230f; color: #ffffff; padding: 24px 32px; text-align: center;'>
-            <h1 style='margin: 0; font-size: 24px;'>🍽 Nhà hàng Quang Quý</h1>
-            <p style='margin: 4px 0 0; font-size: 16px;'>Xác thực đăng ký tài khoản</p>
-        </div>
-        <div style='padding: 32px; text-align: center;'>
-            <p style='font-size: 16px; color: #333;'>Xin chào <strong>{dto.TenTaiKhoan}</strong>,</p>
-            <p style='font-size: 16px; color: #333;'>Cảm ơn bạn đã đăng ký tại <strong>Nhà hàng Quang Quý</strong>!</p>
-            <p style='font-size: 16px; color: #333;'>Mã xác thực tài khoản của bạn là:</p>
-            <div style='margin: 20px auto; display: inline-block; background-color: #fff3f0; padding: 16px 32px; border-radius: 8px; border: 2px dashed #d9230f;'>
-                <span style='font-size: 32px; color: #d9230f; letter-spacing: 4px; font-weight: bold;'>{otpCode}</span>
+    <div style='font-family: Arial, sans-serif; background-color: #f2f4f6; padding: 40px;'>
+        <div style='max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); overflow: hidden;'>
+            <div style='background-color: #d9230f; color: #ffffff; padding: 24px 32px; text-align: center;'>
+                <h1 style='margin: 0; font-size: 24px;'>🍽 Nhà hàng Quang Quý</h1>
+                <p style='margin: 4px 0 0; font-size: 16px;'>Xác thực đăng ký tài khoản</p>
             </div>
-            <p style='font-size: 14px; color: #777; margin-top: 24px;'>Mã có hiệu lực trong vòng 5 phút kể từ thời điểm nhận được email này.</p>
-            <p style='font-size: 14px; color: #777;'>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
-            <p style='font-size: 14px; color: #777;'>Trân trọng,<br /><strong>Đội ngũ Quang Quý Restaurant</strong></p>
+            <div style='padding: 32px; text-align: center;'>
+                <p style='font-size: 16px; color: #333;'>Xin chào <strong>{dto.TenTaiKhoan}</strong>,</p>
+                <p style='font-size: 16px; color: #333;'>Cảm ơn bạn đã đăng ký tại <strong>Nhà hàng Quang Quý</strong>!</p>
+                <p style='font-size: 16px; color: #333;'>Mã xác thực tài khoản của bạn là:</p>
+                <div style='margin: 20px auto; display: inline-block; background-color: #fff3f0; padding: 16px 32px; border-radius: 8px; border: 2px dashed #d9230f;'>
+                    <span style='font-size: 32px; color: #d9230f; letter-spacing: 4px; font-weight: bold;'>{otpCode}</span>
+                </div>
+                <p style='font-size: 14px; color: #777; margin-top: 24px;'>Mã có hiệu lực trong vòng 5 phút kể từ thời điểm nhận được email này.</p>
+                <p style='font-size: 14px; color: #777;'>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.</p>
+                <p style='font-size: 14px; color: #777;'>Trân trọng,<br /><strong>Đội ngũ Quang Quý Restaurant</strong></p>
+            </div>
+            <div style='background-color: #f9f9f9; text-align: center; padding: 16px; font-size: 12px; color: #999;'>
+                © {DateTime.Now.Year} Quang Quý Restaurant. All rights reserved.
+            </div>
         </div>
-        <div style='background-color: #f9f9f9; text-align: center; padding: 16px; font-size: 12px; color: #999;'>
-            © {DateTime.Now.Year} Quang Quý Restaurant. All rights reserved.
-        </div>
-    </div>
-</div>";
+    </div>";
 
-			await _emailService.SendEmailAsync(dto.Email, "Mã xác thực đăng ký", emailBody);
-
-			return Ok(new { message = "Đã gửi mã xác thực. Vui lòng kiểm tra email." });
+			try
+			{
+				await _emailService.SendEmailAsync(dto.Email, "Mã xác thực đăng ký", emailBody);
+				return Ok(new { message = "Đã gửi mã xác thực. Vui lòng kiểm tra email." });
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Failed to send email: {ex.Message}");
+				return StatusCode(500, new { message = "Lỗi khi gửi email. Vui lòng thử lại sau." });
+			}
 		}
 
+		private bool IsValidEmail(string email)
+		{
+			try
+			{
+				var addr = new System.Net.Mail.MailAddress(email);
+				return addr.Address == email;
+			}
+			catch
+			{
+				return false;
+			}
+		}
 		[HttpPost("verify")]
 		public async Task<IActionResult> VerifyOtp([FromBody] string otpCode)
 		{
+			Console.WriteLine($"Received OTP for verification: {otpCode}");
+
+			if (string.IsNullOrWhiteSpace(otpCode))
+				return BadRequest(new { message = "Mã xác thực không được để trống." });
+
 			if (!_memoryCache.TryGetValue($"otp_{otpCode}", out dynamic cached))
-				return BadRequest(new { message = "Mã xác thực không đúng hoặc đã hết hạn." });
+				return BadRequest(new { message = "Mã xác thực không đúng hoặc đã hết hạn. Vui lòng yêu cầu mã mới." });
 
 			var dto = cached.Data;
 			string email = cached.Email;
+
+			// Validate email
+			if (string.IsNullOrWhiteSpace(email) || email == "string")
+			{
+				_memoryCache.Remove($"otp_{otpCode}");
+				Console.WriteLine($"Invalid email detected: {email}");
+				return BadRequest(new { message = "Email không hợp lệ." });
+			}
+
+			// Check for duplicate email in Taikhoans
+			bool emailExistsInTaikhoan = await _context.Taikhoans.AnyAsync(x => x.Email == email);
+			if (emailExistsInTaikhoan)
+			{
+				_memoryCache.Remove($"otp_{otpCode}");
+				return BadRequest(new { message = "Email đã được sử dụng trong bảng TAIKHOAN." });
+			}
+
+			// Check for duplicate email in Khachhang
+			bool emailExistsInKhachhang = await _context.Khachhangs.AnyAsync(x => x.Email == email);
+			if (emailExistsInKhachhang)
+			{
+				_memoryCache.Remove($"otp_{otpCode}");
+				return BadRequest(new { message = "Email đã được sử dụng trong bảng KHACHHANG." });
+			}
 
 			string maTaiKhoan = $"TK{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
 			string maKhachHang = $"KH{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
@@ -101,7 +167,6 @@ namespace RestaurantQuangQuy.Controllers
 				NgaySinh = dto.NgaySinh,
 				MaQuyen = "Q006"
 			};
-			await _context.Taikhoans.AddAsync(taiKhoan);
 
 			var khachHang = new Khachhang
 			{
@@ -112,12 +177,23 @@ namespace RestaurantQuangQuy.Controllers
 				Email = email,
 				MaTaiKhoan = maTaiKhoan
 			};
-			await _context.Khachhangs.AddAsync(khachHang);
 
-			await _context.SaveChangesAsync();
-			_memoryCache.Remove($"otp_{otpCode}");
-
-			return Ok(new { message = "Xác thực thành công. Tài khoản đã được tạo." });
+			using var transaction = await _context.Database.BeginTransactionAsync();
+			try
+			{
+				await _context.Taikhoans.AddAsync(taiKhoan);
+				await _context.Khachhangs.AddAsync(khachHang);
+				await _context.SaveChangesAsync();
+				await transaction.CommitAsync();
+				_memoryCache.Remove($"otp_{otpCode}");
+				return Ok(new { message = "Xác thực thành công. Tài khoản đã được tạo." });
+			}
+			catch (DbUpdateException ex)
+			{
+				await transaction.RollbackAsync();
+				Console.WriteLine($"Database error: {ex.InnerException?.Message}");
+				return StatusCode(500, new { message = "Lỗi khi tạo tài khoản. Vui lòng thử lại." });
+			}
 		}
 
 		[HttpPost("forgot-password/send-code")]

@@ -195,6 +195,11 @@ const PromotionsPage = () => {
                                 Đang hoạt động
                               </span>
                             )}
+                            {!isActive && (
+                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                Không hoạt động
+                              </span>
+                            )}
                           </h3>
                         </div>
                         <div className="text-sm text-gray-600 space-y-1">
@@ -213,10 +218,10 @@ const PromotionsPage = () => {
                           <p>
                             <strong>Trạng thái:</strong> {promo.trangThai}
                           </p>
-                          <p>
+                          {/* <p>
                             <strong>Số hóa đơn sử dụng:</strong>{" "}
                             {promo.soHoaDonSuDung}
-                          </p>
+                          </p> */}
                         </div>
                       </div>
                       <button
