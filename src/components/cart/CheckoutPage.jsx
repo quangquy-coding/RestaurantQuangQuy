@@ -1,13 +1,8 @@
+"use client";
+import React from "react";
 import axios from "axios";
-import {
-  BanknoteIcon,
-  CheckCircle2,
-  Clock,
-  CreditCard,
-  Tag,
-  XCircle,
-} from "lucide-react";
-import React, { useEffect, useState } from "react";
+import { Clock, CreditCard, Tag, XCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { orderService } from "../../api/orderApi";
 import { toast } from "react-hot-toast";
@@ -33,9 +28,8 @@ const CheckoutPage = () => {
   const [total, setTotal] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [finalTotal, setFinalTotal] = useState(0);
-  const [deposit, setDeposit] = useState(0); // New state for SoTienCoc
-  const [remainingAmount, setRemainingAmount] = useState(0); // New state for SoTienConLai
-  const [paymentMethod, setPaymentMethod] = useState("Tiền mặt");
+  const [deposit, setDeposit] = useState(0);
+  const [remainingAmount, setRemainingAmount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null);
   const [userLoading, setUserLoading] = useState(false);
@@ -44,6 +38,7 @@ const CheckoutPage = () => {
   const [promotions, setPromotions] = useState([]);
   const [selectedPromo, setSelectedPromo] = useState(null);
   const [showPromoModal, setShowPromoModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [customerInfo, setCustomerInfo] = useState({
     maDatBan: "",
@@ -55,11 +50,7 @@ const CheckoutPage = () => {
     note: "",
     maKhachHang: "",
   });
-  const [loading, setLoading] = useState(false);
-  const [orderComplete, setOrderComplete] = useState(false);
-  const [orderId, setOrderId] = useState(null);
 
-  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -70,11 +61,9 @@ const CheckoutPage = () => {
     }).format(date);
   };
 
-  // Initialize user data and fetch promotions
   useEffect(() => {
     const token = localStorage.getItem("token");
     const uid = localStorage.getItem("usersId");
-
     setIsLoggedIn(!!token);
 
     if (uid) {
@@ -87,7 +76,6 @@ const CheckoutPage = () => {
       }));
     }
 
-    // Fetch active promotions
     fetchPromotions();
   }, []);
 
@@ -106,8 +94,12 @@ const CheckoutPage = () => {
       const userEmail = userData.email || "";
       const maDatBan = localStorage.getItem("maDatBan") || "";
 
-      if (maDatBan === "") {
-        setError("Vui lòng chọn bàn trước khi thanh toán.");
+      if (!maDatBan) {
+        setError("Vui lòng đặt bàn trước khi thanh toán.");
+        // Chuyển hướng trang sau 3 giây
+        setTimeout(function () {
+          window.location.href = "/reservation";
+        }, 5000); // 3000 milliseconds = 3 giây
         return;
       }
 
@@ -122,14 +114,7 @@ const CheckoutPage = () => {
       });
     } catch (err) {
       console.error("❌ Lỗi lấy thông tin người dùng:", err);
-      setError(
-        err.response?.data?.message ||
-          "Lỗi tải thông tin người dùng. Vui lòng thử lại."
-      );
-      setCustomerInfo((prev) => ({
-        ...prev,
-        maKhachHang: uid,
-      }));
+      setError("Lỗi tải thông tin người dùng. Vui lòng thử lại.");
     } finally {
       setUserLoading(false);
     }
@@ -153,10 +138,14 @@ const CheckoutPage = () => {
         setSelectedPromo(promo);
         setDiscount(result.tienGiam);
         setFinalTotal(result.tongTienSauGiam);
-        setRemainingAmount(result.tongTienSauGiam); // Update SoTienConLai
+
+        const newDeposit = result.tongTienSauGiam * 0.3;
+        setDeposit(newDeposit);
+        setRemainingAmount(result.tongTienSauGiam - newDeposit);
+
         toast.success(
           `Đã áp dụng mã ${
-            promo.maKhuyenMai
+            promo.tenKhuyenMai
           }! Giảm ${result.tienGiam.toLocaleString()} VNĐ`
         );
         setShowPromoModal(false);
@@ -173,12 +162,15 @@ const CheckoutPage = () => {
     setSelectedPromo(null);
     setDiscount(0);
     setFinalTotal(total);
-    setRemainingAmount(total); // Reset SoTienConLai
+
+    const newDeposit = total * 0.3;
+    setDeposit(newDeposit);
+    setRemainingAmount(total - newDeposit);
+
     toast.success("Đã xóa mã khuyến mãi.");
   };
 
   useEffect(() => {
-    // Load cart items
     const savedCheckoutItems = localStorage.getItem("checkoutItems");
     if (savedCheckoutItems) {
       const parsedItems = JSON.parse(savedCheckoutItems);
@@ -189,13 +181,14 @@ const CheckoutPage = () => {
       );
       setTotal(sum);
       setFinalTotal(sum);
-      setRemainingAmount(sum); // Initialize SoTienConLai
-      setDeposit(sum * 0.3); // Assume 30% deposit as default, adjust as needed
+
+      const initialDeposit = sum * 0.3;
+      setDeposit(initialDeposit);
+      setRemainingAmount(sum - initialDeposit);
     } else {
       navigate("/cart");
     }
 
-    // Load customer info
     const savedCustomerInfo = localStorage.getItem("customerInfo");
     if (savedCustomerInfo) {
       setCustomerInfo(JSON.parse(savedCustomerInfo));
@@ -218,7 +211,26 @@ const CheckoutPage = () => {
     let maDatMon = null;
 
     try {
-      // Create order DTO
+      if (
+        !customerInfo.name ||
+        !customerInfo.phone ||
+        !customerInfo.email ||
+        !customerInfo.tableNumber
+      ) {
+        throw new Error("Vui lòng điền đầy đủ thông tin cần thiết.");
+      }
+
+      // Validate deposit amount for VNPay
+      if (deposit < 5000) {
+        throw new Error(
+          "Số tiền cọc phải từ 5,000 VNĐ trở lên để thanh toán qua VNPay"
+        );
+      }
+
+      if (deposit >= 1000000000) {
+        throw new Error("Số tiền cọc phải dưới 1 tỷ VNĐ");
+      }
+
       const datMonDTO = {
         MaBanAn: customerInfo.tableNumber,
         MaKhachHang: customerInfo.maKhachHang,
@@ -236,96 +248,62 @@ const CheckoutPage = () => {
         })),
       };
 
-      // Submit order
       const datMonRes = await orderService.createDatMon(datMonDTO);
       maDatMon = datMonRes.data?.maDatMon;
-      const maBanAn = datMonRes.data?.maBanAn;
+      const maBanAn = datMonRes.data?.maBanAn || customerInfo.tableNumber;
 
-      // Process payment
-      if (paymentMethod === "Tiền mặt") {
-        const hoaDonDTO = {
-          MaHoaDon: "",
-          MaDatMon: maDatMon,
-          MaBanAn: maBanAn,
-          MaKhachHang: customerInfo.maKhachHang,
-          ThoiGianDat: new Date().toISOString(),
-          ThoiGianThanhToan: new Date().toISOString(),
-          MaKhuyenMai: selectedPromo?.maKhuyenMai || null,
-          TongTien: finalTotal,
-          SoTienCoc: deposit,
-          SoTienConLai: remainingAmount,
-          TienGiam: discount,
-          PhuongThucThanhToan: "Tiền mặt",
-          TrangThaiThanhToan: "processing",
-          MaNhanVien: "NV001",
-          GhiChu: customerInfo.note || "",
-        };
+      if (!maDatMon) {
+        throw new Error("Không thể tạo đơn đặt món.");
+      }
 
-        const res = await orderService.createHoaDon(hoaDonDTO);
-        const maHoaDon = res.data?.maHoaDon || "HD" + Date.now();
+      // Create VNPay payment URL
+      const vnpayRequest = {
+        OrderId: maDatMon,
+        Amount: total,
+        SoTienCoc: deposit,
+        SoTienConLai: remainingAmount,
+        TienGiam: discount,
+        OrderDescription: `Dat coc don hang ${maDatMon} tai Nha Hang Quang Quy`,
+        CustomerName: customerInfo.name,
+        CustomerEmail: customerInfo.email,
+        CustomerPhone: customerInfo.phone,
+      };
 
-        setOrderId(maHoaDon);
-        setOrderComplete(true);
-
-        // Clean up localStorage
-        localStorage.removeItem("checkoutItems");
-        localStorage.removeItem("customerInfo");
-
-        const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
-        const remainingItems = savedCart.filter(
-          (item) => !cartItems.some((c) => c.id === item.id)
+      const vnpayRes = await api.createVNPayPayment(vnpayRequest);
+      if (vnpayRes.data.success) {
+        // Store pending order info for later processing
+        localStorage.setItem(
+          "pendingHoaDon",
+          JSON.stringify({
+            MaDatMon: maDatMon,
+            MaBanAn: maBanAn,
+            MaKhachHang: customerInfo.maKhachHang,
+            TongTien: total,
+            SoTienCoc: deposit,
+            SoTienConLai: remainingAmount,
+            TienGiam: discount,
+            MaKhuyenMai: selectedPromo?.maKhuyenMai || null,
+            GhiChu: customerInfo.note,
+          })
         );
-        localStorage.setItem("cart", JSON.stringify(remainingItems));
-        window.dispatchEvent(
-          new CustomEvent("cartUpdated", { detail: { cart: remainingItems } })
-        );
+
+        setRedirecting(true);
+        setTimeout(() => {
+          window.location.href = vnpayRes.data.paymentUrl;
+        }, 1000);
       } else {
-        // VNPay payment
-        const vnpayRequest = {
-          OrderId: maDatMon,
-          Amount: finalTotal,
-          SoTienCoc: deposit,
-          SoTienConLai: remainingAmount,
-          TienGiam: discount,
-          OrderDescription: `Thanh toán đơn hàng ${maDatMon} tại Restaurant Quang Quý`,
-          CustomerName: customerInfo.name,
-          CustomerEmail: customerInfo.email,
-          CustomerPhone: customerInfo.phone,
-        };
-
-        const vnpayRes = await api.createVNPayPayment(vnpayRequest);
-        if (vnpayRes.data.success) {
-          localStorage.setItem(
-            "pendingHoaDon",
-            JSON.stringify({
-              MaDatMon: maDatMon,
-              MaBanAn: maBanAn,
-              MaKhachHang: customerInfo.maKhachHang,
-              TongTien: finalTotal,
-              SoTienCoc: deposit,
-              SoTienConLai: remainingAmount,
-              TienGiam: discount,
-              MaKhuyenMai: selectedPromo?.maKhuyenMai || null,
-              GhiChu: customerInfo.note,
-            })
-          );
-          setRedirecting(true);
-          setTimeout(() => {
-            window.location.href = vnpayRes.data.paymentUrl;
-          }, 1000);
-        } else {
-          throw new Error(
-            vnpayRes.data.message || "Lỗi tạo URL thanh toán VNPay"
-          );
-        }
+        throw new Error(
+          vnpayRes.data.message || "Lỗi tạo URL thanh toán VNPay"
+        );
       }
     } catch (err) {
       console.error("❌ Lỗi khi gửi đơn hàng:", err);
       setError(
-        err.message || "Đã xảy ra lỗi khi xử lý đơn hàng. Vui lòng thử lại."
+        err.response?.data?.message ||
+          err.message ||
+          "Đã xảy ra lỗi khi xử lý đơn hàng. Vui lòng thử lại."
       );
 
-      // Rollback order if error
       if (maDatMon) {
         try {
           await orderService.deleteDatMon(maDatMon);
@@ -341,45 +319,15 @@ const CheckoutPage = () => {
 
   if (redirecting) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full text-center">
           <Clock className="animate-spin mx-auto h-16 w-16 text-blue-600 mb-4" />
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
             Đang chuyển hướng đến VNPay...
           </h1>
           <p className="text-gray-600">
-            Vui lòng chờ trong giây lát để hoàn tất thanh toán.
+            Vui lòng chờ trong giây lát để hoàn tất thanh toán đặt cọc.
           </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (orderComplete) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
-          <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">
-            Đặt món thành công!
-          </h1>
-          <p className="text-gray-600 mb-4">
-            Cảm ơn bạn đã đặt món tại nhà hàng chúng tôi.
-          </p>
-          <div className="bg-gray-50 p-4 rounded-lg mb-6">
-            <p className="font-semibold text-gray-800">
-              Mã đơn hàng: {orderId}
-            </p>
-            <p className="text-sm text-gray-500">
-              Vui lòng lưu lại mã đơn hàng để tra cứu.
-            </p>
-          </div>
-          <button
-            onClick={() => navigate("/")}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Quay về trang chủ
-          </button>
         </div>
       </div>
     );
@@ -387,11 +335,14 @@ const CheckoutPage = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-gray-600 mb-4">
             Không có món nào để thanh toán. Quay lại{" "}
-            <Link to="/cart" className="text-blue-600 hover:underline">
+            <Link
+              to="/cart"
+              className="text-blue-600 hover:text-blue-700 transition-colors"
+            >
               giỏ hàng
             </Link>
             .
@@ -403,12 +354,15 @@ const CheckoutPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button
-            onClick={() => navigate("/checkout")}
-            className="bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+            onClick={() => {
+              setError(null);
+              navigate("/checkout");
+            }}
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
           >
             Thử lại
           </button>
@@ -418,13 +372,50 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 py-8 px-4">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Thanh toán</h1>
+        <h1 className="text-4xl font-bold text-amber-700 mb-4 tracking-tight">
+          Đặt cọc bàn ăn
+        </h1>
+
+        {/* Thông báo đặt cọc */}
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-6 mb-8">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg
+                className="h-6 w-6 text-amber-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-lg font-semibold text-amber-800 mb-2">
+                Thông tin đặt cọc
+              </h3>
+              <p className="text-amber-700 leading-relaxed">
+                <strong>
+                  Bạn vui lòng đặt cọc để đảm bảo có bàn, bạn có thể thanh toán
+                  bằng tiền mặt khi ăn xong. Xin cảm ơn!
+                </strong>
+              </p>
+              <p className="text-amber-600 text-sm mt-2">
+                💡 Số tiền cọc: 30% tổng hóa đơn | Số tiền còn lại sẽ thanh toán
+                tại nhà hàng
+              </p>
+            </div>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Order Summary */}
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-white rounded-xl shadow-xl overflow-hidden">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-800">
                 Tóm tắt đơn hàng
@@ -456,7 +447,7 @@ const CheckoutPage = () => {
                 </li>
               ))}
             </ul>
-            <div className="p-6 bg-gray-50">
+            <div className="p-6 bg-gradient-to-r from-blue-50 to-teal-50">
               <div className="flex justify-between mb-2 text-gray-700">
                 <span>Tạm tính:</span>
                 <span>{total.toLocaleString("vi-VN")} ₫</span>
@@ -467,83 +458,82 @@ const CheckoutPage = () => {
                   <span>-{discount.toLocaleString("vi-VN")} ₫</span>
                 </div>
               )}
-              <div className="flex justify-between mb-2 text-gray-700">
-                <span>Số tiền cọc (30%):</span>
-                <span>{deposit.toLocaleString("vi-VN")} ₫</span>
-              </div>
-              <div className="flex justify-between mb-2 text-gray-700">
-                <span>Số tiền còn lại:</span>
-                <span>{remainingAmount.toLocaleString("vi-VN")} ₫</span>
-              </div>
-              <div className="flex justify-between font-bold text-xl text-gray-800">
-                <span>Tổng cộng:</span>
-                <span>{finalTotal.toLocaleString("vi-VN")} ₫</span>
+              <div className="border-t border-gray-300 pt-2 mt-2">
+                <div className="flex justify-between mb-2 text-gray-700">
+                  <span>Tổng hóa đơn:</span>
+                  <span className="font-semibold">
+                    {finalTotal.toLocaleString("vi-VN")} ₫
+                  </span>
+                </div>
+                <div className="flex justify-between mb-2 text-blue-600 font-medium">
+                  <span>💰 Số tiền cọc (30%):</span>
+                  <span>{deposit.toLocaleString("vi-VN")} ₫</span>
+                </div>
+                <div className="flex justify-between text-orange-600 font-medium">
+                  <span>💵 Thanh toán tại nhà hàng:</span>
+                  <span>{remainingAmount.toLocaleString("vi-VN")} ₫</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Payment Form */}
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-white rounded-xl shadow-xl overflow-hidden">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-800">
-                Thông tin thanh toán
+                Thông tin đặt cọc
               </h2>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Họ tên
+                  Họ tên *
                 </label>
                 <input
                   type="text"
                   name="name"
                   value={customerInfo.name}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md transition-all duration-300"
                   required
-                  readOnly
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Số điện thoại
+                  Số điện thoại *
                 </label>
                 <input
                   type="tel"
                   name="phone"
                   value={customerInfo.phone}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md transition-all duration-300"
                   required
-                  readOnly
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
+                  Email *
                 </label>
                 <input
                   type="email"
                   name="email"
                   value={customerInfo.email}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required={paymentMethod !== "Tiền mặt"}
-                  readOnly
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md transition-all duration-300"
+                  required
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Mã bàn đặt
+                  Mã bàn đặt *
                 </label>
                 <input
                   type="text"
                   name="tableNumber"
                   value={customerInfo.tableNumber}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md transition-all duration-300"
                   required
-                  readOnly
                 />
               </div>
               <div>
@@ -556,13 +546,13 @@ const CheckoutPage = () => {
                     value={selectedPromo?.maKhuyenMai || ""}
                     readOnly
                     placeholder="Chọn mã khuyến mãi"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 shadow-sm"
                   />
                   {selectedPromo ? (
                     <button
                       type="button"
                       onClick={removePromotion}
-                      className="px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      className="px-4 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-lg hover:from-red-700 hover:to-pink-700 transition-all duration-300 shadow-md hover:shadow-lg"
                     >
                       Xóa
                     </button>
@@ -570,7 +560,7 @@ const CheckoutPage = () => {
                     <button
                       type="button"
                       onClick={() => setShowPromoModal(true)}
-                      className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
                     >
                       Chọn
                     </button>
@@ -586,77 +576,77 @@ const CheckoutPage = () => {
                   value={customerInfo.note}
                   onChange={handleInputChange}
                   rows="4"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md transition-all duration-300"
+                  placeholder="Yêu cầu đặc biệt về món ăn, thời gian..."
                 ></textarea>
               </div>
+
+              {/* Phương thức thanh toán - chỉ VNPay */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Phương thức thanh toán
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  Phương thức thanh toán đặt cọc
                 </label>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <input
-                      type="radio"
-                      id="Tiền mặt"
-                      name="paymentMethod"
-                      value="Tiền mặt"
-                      checked={paymentMethod === "Tiền mặt"}
-                      onChange={() => setPaymentMethod("Tiền mặt")}
-                      className="sr-only peer"
-                    />
-                    <label
-                      htmlFor="Tiền mặt"
-                      className="flex flex-col items-center justify-center rounded-lg border-2 border-gray-200 p-4 cursor-pointer hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-colors"
-                    >
-                      <BanknoteIcon className="mb-2 h-6 w-6 text-gray-600 peer-checked:text-blue-600" />
-                      <span className="text-sm font-medium text-gray-700">
-                        Tiền mặt
-                      </span>
-                    </label>
-                  </div>
-                  <div>
-                    <input
-                      type="radio"
-                      id="vnpay"
-                      name="paymentMethod"
-                      value="VNPay"
-                      checked={paymentMethod === "VNPay"}
-                      onChange={() => setPaymentMethod("VNPay")}
-                      className="sr-only peer"
-                    />
-                    <label
-                      htmlFor="vnpay"
-                      className="flex flex-col items-center justify-center rounded-lg border-2 border-gray-200 p-4 cursor-pointer hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-colors"
-                    >
-                      <CreditCard className="mb-2 h-6 w-6 text-gray-600 peer-checked:text-blue-600" />
-                      <span className="text-sm font-medium text-gray-700">
-                        VNPay
-                      </span>
-                    </label>
+                <div className="bg-gradient-to-r from-blue-100 to-indigo-100 border border-blue-300 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow duration-200">
+                  <div className="flex items-center gap-4">
+                    <CreditCard className="h-10 w-10 text-blue-700 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-lg font-bold text-blue-900">VNPay</h3>
+                      <p className="text-sm text-blue-700">
+                        Thanh toán nhanh chóng và an toàn qua VNPay
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Deposit Warning */}
+              {deposit < 5000 && (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4 flex items-start gap-3">
+                  <svg
+                    className="h-6 w-6 text-yellow-500 flex-shrink-0"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium text-yellow-800">
+                      Số tiền cọc ({deposit.toLocaleString("vi-VN")} ₫) không đủ
+                      để thanh toán qua VNPay.
+                      <span className="font-semibold">Tối thiểu 5,000 ₫</span>.
+                      Vui lòng thêm món để đạt mức tối thiểu.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <button
                 type="submit"
-                disabled={loading || userLoading || redirecting}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={
+                  loading || userLoading || redirecting || deposit < 5000
+                }
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed text-lg font-semibold"
               >
                 {loading || redirecting ? (
                   <>
                     <Clock className="animate-spin mr-2 h-5 w-5" />
                     Đang xử lý...
                   </>
-                ) : paymentMethod === "Tiền mặt" ? (
-                  "Hoàn tất đặt món"
                 ) : (
-                  "Tiến hành thanh toán VNPay"
+                  <>
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    Đặt cọc qua VNPay ({deposit.toLocaleString("vi-VN")} ₫)
+                  </>
                 )}
               </button>
             </form>
           </div>
         </div>
 
-        {/* Promotions Modal */}
         {showPromoModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
@@ -666,7 +656,7 @@ const CheckoutPage = () => {
                 </h3>
                 <button
                   onClick={() => setShowPromoModal(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 hover:text-gray-700 transition-all duration-300"
                 >
                   <XCircle className="h-6 w-6" />
                 </button>
@@ -680,11 +670,11 @@ const CheckoutPage = () => {
                   {promotions.map((promo) => (
                     <li
                       key={promo.maKhuyenMai}
-                      className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                      className="p-4 hover:bg-gray-50 cursor-pointer transition-all duration-300"
                       onClick={() => applyPromotion(promo)}
                     >
                       <div className="flex items-center">
-                        <Tag className="h-5 w-5 text-blue-600 mr-3" />
+                        <Tag className="h-5 w-5 text-blue-600 mr-3 animate-pulse" />
                         <div>
                           <h4 className="font-medium text-gray-800">
                             {promo.tenKhuyenMai}

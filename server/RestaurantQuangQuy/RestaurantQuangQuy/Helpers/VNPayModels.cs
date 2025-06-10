@@ -53,9 +53,13 @@ namespace RestaurantQuangQuy.Models
 		public bool Success { get; set; }
 		public string OrderId { get; set; }
 		public decimal Amount { get; set; }
+		public decimal SoTienCoc { get; set; }
+		public decimal SoTienConLai { get; set; }
+		public decimal TienGiam { get; set; }
 		public string TransactionId { get; set; }
 		public string ResponseCode { get; set; }
 		public string Message { get; set; }
 		public DateTime PaymentDate { get; set; }
+
 	}
 }

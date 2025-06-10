@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RestaurantQuangQuy.Models;
+using RestaurantQuangQuy.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,9 +11,6 @@ using System.Threading.Tasks;
 using System.Web;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
-using RestaurantQuangQuy.Migrations;
-
-
 
 namespace RestaurantQuangQuy.Controllers.Api
 {
@@ -21,11 +20,13 @@ namespace RestaurantQuangQuy.Controllers.Api
 	{
 		private readonly RestaurantManagementContext _context;
 		private readonly IConfiguration _configuration;
+		private readonly IEmailService _emailService;
 
-		public PaymentProcessorController(RestaurantManagementContext context, IConfiguration configuration)
+		public PaymentProcessorController(RestaurantManagementContext context, IConfiguration configuration, IEmailService emailService)
 		{
 			_context = context;
 			_configuration = configuration;
+			_emailService = emailService;
 		}
 
 		[HttpPost("CreateOrderAndPay")]
@@ -34,9 +35,50 @@ namespace RestaurantQuangQuy.Controllers.Api
 			try
 			{
 				// Kiểm tra dữ liệu đầu vào
-				if (orderDto == null || orderDto.SoTienCoc <= 0 || string.IsNullOrEmpty(orderDto.PhuongThucThanhToan))
+				if (orderDto == null || orderDto.TongTien <= 0 || string.IsNullOrEmpty(orderDto.PhuongThucThanhToan))
 				{
 					return BadRequest(new { error = "Dữ liệu đơn hàng không hợp lệ" });
+				}
+
+				// Tính toán lại các giá trị để đảm bảo tính chính xác
+				decimal tongTien = orderDto.TongTien;
+				decimal tienGiam = 0;
+
+				// Kiểm tra và áp dụng khuyến mãi nếu có
+				if (!string.IsNullOrEmpty(orderDto.MaKhuyenMai))
+				{
+					var khuyenMai = await _context.Khuyenmais
+						.FirstOrDefaultAsync(km => km.MaKhuyenMai == orderDto.MaKhuyenMai);
+
+					if (khuyenMai != null && khuyenMai.TrangThai == "Hoạt động")
+					{
+						var today = DateOnly.FromDateTime(DateTime.Now);
+						if (khuyenMai.NgayBatDau <= today && khuyenMai.NgayKetThuc >= today)
+						{
+							if (tongTien >= khuyenMai.MucTienToiThieu)
+							{
+								tienGiam = tongTien * (khuyenMai.TyLeGiamGia ?? 0) / 100;
+							}
+						}
+					}
+				}
+
+				decimal tongTienSauGiam = tongTien - tienGiam;
+				decimal soTienCoc = orderDto.SoTienCoc > 0 ? orderDto.SoTienCoc : tongTienSauGiam * 0.3m;
+				decimal soTienConLai = tongTienSauGiam - soTienCoc;
+
+				// Validate amount cho VNPay
+				if (orderDto.PhuongThucThanhToan.ToLower() == "vnpay")
+				{
+					if (soTienCoc < 5000)
+					{
+						return BadRequest(new { error = "Số tiền cọc phải từ 5,000 VNĐ trở lên để thanh toán qua VNPay" });
+					}
+
+					if (soTienCoc >= 1000000000)
+					{
+						return BadRequest(new { error = "Số tiền cọc phải dưới 1 tỷ VNĐ" });
+					}
 				}
 
 				// Tạo mã hóa đơn
@@ -52,13 +94,10 @@ namespace RestaurantQuangQuy.Controllers.Api
 					ThoiGianDat = DateTime.Now,
 					ThoiGianThanhToan = orderDto.PhuongThucThanhToan == "vnpay" ? null : DateTime.Now,
 					MaKhuyenMai = orderDto.MaKhuyenMai,
-					TienGiam = (_context.Khuyenmais
-						.Where(km => km.MaKhuyenMai == orderDto.MaKhuyenMai)
-						.Select(km => km.TyLeGiamGia)
-						.FirstOrDefault()) * orderDto.TongTien,
-					TongTien = orderDto.TongTien,
-					SoTienCoc = orderDto.TongTien * 0.3m,
-					SoTienConLai = orderDto.TongTien - orderDto.TongTien * 0.3m,
+					TienGiam = tienGiam,
+					TongTien = tongTien,
+					SoTienCoc = soTienCoc,
+					SoTienConLai = soTienConLai,
 					PhuongThucThanhToan = orderDto.PhuongThucThanhToan,
 					TrangThaiThanhToan = orderDto.PhuongThucThanhToan == "vnpay" ? "pending" : "completed",
 					MaNhanVien = orderDto.MaNhanVien,
@@ -91,7 +130,7 @@ namespace RestaurantQuangQuy.Controllers.Api
 		{
 			try
 			{
-				var vnpParams = Request.Query.ToDictionary();
+				var vnpParams = Request.Query.ToDictionary(k => k.Key, v => v.Value.ToString());
 				var secureHash = vnpParams.GetValueOrDefault("vnp_SecureHash");
 				vnpParams.Remove("vnp_SecureHash");
 
@@ -102,7 +141,7 @@ namespace RestaurantQuangQuy.Controllers.Api
 
 				var responseCode = vnpParams["vnp_ResponseCode"];
 				var maHoaDon = vnpParams["vnp_TxnRef"];
-				var hoadon = _context.Hoadonthanhtoans.FirstOrDefault(h => h.MaHoaDon == maHoaDon);
+				var hoadon = await _context.Hoadonthanhtoans.FirstOrDefaultAsync(h => h.MaHoaDon == maHoaDon);
 
 				if (hoadon == null)
 				{
@@ -136,11 +175,6 @@ namespace RestaurantQuangQuy.Controllers.Api
 			}
 		}
 
-		private bool ValidateSignature(Dictionary<string, StringValues> vnpParams, StringValues secureHash)
-		{
-			throw new NotImplementedException();
-		}
-
 		[HttpGet("/payment/vnpay")]
 		public async Task<IActionResult> IpnUrl()
 		{
@@ -157,7 +191,7 @@ namespace RestaurantQuangQuy.Controllers.Api
 
 				var responseCode = vnpParams["vnp_ResponseCode"];
 				var maHoaDon = vnpParams["vnp_TxnRef"];
-				var hoadon = _context.Hoadonthanhtoans.FirstOrDefault(h => h.MaHoaDon == maHoaDon);
+				var hoadon = await _context.Hoadonthanhtoans.FirstOrDefaultAsync(h => h.MaHoaDon == maHoaDon);
 
 				if (hoadon == null)
 				{
@@ -202,37 +236,24 @@ namespace RestaurantQuangQuy.Controllers.Api
 					throw new Exception("Thiếu cấu hình VNPAY trong appsettings.json");
 				}
 
-				if (hoadon.SoTienCoc <= 0)
-				{
-					throw new Exception("Tổng tiền phải lớn hơn 0");
-				}
+				// Sử dụng VNPayLibrary như code cũ
+				var vnpay = new VNPayLibrary();
 
-				var vnpParams = new SortedDictionary<string, string>
-				{
-					{ "vnp_Version", _configuration["Vnpay:Version"] ?? "2.1.0" },
-					{ "vnp_Command", _configuration["Vnpay:Command"] ?? "pay" },
-					{ "vnp_TmnCode", vnpTmnCode },
-					{ "vnp_Amount", ((int)(hoadon.SoTienCoc * 100)).ToString() },
-					{ "vnp_CurrCode", _configuration["Vnpay:CurrCode"] ?? "VND" },
-					{ "vnp_TxnRef", hoadon.MaHoaDon },
-					{ "vnp_OrderInfo", $"Thanh toan hoa don {hoadon.MaHoaDon}" },
-					{ "vnp_OrderType", "billpayment" },
-					{ "vnp_Locale", _configuration["Vnpay:Locale"] ?? "vn" },
-					{ "vnp_ReturnUrl", vnpReturnUrl },
-					{ "vnp_IpAddr", vnpIpAddr },
-					{ "vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss") },
-					{ "vnp_ExpireDate", DateTime.Now.AddMinutes(15).ToString("yyyyMMddHHmmss") }
-				};
+				vnpay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"] ?? "2.1.0");
+				vnpay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"] ?? "pay");
+				vnpay.AddRequestData("vnp_TmnCode", vnpTmnCode);
+				vnpay.AddRequestData("vnp_Amount", ((long)((hoadon.SoTienCoc ?? 0) * 100)).ToString());
+				vnpay.AddRequestData("vnp_CurrCode", _configuration["Vnpay:CurrCode"] ?? "VND");
+				vnpay.AddRequestData("vnp_TxnRef", hoadon.MaHoaDon);
+				vnpay.AddRequestData("vnp_OrderInfo", $"Thanh toan hoa don {hoadon.MaHoaDon}");
+				vnpay.AddRequestData("vnp_OrderType", "billpayment");
+				vnpay.AddRequestData("vnp_Locale", _configuration["Vnpay:Locale"] ?? "vn");
+				vnpay.AddRequestData("vnp_ReturnUrl", vnpReturnUrl);
+				vnpay.AddRequestData("vnp_IpAddr", vnpIpAddr);
+				vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+				vnpay.AddRequestData("vnp_ExpireDate", DateTime.Now.AddMinutes(15).ToString("yyyyMMddHHmmss"));
 
-				Console.WriteLine("vnpParams: " + string.Join(", ", vnpParams.Select(kvp => $"{kvp.Key}={kvp.Value}")));
-				var queryString = string.Join("&", vnpParams.Select(kvp => $"{kvp.Key}={HttpUtility.UrlEncode(kvp.Value)}"));
-				Console.WriteLine($"QueryString before hash: {queryString}");
-
-				var secureHash = HmacSha512(vnpHashSecret, queryString);
-				Console.WriteLine($"Generated secureHash: {secureHash}");
-
-				queryString += $"&vnp_SecureHash={secureHash}";
-				var paymentUrl = $"{vnpUrl}?{queryString}";
+				var paymentUrl = vnpay.CreateRequestUrl(vnpUrl, vnpHashSecret);
 				Console.WriteLine($"Generated paymentUrl: {paymentUrl}");
 
 				return paymentUrl;
@@ -263,7 +284,7 @@ namespace RestaurantQuangQuy.Controllers.Api
 		{
 			try
 			{
-				var khachHang = _context.Khachhangs.FirstOrDefault(kh => kh.MaKhachHang == hoadon.MaKhachHang);
+				var khachHang = await _context.Khachhangs.FirstOrDefaultAsync(kh => kh.MaKhachHang == hoadon.MaKhachHang);
 				string toEmail = khachHang?.Email ?? "default@email.com";
 				string subject = "💰 Xác nhận thanh toán thành công - Nhà Hàng Quang Quý";
 
@@ -289,7 +310,20 @@ namespace RestaurantQuangQuy.Controllers.Api
                                         <td style='padding: 8px; font-weight: bold;'>💸 Tổng tiền:</td>
                                         <td style='padding: 8px;'>{hoadon.TongTien:N0} VNĐ</td>
                                     </tr>
+                                    {(hoadon.TienGiam > 0 ? $@"
                                     <tr style='background-color: #f9f9f9;'>
+                                        <td style='padding: 8px; font-weight: bold;'>🎁 Tiền giảm:</td>
+                                        <td style='padding: 8px;'>{hoadon.TienGiam:N0} VNĐ</td>
+                                    </tr>" : "")}
+                                    <tr>
+                                        <td style='padding: 8px; font-weight: bold;'>💰 Tiền cọc:</td>
+                                        <td style='padding: 8px;'>{hoadon.SoTienCoc:N0} VNĐ</td>
+                                    </tr>
+                                    <tr style='background-color: #f9f9f9;'>
+                                        <td style='padding: 8px; font-weight: bold;'>💵 Tiền còn lại:</td>
+                                        <td style='padding: 8px;'>{hoadon.SoTienConLai:N0} VNĐ</td>
+                                    </tr>
+                                    <tr>
                                         <td style='padding: 8px; font-weight: bold;'>📅 Ngày thanh toán:</td>
                                         <td style='padding: 8px;'>{DateTime.Now:HH:mm dd/MM/yyyy}</td>
                                     </tr>
@@ -307,7 +341,7 @@ namespace RestaurantQuangQuy.Controllers.Api
                         </div>
                     </div>";
 
-				// TODO: Inject IEmailService để gửi email thật
+				await _emailService.SendEmailAsync(toEmail, subject, body);
 				Console.WriteLine($"Email sent to {toEmail} for order {hoadon.MaHoaDon}");
 			}
 			catch (Exception ex)

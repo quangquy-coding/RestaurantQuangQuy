@@ -11,8 +11,8 @@ namespace RestaurantQuangQuy.Controllers
 	{
 		private readonly IVNPayService _vnPayService;
 		private readonly ILogger<PaymentController> _logger;
-		private readonly RestaurantManagementContext _dbContext; // Assumed database context
-		private readonly IEmailService _emailService;   // Assumed email service
+		private readonly RestaurantManagementContext _dbContext;
+		private readonly IEmailService _emailService;
 
 		public PaymentController(IVNPayService vnPayService, ILogger<PaymentController> logger, RestaurantManagementContext dbContext, IEmailService emailService)
 		{
@@ -30,6 +30,25 @@ namespace RestaurantQuangQuy.Controllers
 				if (!ModelState.IsValid)
 				{
 					return BadRequest(ModelState);
+				}
+
+				// Validate amount theo yêu cầu VNPay
+				if (request.SoTienCoc < 5000)
+				{
+					return BadRequest(new
+					{
+						success = false,
+						message = "Số tiền cọc phải từ 5,000 VNĐ trở lên để thanh toán qua VNPay"
+					});
+				}
+
+				if (request.SoTienCoc >= 1000000000)
+				{
+					return BadRequest(new
+					{
+						success = false,
+						message = "Số tiền cọc phải dưới 1 tỷ VNĐ"
+					});
 				}
 
 				var result = await _vnPayService.CreatePaymentUrlAsync(request, HttpContext);
@@ -53,21 +72,18 @@ namespace RestaurantQuangQuy.Controllers
 		{
 			try
 			{
+				_logger.LogInformation("Processing payment return with query: {Query}", Request.QueryString);
+
 				var result = await _vnPayService.ProcessPaymentReturnAsync(Request.Query);
 
-				// Log kết quả thanh toán
 				_logger.LogInformation($"Payment result for order {result.OrderId}: {result.Success} - {result.Message}");
 
-				// Xử lý kết quả thanh toán ở đây (cập nhật database, gửi email, etc.)
 				if (result.Success)
 				{
-					// Thanh toán thành công - cập nhật trạng thái đơn hàng
-
 					await ProcessSuccessfulPayment(result);
 				}
 				else
 				{
-					// Thanh toán thất bại - xử lý lỗi
 					await ProcessFailedPayment(result);
 				}
 
@@ -75,36 +91,13 @@ namespace RestaurantQuangQuy.Controllers
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Error processing payment return");
-				return StatusCode(500, new { message = "Có lỗi xảy ra khi xử lý kết quả thanh toán" });
-			}
-		}
-
-		[HttpPost("ipn")]
-		public async Task<IActionResult> IPN([FromBody] VNPayIpnRequest request)
-		{
-			try
-			{
-				var result = await _vnPayService.ProcessIpnAsync(request);
-
-				_logger.LogInformation($"IPN received for order {result.OrderId}: {result.Success} - {result.Message}");
-
-				if (result.Success)
+				_logger.LogError(ex, "Error processing payment return: {Message}", ex.Message);
+				return StatusCode(500, new
 				{
-					// IPN hợp lệ và thanh toán thành công
-					await ProcessSuccessfulPayment(result);
-					return Ok(new { RspCode = "00", Message = "Confirm Success" });
-				}
-				else
-				{
-					// IPN không hợp lệ hoặc thanh toán thất bại
-					return Ok(new { RspCode = "97", Message = "Checksum failed" });
-				}
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Error processing IPN");
-				return Ok(new { RspCode = "99", Message = "Unknown error" });
+					success = false,
+					message = "Có lỗi xảy ra khi xử lý kết quả thanh toán",
+					error = ex.Message
+				});
 			}
 		}
 
@@ -112,7 +105,9 @@ namespace RestaurantQuangQuy.Controllers
 		{
 			try
 			{
-				// Find the order in the database
+				_logger.LogInformation($"Processing successful payment for order: {result.OrderId}");
+
+				// Tìm đơn đặt món
 				var datMon = await _dbContext.Dondatmons.FindAsync(result.OrderId);
 				if (datMon == null)
 				{
@@ -120,13 +115,42 @@ namespace RestaurantQuangQuy.Controllers
 					return;
 				}
 
-				// Get customer details
+				// Lấy thông tin khách hàng
 				var khachHang = await _dbContext.Khachhangs
 					.FirstOrDefaultAsync(kh => kh.MaKhachHang == datMon.MaKhachHang);
+
 				string toEmail = khachHang?.Email ?? "default@email.com";
 				string customerName = khachHang?.TenKhachHang ?? "Quý khách";
 
-				// Create new Hoadonthanhtoan
+				// Tính toán số tiền
+				decimal tongTien = datMon.TongTien ?? 0;
+				decimal tienGiam = 0;
+				string maKhuyenMai = null;
+
+				// Kiểm tra khuyến mãi (nếu có)
+				var khuyenMaiList = await _dbContext.Khuyenmais
+					.Where(km => km.TrangThai == "Hoạt động")
+					.ToListAsync();
+
+				foreach (var km in khuyenMaiList)
+				{
+					var today = DateOnly.FromDateTime(DateTime.Now);
+					if (km.NgayBatDau <= today && km.NgayKetThuc >= today && tongTien >= km.MucTienToiThieu)
+					{
+						decimal giamGia = tongTien * (km.TyLeGiamGia ?? 0) / 100;
+						if (giamGia > tienGiam)
+						{
+							tienGiam = giamGia;
+							maKhuyenMai = km.MaKhuyenMai;
+						}
+					}
+				}
+
+				decimal tongTienSauGiam = tongTien - tienGiam;
+				decimal soTienCoc = result.Amount;
+				decimal soTienConLai = tongTienSauGiam - soTienCoc;
+
+				// Tạo hóa đơn
 				string maHoaDon = "HDMM" + Guid.NewGuid().ToString().Substring(0, 6);
 				var hoadon = new Hoadonthanhtoan
 				{
@@ -136,70 +160,94 @@ namespace RestaurantQuangQuy.Controllers
 					MaKhachHang = datMon.MaKhachHang,
 					ThoiGianDat = DateTime.Now,
 					ThoiGianThanhToan = result.PaymentDate,
-					MaKhuyenMai = "KM001",
-					TongTien = result.Amount, // Convert VNPay amount to VND
+					MaKhuyenMai = maKhuyenMai,
+					TongTien = tongTien,
+					TienGiam = tienGiam,
+					SoTienCoc = soTienCoc,
+					SoTienConLai = soTienConLai,
 					PhuongThucThanhToan = "VNPay",
 					TrangThaiThanhToan = "completed",
 					MaNhanVien = "NV001",
 					GhiChu = datMon.GhiChu
 				};
 
-				// Add to database
 				_dbContext.Hoadonthanhtoans.Add(hoadon);
 				await _dbContext.SaveChangesAsync();
 
-				// Prepare email content
-				string subject = "💰 Xác nhận thanh toán thành công - Nhà Hàng Quang Quý";
-				string body = $@"
-				<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;'>
-					<div style='max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); overflow: hidden;'>
-						<div style='background-color: #388e3c; color: white; padding: 16px; text-align: center;'>
-							<h2 style='margin: 0;'>Thanh toán thành công</h2>
-						</div>
-						<div style='padding: 24px;'>
-							<p>Xin chào <strong>{customerName}</strong>,</p>
-							<p>Chúng tôi xin xác nhận rằng bạn đã thanh toán thành công tại <strong>Nhà Hàng Quang Quý</strong>.</p>
+				_logger.LogInformation($"Created invoice {maHoaDon} for order {result.OrderId}");
 
-							<table style='width: 100%; margin-top: 16px; border-collapse: collapse;'>
-								<tr>
-									<td style='padding: 8px; font-weight: bold;'>🧾 Mã hóa đơn:</td>
-									<td style='padding: 8px;'>{maHoaDon}</td>
-								</tr>
-								<tr style='background-color: #f9f9f9;'>
-									<td style='padding: 8px; font-weight: bold;'>💳 Phương thức:</td>
-									<td style='padding: 8px;'>VNPay</td>
-								</tr>
-								<tr>
-									<td style='padding: 8px; font-weight: bold;'>💸 Tổng tiền:</td>
-									<td style='padding: 8px;'>{(result.Amount):N0} VNĐ</td>
-								</tr>
-								<tr style='background-color: #f9f9f9;'>
-									<td style='padding: 8px; font-weight: bold;'>📅 Ngày thanh toán:</td>
-									<td style='padding: 8px;'>{result.PaymentDate:HH:mm dd/MM/yyyy}</td>
-								</tr>
-								<tr>
-									<td style='padding: 8px; font-weight: bold;'>📝 Mã giao dịch:</td>
-									<td style='padding: 8px;'>{result.TransactionId ?? "Không có"}</td>
-								</tr>
-							</table>
+				// Gửi email xác nhận
+				try
+				{
+					string subject = "💰 Xác nhận đặt cọc thành công - Nhà Hàng Quang Quý";
+					string body = $@"
+                    <div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;'>
+                        <div style='max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); overflow: hidden;'>
+                            <div style='background-color: #388e3c; color: white; padding: 16px; text-align: center;'>
+                                <h2 style='margin: 0;'>Đặt cọc thành công</h2>
+                            </div>
+                            <div style='padding: 24px;'>
+                                <p>Xin chào <strong>{customerName}</strong>,</p>
+                                <p>Chúng tôi xin xác nhận rằng bạn đã đặt cọc thành công tại <strong>Nhà Hàng Quang Quý</strong>.</p>
+                                <table style='width: 100%; margin-top: 16px; border-collapse: collapse;'>
+                                    <tr>
+                                        <td style='padding: 8px; font-weight: bold;'>🧾 Mã hóa đơn:</td>
+                                        <td style='padding: 8px;'>{maHoaDon}</td>
+                                    </tr>
+                                    <tr style='background-color: #f9f9f9;'>
+                                        <td style='padding: 8px; font-weight: bold;'>💳 Phương thức:</td>
+                                        <td style='padding: 8px;'>VNPay</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='padding: 8px; font-weight: bold;'>💸 Tổng hóa đơn:</td>
+                                        <td style='padding: 8px;'>{tongTienSauGiam:N0} VNĐ</td>
+                                    </tr>
+                                    {(tienGiam > 0 ? $@"
+                                    <tr style='background-color: #f9f9f9;'>
+                                        <td style='padding: 8px; font-weight: bold;'>🎁 Tiền giảm:</td>
+                                        <td style='padding: 8px;'>{tienGiam:N0} VNĐ</td>
+                                    </tr>" : "")}
+                                    <tr>
+                                        <td style='padding: 8px; font-weight: bold;'>💰 Tiền cọc đã thanh toán:</td>
+                                        <td style='padding: 8px; color: #388e3c; font-weight: bold;'>{soTienCoc:N0} VNĐ</td>
+                                    </tr>
+                                    <tr style='background-color: #fff3cd;'>
+                                        <td style='padding: 8px; font-weight: bold;'>💵 Thanh toán tại nhà hàng:</td>
+                                        <td style='padding: 8px; color: #856404; font-weight: bold;'>{soTienConLai:N0} VNĐ</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='padding: 8px; font-weight: bold;'>📅 Ngày đặt cọc:</td>
+                                        <td style='padding: 8px;'>{result.PaymentDate:HH:mm dd/MM/yyyy}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='padding: 8px; font-weight: bold;'>📝 Mã giao dịch:</td>
+                                        <td style='padding: 8px;'>{result.TransactionId ?? "Không có"}</td>
+                                    </tr>
+                                </table>
+                                <div style='background-color: #e8f5e8; padding: 16px; border-radius: 8px; margin-top: 20px;'>
+                                    <p style='margin: 0; color: #2d5a2d; font-weight: bold;'>📍 Lưu ý quan trọng:</p>
+                                    <p style='margin: 8px 0 0 0; color: #2d5a2d;'>Bạn có thể thanh toán số tiền còn lại bằng tiền mặt khi đến nhà hàng. Vui lòng mang theo mã hóa đơn để xác nhận.</p>
+                                </div>
+                                <p style='margin-top: 24px;'>Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ của chúng tôi!</p>
+                                <p style='margin-top: 16px;'>Trân trọng,<br/><strong>Nhà Hàng Quang Quý</strong></p>
+                            </div>
+                            <div style='background-color: #eeeeee; padding: 12px; text-align: center; font-size: 12px; color: #555;'>
+                                © {DateTime.Now.Year} Nhà Hàng Quang Quý. Mọi quyền được bảo lưu.
+                            </div>
+                        </div>
+                    </div>";
 
-							<p style='margin-top: 24px;'>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
-							<p style='margin-top: 16px;'>Trân trọng,<br/><strong>Nhà Hàng Quang Quý</strong></p>
-						</div>
-						<div style='background-color: #eeeeee; padding: 12px; text-align: center; font-size: 12px; color: #555;'>
-							© {DateTime.Now.Year} Nhà Hàng Quang Quý. Mọi quyền được bảo lưu.
-						</div>
-					</div>
-				</div>";
+					await _emailService.SendEmailAsync(toEmail, subject, body);
+					_logger.LogInformation($"Email sent successfully to {toEmail}");
+				}
+				catch (Exception emailEx)
+				{
+					_logger.LogError(emailEx, "Failed to send confirmation email");
+				}
 
-				// Send confirmation email
-				await _emailService.SendEmailAsync(toEmail, subject, body);
-
-				// Update VNPayPaymentResult with new MaHoaDon
+				// Cập nhật result với mã hóa đơn mới
 				result.OrderId = maHoaDon;
-
-				// Log successful payment
-				_logger.LogInformation($"Processed successful payment for order {maHoaDon}, amount: {result.Amount}");
+				_logger.LogInformation($"Processed successful deposit payment for order {maHoaDon}, amount: {result.Amount}");
 			}
 			catch (Exception ex)
 			{
@@ -212,40 +260,49 @@ namespace RestaurantQuangQuy.Controllers
 		{
 			try
 			{
-				// Find the order in the database
-				var order = await _dbContext.Hoadonthanhtoans.FindAsync(result.OrderId);
-				if (order == null)
+				_logger.LogInformation($"Processing failed payment for order: {result.OrderId}");
+
+				// Tìm đơn đặt món để rollback
+				var datMon = await _dbContext.Dondatmons.FindAsync(result.OrderId);
+				if (datMon != null)
 				{
-					_logger.LogWarning($"Order {result.OrderId} not found in database");
-					return;
+					var khachHang = await _dbContext.Khachhangs
+						.FirstOrDefaultAsync(kh => kh.MaKhachHang == datMon.MaKhachHang);
+
+					// Gửi email thông báo thất bại
+					try
+					{
+						var emailSubject = "Thông báo đặt cọc thất bại";
+						var emailBody = $@"
+                            <div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;'>
+                                <div style='max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); overflow: hidden;'>
+                                    <div style='background-color: #d32f2f; color: white; padding: 16px; text-align: center;'>
+                                        <h2 style='margin: 0;'>Đặt cọc thất bại</h2>
+                                    </div>
+                                    <div style='padding: 24px;'>
+                                        <p>Kính gửi <strong>{khachHang?.TenKhachHang ?? "Quý khách"}</strong>,</p>
+                                        <p>Đặt cọc cho đơn hàng <strong>{result.OrderId}</strong> đã thất bại.</p>
+                                        <p><strong>Lý do:</strong> {result.Message}</p>
+                                        <p>Vui lòng thử lại hoặc liên hệ với chúng tôi để được hỗ trợ.</p>
+                                        <p style='margin-top: 16px;'>Trân trọng,<br/><strong>Nhà Hàng Quang Quý</strong></p>
+                                    </div>
+                                </div>
+                            </div>";
+
+						await _emailService.SendEmailAsync(khachHang?.Email ?? "default@email.com", emailSubject, emailBody);
+					}
+					catch (Exception emailEx)
+					{
+						_logger.LogError(emailEx, "Failed to send failure notification email");
+					}
 				}
 
-				// Update order status
-				order.TrangThaiThanhToan = "Failed";
-				order.ThoiGianThanhToan = result.PaymentDate;
-
-				// Save changes to database
-				await _dbContext.SaveChangesAsync();
-
-				// Send failure notification email to customer
-				var emailSubject = "Thông báo thanh toán thất bại";
-				var emailBody = $@"
-                    Kính gửi Quý khách,
-                    Thanh toán cho đơn hàng {result.OrderId} đã thất bại.
-                    Lý do: {result.Message}
-                    Vui lòng thử lại hoặc liên hệ với chúng tôi để được hỗ trợ.
-                    Trân trọng,
-                    Restaurant Quang Quy
-                ";
-				await _emailService.SendEmailAsync(order.MaKhachHangNavigation.Email, emailSubject, emailBody);
-
-				// Log failed payment
-				_logger.LogWarning($"Processing failed payment for order {result.OrderId}: {result.Message}");
+				_logger.LogWarning($"Processing failed deposit payment for order {result.OrderId}: {result.Message}");
 			}
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, $"Error processing failed payment for order {result.OrderId}");
-				throw; // Re-throw to handle in calling method if needed
+				throw;
 			}
 		}
 	}

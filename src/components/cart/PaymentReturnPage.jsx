@@ -1,9 +1,10 @@
+"use client";
+import React from "react";
 import axios from "axios";
 import { CheckCircle2, XCircle, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { orderService } from "../../api/orderApi";
-import React from "react";
 
 const PAYMENT_API_URL = "http://localhost:5080/api/Payment";
 
@@ -17,24 +18,25 @@ const PaymentReturnPage = () => {
   useEffect(() => {
     const processPaymentResult = async () => {
       try {
-        // Fetch payment result from backend
+        console.log("🔄 Processing payment return with URL:", location.search);
+
         const response = await axios.get(
           `${PAYMENT_API_URL}/payment-return${location.search}`
         );
         const result = response.data;
 
+        console.log("✅ Payment result received:", result);
         setPaymentResult(result);
 
         if (result.success) {
-          // Create Hoadonthanhtoan from pendingHoaDon
           const pendingHoaDon = JSON.parse(
-            localStorage.getItem("pendingHoaDon")
+            localStorage.getItem("pendingHoaDon") || "{}"
           );
-          if (!pendingHoaDon) {
-            throw new Error("Không tìm thấy thông tin hóa đơn tạm thời.");
+
+          if (!pendingHoaDon.MaDatMon) {
+            console.warn("⚠️ No pending order found in localStorage");
           }
 
-          // Log cart before update
           const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
           const checkoutItems = JSON.parse(
             localStorage.getItem("checkoutItems") || "[]"
@@ -42,8 +44,7 @@ const PaymentReturnPage = () => {
           console.log("🛒 Cart before update:", savedCart);
           console.log("✅ Checkout items to remove:", checkoutItems);
 
-          // Remove paid items from cart
-          if (checkoutItems.length) {
+          if (checkoutItems.length > 0) {
             const remainingItems = savedCart.filter(
               (item) => !checkoutItems.some((c) => c.id === item.id)
             );
@@ -62,10 +63,13 @@ const PaymentReturnPage = () => {
           localStorage.removeItem("pendingHoaDon");
           localStorage.removeItem("checkoutItems");
           localStorage.removeItem("customerInfo");
+          localStorage.removeItem("maDatBan");
+
+          console.log("🧹 Cleared localStorage");
         } else {
-          // Rollback DatMon if payment fails
+          // Rollback order if payment failed
           const pendingHoaDon = JSON.parse(
-            localStorage.getItem("pendingHoaDon")
+            localStorage.getItem("pendingHoaDon") || "{}"
           );
           if (pendingHoaDon && pendingHoaDon.MaDatMon) {
             try {
@@ -78,12 +82,21 @@ const PaymentReturnPage = () => {
             }
             localStorage.removeItem("pendingHoaDon");
           }
-          setError(result.message || "Thanh toán thất bại. Vui lòng thử lại.");
+          setError(result.message || "Đặt cọc thất bại. Vui lòng thử lại.");
         }
       } catch (err) {
         console.error("❌ Lỗi xử lý kết quả thanh toán:", err);
+
+        // Log chi tiết lỗi
+        if (err.response) {
+          console.error("Response data:", err.response.data);
+          console.error("Response status:", err.response.status);
+        }
+
         setError(
-          err.message ||
+          err.response?.data?.message ||
+            err.response?.data?.error ||
+            err.message ||
             "Đã xảy ra lỗi khi xử lý kết quả thanh toán. Vui lòng thử lại."
         );
       } finally {
@@ -99,7 +112,7 @@ const PaymentReturnPage = () => {
       <div className="min-h-screen bg-red-50 p-4 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
           <Clock className="animate-spin mx-auto h-16 w-16 text-blue-500 mb-4" />
-          <p className="text-gray-600">Đang xử lý kết quả thanh toán...</p>
+          <p className="text-gray-600">Đang xử lý kết quả đặt cọc...</p>
         </div>
       </div>
     );
@@ -110,7 +123,7 @@ const PaymentReturnPage = () => {
       <div className="min-h-screen bg-red-50 p-4 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
           <XCircle className="mx-auto h-16 w-16 text-red-500 mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Thanh toán thất bại</h1>
+          <h1 className="text-2xl font-bold mb-2">Đặt cọc thất bại</h1>
           <p className="text-gray-600 mb-4">{error}</p>
           {paymentResult && (
             <div className="bg-gray-50 p-4 rounded-md mb-6 text-left">
@@ -146,20 +159,21 @@ const PaymentReturnPage = () => {
 
   if (paymentResult?.success) {
     return (
-      <div className="min-h-screen bg-red-50 p-4 flex items-center justify-center">
+      <div className="min-h-screen bg-green-50 p-4 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
           <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Thanh toán thành công!</h1>
+          <h1 className="text-2xl font-bold mb-2">Đặt cọc thành công!</h1>
           <p className="text-gray-600 mb-4">
-            Cảm ơn bạn đã đặt món tại Restaurant Quang Quý
+            Cảm ơn bạn đã đặt cọc tại Nhà Hàng Quang Quý
           </p>
-          <div className="bg-gray-50 p-4 rounded-md mb-6 text-left">
+
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-md mb-6 text-left">
             <p className="text-sm">
               <strong>Mã hóa đơn:</strong> {paymentResult.orderId}
             </p>
             <p className="text-sm">
-              <strong>Số tiền:</strong>{" "}
-              {paymentResult.amount.toLocaleString("vi-VN")} ₫
+              <strong>Số tiền cọc:</strong>{" "}
+              {paymentResult.amount?.toLocaleString("vi-VN")} ₫
             </p>
             <p className="text-sm">
               <strong>Mã giao dịch:</strong>{" "}
@@ -183,9 +197,21 @@ const PaymentReturnPage = () => {
                 : "N/A"}
             </p>
             <p className="text-sm">
-              <strong>Trạng thái:</strong> Thành công
+              <strong>Trạng thái:</strong>{" "}
+              <span className="text-green-600 font-semibold">
+                Đặt cọc thành công
+              </span>
             </p>
           </div>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+            <p className="text-amber-800 text-sm">
+              <strong>💡 Lưu ý:</strong> Bạn có thể thanh toán số tiền còn lại
+              bằng tiền mặt khi đến nhà hàng. Vui lòng mang theo mã hóa đơn để
+              xác nhận.
+            </p>
+          </div>
+
           <button
             onClick={() => navigate("/")}
             className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors w-full"
