@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Web;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
+using RestaurantQuangQuy.Migrations;
 
 
 
@@ -33,7 +34,7 @@ namespace RestaurantQuangQuy.Controllers.Api
 			try
 			{
 				// Kiểm tra dữ liệu đầu vào
-				if (orderDto == null || orderDto.TongTien <= 0 || string.IsNullOrEmpty(orderDto.PhuongThucThanhToan))
+				if (orderDto == null || orderDto.SoTienCoc <= 0 || string.IsNullOrEmpty(orderDto.PhuongThucThanhToan))
 				{
 					return BadRequest(new { error = "Dữ liệu đơn hàng không hợp lệ" });
 				}
@@ -51,7 +52,13 @@ namespace RestaurantQuangQuy.Controllers.Api
 					ThoiGianDat = DateTime.Now,
 					ThoiGianThanhToan = orderDto.PhuongThucThanhToan == "vnpay" ? null : DateTime.Now,
 					MaKhuyenMai = orderDto.MaKhuyenMai,
+					TienGiam = (_context.Khuyenmais
+						.Where(km => km.MaKhuyenMai == orderDto.MaKhuyenMai)
+						.Select(km => km.TyLeGiamGia)
+						.FirstOrDefault()) * orderDto.TongTien,
 					TongTien = orderDto.TongTien,
+					SoTienCoc = orderDto.TongTien * 0.3m,
+					SoTienConLai = orderDto.TongTien - orderDto.TongTien * 0.3m,
 					PhuongThucThanhToan = orderDto.PhuongThucThanhToan,
 					TrangThaiThanhToan = orderDto.PhuongThucThanhToan == "vnpay" ? "pending" : "completed",
 					MaNhanVien = orderDto.MaNhanVien,
@@ -195,7 +202,7 @@ namespace RestaurantQuangQuy.Controllers.Api
 					throw new Exception("Thiếu cấu hình VNPAY trong appsettings.json");
 				}
 
-				if (hoadon.TongTien <= 0)
+				if (hoadon.SoTienCoc <= 0)
 				{
 					throw new Exception("Tổng tiền phải lớn hơn 0");
 				}
@@ -205,7 +212,7 @@ namespace RestaurantQuangQuy.Controllers.Api
 					{ "vnp_Version", _configuration["Vnpay:Version"] ?? "2.1.0" },
 					{ "vnp_Command", _configuration["Vnpay:Command"] ?? "pay" },
 					{ "vnp_TmnCode", vnpTmnCode },
-					{ "vnp_Amount", ((int)(hoadon.TongTien * 100)).ToString() },
+					{ "vnp_Amount", ((int)(hoadon.SoTienCoc * 100)).ToString() },
 					{ "vnp_CurrCode", _configuration["Vnpay:CurrCode"] ?? "VND" },
 					{ "vnp_TxnRef", hoadon.MaHoaDon },
 					{ "vnp_OrderInfo", $"Thanh toan hoa don {hoadon.MaHoaDon}" },
@@ -317,6 +324,9 @@ namespace RestaurantQuangQuy.Controllers.Api
 		public string MaKhachHang { get; set; }
 		public string MaKhuyenMai { get; set; }
 		public decimal TongTien { get; set; }
+		public decimal SoTienCoc { get; set; }
+		public decimal SoTienConLai { get; set; }
+		public decimal TienGiam { get; set; }
 		public string PhuongThucThanhToan { get; set; }
 		public string MaNhanVien { get; set; }
 		public string GhiChu { get; set; }

@@ -67,19 +67,30 @@ const AdvancedReservationPage = () => {
   // Generate available times based on business logic
   const generateAvailableTimes = (date, partySize) => {
     const times = [];
-    const startHour = 10;
-    const endHour = 21;
     const interval = 30;
+    let startHour, endHour;
 
-    const dayOfWeek = date.getDay();
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const dayOfWeek = date.getDay(); // 0: Sunday, 1: Monday, ..., 6: Saturday
+    const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5; // Monday to Friday
+    const isSaturday = dayOfWeek === 6;
+    const isSunday = dayOfWeek === 0;
 
-    for (let hour = startHour; hour <= endHour; hour++) {
+    // Set operating hours based on day
+    if (isWeekday) {
+      startHour = 10; // 10:00
+      endHour = 22; // 22:00
+    } else if (isSaturday) {
+      startHour = 9; // 09:00
+      endHour = 23; // 23:00
+    } else if (isSunday) {
+      startHour = 9; // 09:00
+      endHour = 22; // 22:00
+    }
+
+    for (let hour = startHour; hour < endHour; hour++) {
       for (let minute = 0; minute < 60; minute += interval) {
         // Skip lunch break (12:00-13:00) on weekdays
-        if (!isWeekend && hour === 12) continue;
-
-        // Không random nữa, chỉ kiểm tra điều kiện logic
+        if (isWeekday && hour === 12) continue;
         times.push(
           `${hour.toString().padStart(2, "0")}:${minute
             .toString()
@@ -87,7 +98,10 @@ const AdvancedReservationPage = () => {
         );
       }
     }
-
+    // Add the last time slot if it matches the end hour
+    if (endHour === Math.floor(endHour)) {
+      times.push(`${endHour.toString().padStart(2, "0")}:00`);
+    }
     return times;
   };
 

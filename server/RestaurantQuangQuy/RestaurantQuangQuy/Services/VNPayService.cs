@@ -39,7 +39,7 @@ namespace RestaurantQuangQuy.Services
 				vnpay.AddRequestData("vnp_Version", _configuration["Vnpay:Version"]);
 				vnpay.AddRequestData("vnp_Command", _configuration["Vnpay:Command"]);
 				vnpay.AddRequestData("vnp_TmnCode", _vnpTmnCode);
-				vnpay.AddRequestData("vnp_Amount", ((long)(request.Amount * 100)).ToString());
+				vnpay.AddRequestData("vnp_Amount", ((long)(request.SoTienCoc * 100)).ToString());
 				vnpay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
 				vnpay.AddRequestData("vnp_CurrCode", _configuration["Vnpay:CurrCode"]);
 				vnpay.AddRequestData("vnp_IpAddr", clientIp);

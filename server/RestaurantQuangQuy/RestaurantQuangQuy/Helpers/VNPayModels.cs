@@ -6,7 +6,10 @@ namespace RestaurantQuangQuy.Models
 	{
 		[Required]
 		public decimal Amount { get; set; }
-
+		[Required]
+		public decimal SoTienCoc { get; set; }
+		public decimal SoTienConLai { get; set; }
+		public decimal TienGiam { get; set; }
 		[Required]
 		public string OrderDescription { get; set; }
 

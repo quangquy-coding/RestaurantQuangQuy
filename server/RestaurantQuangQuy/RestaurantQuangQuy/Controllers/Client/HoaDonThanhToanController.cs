@@ -34,6 +34,9 @@ namespace RestaurantQuangQuy.Controllers.Client
                         h.ThoiGianDat,
                         h.ThoiGianThanhToan,
                         h.MaKhuyenMai,
+                        h.SoTienConLai,
+                        h.TienGiam,
+                        h.SoTienCoc,
                         h.TongTien,
                         h.PhuongThucThanhToan,
                         h.TrangThaiThanhToan,
@@ -74,7 +77,10 @@ namespace RestaurantQuangQuy.Controllers.Client
                         h.ThoiGianThanhToan,
                         h.MaKhuyenMai,
                         h.TongTien,
-                        h.PhuongThucThanhToan,
+						h.SoTienCoc,
+						h.SoTienConLai,
+						h.TienGiam,
+						h.PhuongThucThanhToan,
                         h.TrangThaiThanhToan,
                         h.MaNhanVien,
                         h.GhiChu
@@ -117,7 +123,10 @@ namespace RestaurantQuangQuy.Controllers.Client
 					ThoiGianThanhToan = DateTime.Now,
 					MaKhuyenMai = hoadondto.MaKhuyenMai,
                     TongTien = hoadondto.TongTien,
-                    PhuongThucThanhToan = hoadondto.PhuongThucThanhToan,
+					SoTienCoc = hoadondto.SoTienCoc,
+					SoTienConLai = hoadondto.SoTienConLai,
+					TienGiam = hoadondto.TienGiam,
+					PhuongThucThanhToan = hoadondto.PhuongThucThanhToan,
                     TrangThaiThanhToan = hoadondto.TrangThaiThanhToan,
                     MaNhanVien = hoadondto.MaNhanVien,
                     GhiChu = hoadondto.GhiChu
@@ -154,6 +163,7 @@ namespace RestaurantQuangQuy.Controllers.Client
                             <td style='padding: 8px; font-weight: bold;'>💸 Tổng tiền:</td>
                             <td style='padding: 8px;'>{hoadondto.TongTien:N0} VNĐ</td>
                         </tr>
+        
                         <tr style='background-color: #f9f9f9;'>
                             <td style='padding: 8px; font-weight: bold;'>📅 Ngày thanh toán:</td>
                             <td style='padding: 8px;'>{DateTime.Now:HH:mm dd/MM/yyyy}</td>
@@ -218,7 +228,10 @@ namespace RestaurantQuangQuy.Controllers.Client
 				hoadon.ThoiGianThanhToan = DateTime.Now;
 				hoadon.MaKhuyenMai = hoadondto.MaKhuyenMai;
                 hoadon.TongTien = hoadondto.TongTien;
-                hoadon.PhuongThucThanhToan = hoadondto.PhuongThucThanhToan;
+				hoadon.SoTienCoc = hoadondto.SoTienCoc;
+				hoadon.SoTienConLai = hoadondto.SoTienConLai;
+				hoadon.TienGiam = hoadondto.TienGiam;
+				hoadon.PhuongThucThanhToan = hoadondto.PhuongThucThanhToan;
                 hoadon.TrangThaiThanhToan = hoadondto.TrangThaiThanhToan;
                 hoadon.MaNhanVien = hoadondto.MaNhanVien;
                 hoadon.GhiChu = hoadondto.GhiChu;

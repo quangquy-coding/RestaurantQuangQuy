@@ -7,8 +7,7 @@ import {
   Tag,
   XCircle,
 } from "lucide-react";
-import React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { orderService } from "../../api/orderApi";
 import { toast } from "react-hot-toast";
@@ -34,6 +33,8 @@ const CheckoutPage = () => {
   const [total, setTotal] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [finalTotal, setFinalTotal] = useState(0);
+  const [deposit, setDeposit] = useState(0); // New state for SoTienCoc
+  const [remainingAmount, setRemainingAmount] = useState(0); // New state for SoTienConLai
   const [paymentMethod, setPaymentMethod] = useState("Tiền mặt");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null);
@@ -152,6 +153,7 @@ const CheckoutPage = () => {
         setSelectedPromo(promo);
         setDiscount(result.tienGiam);
         setFinalTotal(result.tongTienSauGiam);
+        setRemainingAmount(result.tongTienSauGiam); // Update SoTienConLai
         toast.success(
           `Đã áp dụng mã ${
             promo.maKhuyenMai
@@ -171,6 +173,7 @@ const CheckoutPage = () => {
     setSelectedPromo(null);
     setDiscount(0);
     setFinalTotal(total);
+    setRemainingAmount(total); // Reset SoTienConLai
     toast.success("Đã xóa mã khuyến mãi.");
   };
 
@@ -185,7 +188,9 @@ const CheckoutPage = () => {
         0
       );
       setTotal(sum);
-      setFinalTotal(sum); // Initialize final total
+      setFinalTotal(sum);
+      setRemainingAmount(sum); // Initialize SoTienConLai
+      setDeposit(sum * 0.3); // Assume 30% deposit as default, adjust as needed
     } else {
       navigate("/cart");
     }
@@ -247,6 +252,9 @@ const CheckoutPage = () => {
           ThoiGianThanhToan: new Date().toISOString(),
           MaKhuyenMai: selectedPromo?.maKhuyenMai || null,
           TongTien: finalTotal,
+          SoTienCoc: deposit,
+          SoTienConLai: remainingAmount,
+          TienGiam: discount,
           PhuongThucThanhToan: "Tiền mặt",
           TrangThaiThanhToan: "processing",
           MaNhanVien: "NV001",
@@ -276,6 +284,9 @@ const CheckoutPage = () => {
         const vnpayRequest = {
           OrderId: maDatMon,
           Amount: finalTotal,
+          SoTienCoc: deposit,
+          SoTienConLai: remainingAmount,
+          TienGiam: discount,
           OrderDescription: `Thanh toán đơn hàng ${maDatMon} tại Restaurant Quang Quý`,
           CustomerName: customerInfo.name,
           CustomerEmail: customerInfo.email,
@@ -291,6 +302,9 @@ const CheckoutPage = () => {
               MaBanAn: maBanAn,
               MaKhachHang: customerInfo.maKhachHang,
               TongTien: finalTotal,
+              SoTienCoc: deposit,
+              SoTienConLai: remainingAmount,
+              TienGiam: discount,
               MaKhuyenMai: selectedPromo?.maKhuyenMai || null,
               GhiChu: customerInfo.note,
             })
@@ -327,13 +341,13 @@ const CheckoutPage = () => {
 
   if (redirecting) {
     return (
-      <div className="min-h-screen bg-red-50 p-4 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
-          <Clock className="animate-spin mx-auto h-16 w-16 text-blue-500 mb-4" />
-          <h1 className="text-2xl font-bold mb-2">
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+          <Clock className="animate-spin mx-auto h-16 w-16 text-blue-600 mb-4" />
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">
             Đang chuyển hướng đến VNPay...
           </h1>
-          <p className="text-gray-600 mb-4">
+          <p className="text-gray-600">
             Vui lòng chờ trong giây lát để hoàn tất thanh toán.
           </p>
         </div>
@@ -343,22 +357,26 @@ const CheckoutPage = () => {
 
   if (orderComplete) {
     return (
-      <div className="min-h-screen bg-red-50 p-4 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
           <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Đặt món thành công!</h1>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            Đặt món thành công!
+          </h1>
           <p className="text-gray-600 mb-4">
-            Cảm ơn bạn đã đặt món tại nhà hàng chúng tôi
+            Cảm ơn bạn đã đặt món tại nhà hàng chúng tôi.
           </p>
-          <div className="bg-gray-50 p-4 rounded-md mb-6">
-            <p className="font-medium">Mã đơn hàng: {orderId}</p>
+          <div className="bg-gray-50 p-4 rounded-lg mb-6">
+            <p className="font-semibold text-gray-800">
+              Mã đơn hàng: {orderId}
+            </p>
             <p className="text-sm text-gray-500">
-              Vui lòng lưu lại mã đơn hàng để tra cứu
+              Vui lòng lưu lại mã đơn hàng để tra cứu.
             </p>
           </div>
           <button
             onClick={() => navigate("/")}
-            className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors w-full"
+            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Quay về trang chủ
           </button>
@@ -369,69 +387,77 @@ const CheckoutPage = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-gray-600">
-          Không có món nào để thanh toán. Quay lại{" "}
-          <Link to="/cart" className="text-blue-600">
-            giỏ hàng
-          </Link>
-          .
-        </p>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-gray-600 mb-4">
+            Không có món nào để thanh toán. Quay lại{" "}
+            <Link to="/cart" className="text-blue-600 hover:underline">
+              giỏ hàng
+            </Link>
+            .
+          </p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-red-600">{error}</p>
-        <button
-          onClick={() => navigate("/checkout")}
-          className="mt-4 bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"
-        >
-          Thử lại
-        </button>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button
+            onClick={() => navigate("/checkout")}
+            className="bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Thử lại
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-red-50 p-4">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Thanh toán</h1>
+    <div className="min-h-screen bg-gray-100 py-8 px-4">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-800 mb-8">Thanh toán</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Order Summary */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="p-4 border-b">
-              <h2 className="font-semibold">Tóm tắt đơn hàng</h2>
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">
+                Tóm tắt đơn hàng
+              </h2>
             </div>
-            <ul className="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+            <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
               {cartItems.map((item) => (
-                <li key={item.id} className="p-4 flex items-center">
-                  <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+                <li key={item.id} className="p-6 flex items-center">
+                  <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200">
                     <img
-                      src={item.image || "/placeholder.svg?height=48&width=48"}
+                      src={item.image || "/placeholder.svg?height=64&width=64"}
                       alt={item.name}
                       className="h-full w-full object-cover object-center"
                     />
                   </div>
                   <div className="ml-4 flex-1">
-                    <h3 className="font-medium text-sm">{item.name}</h3>
-                    <p className="text-gray-500 text-xs">
+                    <h3 className="text-lg font-medium text-gray-800">
+                      {item.name}
+                    </h3>
+                    <p className="text-gray-500 text-sm">
                       {item.quantity} x {item.price.toLocaleString("vi-VN")} ₫
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">
+                    <p className="font-medium text-gray-800">
                       {(item.price * item.quantity).toLocaleString("vi-VN")} ₫
                     </p>
                   </div>
                 </li>
               ))}
             </ul>
-            <div className="p-4 bg-gray-50">
-              <div className="flex justify-between mb-2">
+            <div className="p-6 bg-gray-50">
+              <div className="flex justify-between mb-2 text-gray-700">
                 <span>Tạm tính:</span>
                 <span>{total.toLocaleString("vi-VN")} ₫</span>
               </div>
@@ -441,7 +467,15 @@ const CheckoutPage = () => {
                   <span>-{discount.toLocaleString("vi-VN")} ₫</span>
                 </div>
               )}
-              <div className="flex justify-between font-bold text-lg">
+              <div className="flex justify-between mb-2 text-gray-700">
+                <span>Số tiền cọc (30%):</span>
+                <span>{deposit.toLocaleString("vi-VN")} ₫</span>
+              </div>
+              <div className="flex justify-between mb-2 text-gray-700">
+                <span>Số tiền còn lại:</span>
+                <span>{remainingAmount.toLocaleString("vi-VN")} ₫</span>
+              </div>
+              <div className="flex justify-between font-bold text-xl text-gray-800">
                 <span>Tổng cộng:</span>
                 <span>{finalTotal.toLocaleString("vi-VN")} ₫</span>
               </div>
@@ -449,171 +483,175 @@ const CheckoutPage = () => {
           </div>
 
           {/* Payment Form */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="p-4 border-b">
-              <h2 className="font-semibold">Thông tin thanh toán</h2>
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">
+                Thông tin thanh toán
+              </h2>
             </div>
-            <form onSubmit={handleSubmit} className="p-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Họ tên
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={customerInfo.name}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-500"
-                    required
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Số điện thoại
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={customerInfo.phone}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    required
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={customerInfo.email}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    required={paymentMethod !== "Tiền mặt"}
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mã bàn đặt
-                  </label>
-                  <input
-                    type="text"
-                    name="tableNumber"
-                    value={customerInfo.tableNumber}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    required
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mã khuyến mãi
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={selectedPromo?.maKhuyenMai || ""}
-                      readOnly
-                      placeholder="Chọn mã khuyến mãi"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
-                    />
-                    {selectedPromo ? (
-                      <button
-                        type="button"
-                        onClick={removePromotion}
-                        className="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-                      >
-                        Xóa
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setShowPromoModal(true)}
-                        className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                      >
-                        Chọn
-                      </button>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ghi chú
-                  </label>
-                  <textarea
-                    name="note"
-                    value={customerInfo.note}
-                    onChange={handleInputChange}
-                    rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  ></textarea>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phương thức thanh toán
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <input
-                        type="radio"
-                        id="Tiền mặt"
-                        name="paymentMethod"
-                        value="Tiền mặt"
-                        checked={paymentMethod === "Tiền mặt"}
-                        onChange={() => setPaymentMethod("Tiền mặt")}
-                        className="sr-only peer"
-                      />
-                      <label
-                        htmlFor="Tiền mặt"
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-gray-200 p-4 cursor-pointer hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50"
-                      >
-                        <BanknoteIcon className="mb-2 h-6 w-6 text-gray-700 peer-checked:text-blue-600" />
-                        <span className="text-sm">Tiền mặt</span>
-                      </label>
-                    </div>
-                    <div>
-                      <input
-                        type="radio"
-                        id="vnpay"
-                        name="paymentMethod"
-                        value="VNPay"
-                        checked={paymentMethod === "VNPay"}
-                        onChange={() => setPaymentMethod("VNPay")}
-                        className="sr-only peer"
-                      />
-                      <label
-                        htmlFor="vnpay"
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-gray-200 p-4 cursor-pointer hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50"
-                      >
-                        <CreditCard className="mb-2 h-6 w-6 text-gray-700 peer-checked:text-blue-600" />
-                        <span className="text-sm">VNPay</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading || userLoading || redirecting}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors w-full flex items-center justify-center disabled:bg-gray-400"
-                >
-                  {loading || redirecting ? (
-                    <>
-                      <Clock className="animate-spin mr-2 h-5 w-5" />
-                      Đang xử lý...
-                    </>
-                  ) : paymentMethod === "Tiền mặt" ? (
-                    "Hoàn tất đặt món"
-                  ) : (
-                    "Tiến hành thanh toán VNPay"
-                  )}
-                </button>
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Họ tên
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={customerInfo.name}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  readOnly
+                />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Số điện thoại
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={customerInfo.phone}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={customerInfo.email}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required={paymentMethod !== "Tiền mặt"}
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Mã bàn đặt
+                </label>
+                <input
+                  type="text"
+                  name="tableNumber"
+                  value={customerInfo.tableNumber}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Mã khuyến mãi
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={selectedPromo?.maKhuyenMai || ""}
+                    readOnly
+                    placeholder="Chọn mã khuyến mãi"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
+                  />
+                  {selectedPromo ? (
+                    <button
+                      type="button"
+                      onClick={removePromotion}
+                      className="px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Xóa
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowPromoModal(true)}
+                      className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Chọn
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ghi chú
+                </label>
+                <textarea
+                  name="note"
+                  value={customerInfo.note}
+                  onChange={handleInputChange}
+                  rows="4"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                ></textarea>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Phương thức thanh toán
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <input
+                      type="radio"
+                      id="Tiền mặt"
+                      name="paymentMethod"
+                      value="Tiền mặt"
+                      checked={paymentMethod === "Tiền mặt"}
+                      onChange={() => setPaymentMethod("Tiền mặt")}
+                      className="sr-only peer"
+                    />
+                    <label
+                      htmlFor="Tiền mặt"
+                      className="flex flex-col items-center justify-center rounded-lg border-2 border-gray-200 p-4 cursor-pointer hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-colors"
+                    >
+                      <BanknoteIcon className="mb-2 h-6 w-6 text-gray-600 peer-checked:text-blue-600" />
+                      <span className="text-sm font-medium text-gray-700">
+                        Tiền mặt
+                      </span>
+                    </label>
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      id="vnpay"
+                      name="paymentMethod"
+                      value="VNPay"
+                      checked={paymentMethod === "VNPay"}
+                      onChange={() => setPaymentMethod("VNPay")}
+                      className="sr-only peer"
+                    />
+                    <label
+                      htmlFor="vnpay"
+                      className="flex flex-col items-center justify-center rounded-lg border-2 border-gray-200 p-4 cursor-pointer hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-colors"
+                    >
+                      <CreditCard className="mb-2 h-6 w-6 text-gray-600 peer-checked:text-blue-600" />
+                      <span className="text-sm font-medium text-gray-700">
+                        VNPay
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={loading || userLoading || redirecting}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {loading || redirecting ? (
+                  <>
+                    <Clock className="animate-spin mr-2 h-5 w-5" />
+                    Đang xử lý...
+                  </>
+                ) : paymentMethod === "Tiền mặt" ? (
+                  "Hoàn tất đặt món"
+                ) : (
+                  "Tiến hành thanh toán VNPay"
+                )}
+              </button>
             </form>
           </div>
         </div>
@@ -621,9 +659,9 @@ const CheckoutPage = () => {
         {/* Promotions Modal */}
         {showPromoModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-xl font-semibold text-gray-800">
                   Chọn Mã Khuyến Mãi
                 </h3>
                 <button
@@ -634,21 +672,23 @@ const CheckoutPage = () => {
                 </button>
               </div>
               {promotions.length === 0 ? (
-                <p className="text-gray-600 text-center">
+                <p className="text-gray-600 text-center py-4">
                   Không có mã khuyến mãi nào đang hoạt động.
                 </p>
               ) : (
-                <ul className="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                <ul className="divide-y divide-gray-200 max-h-80 overflow-y-auto">
                   {promotions.map((promo) => (
                     <li
                       key={promo.maKhuyenMai}
-                      className="p-4 hover:bg-gray-50 cursor-pointer"
+                      className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
                       onClick={() => applyPromotion(promo)}
                     >
                       <div className="flex items-center">
-                        <Tag className="h-5 w-5 text-blue-600 mr-2" />
+                        <Tag className="h-5 w-5 text-blue-600 mr-3" />
                         <div>
-                          <h4 className="font-medium">{promo.tenKhuyenMai}</h4>
+                          <h4 className="font-medium text-gray-800">
+                            {promo.tenKhuyenMai}
+                          </h4>
                           <p className="text-sm text-gray-600">
                             Mã: {promo.maKhuyenMai} | Giảm: {promo.tyLeGiamGia}%
                             | Tối thiểu:{" "}
