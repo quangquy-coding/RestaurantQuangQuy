@@ -99,7 +99,7 @@ namespace RestaurantQuangQuy.Controllers.Api
 					SoTienCoc = soTienCoc,
 					SoTienConLai = soTienConLai,
 					PhuongThucThanhToan = orderDto.PhuongThucThanhToan,
-					TrangThaiThanhToan = orderDto.PhuongThucThanhToan == "vnpay" ? "pending" : "completed",
+					TrangThaiThanhToan = orderDto.PhuongThucThanhToan == "vnpay" ? "pending" : "deposit",
 					MaNhanVien = orderDto.MaNhanVien,
 					GhiChu = orderDto.GhiChu
 				};
@@ -150,7 +150,7 @@ namespace RestaurantQuangQuy.Controllers.Api
 
 				if (responseCode == "00")
 				{
-					hoadon.TrangThaiThanhToan = "completed";
+					hoadon.TrangThaiThanhToan = "deposit";
 					hoadon.ThoiGianThanhToan = DateTime.Now;
 					_context.Hoadonthanhtoans.Update(hoadon);
 					await _context.SaveChangesAsync();
@@ -200,7 +200,7 @@ namespace RestaurantQuangQuy.Controllers.Api
 
 				if (responseCode == "00")
 				{
-					hoadon.TrangThaiThanhToan = "completed";
+					hoadon.TrangThaiThanhToan = "deposit";
 					hoadon.ThoiGianThanhToan = DateTime.Now;
 					_context.Hoadonthanhtoans.Update(hoadon);
 					await _context.SaveChangesAsync();

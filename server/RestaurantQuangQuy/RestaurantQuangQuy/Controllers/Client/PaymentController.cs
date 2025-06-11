@@ -166,7 +166,7 @@ namespace RestaurantQuangQuy.Controllers
 					SoTienCoc = soTienCoc,
 					SoTienConLai = soTienConLai,
 					PhuongThucThanhToan = "VNPay",
-					TrangThaiThanhToan = "completed",
+					TrangThaiThanhToan = "deposit",
 					MaNhanVien = "NV001",
 					GhiChu = datMon.GhiChu
 				};
