@@ -23,7 +23,7 @@ const AdvancedSearchPage = () => {
   const [priceRange, setPriceRange] = useState([0, 200000]);
   const [maxPrepTime, setMaxPrepTime] = useState(60);
   const [sortBy, setSortBy] = useState("name");
-
+  const role = localStorage.getItem("role");
   // Fetch initial data
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -105,6 +105,19 @@ const AdvancedSearchPage = () => {
 
   // Grouped functions
   const addToCart = (dish) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Bạn cần đăng nhập để thêm món vào giỏ hàng!", {
+        duration: 2000,
+        position: "top-right",
+        style: {
+          backgroundColor: "#f44336",
+          color: "#fff",
+          fontSize: "16px",
+        },
+      });
+      return;
+    }
     const savedCart = localStorage.getItem("cart");
     const cart = savedCart ? JSON.parse(savedCart) : [];
     const existingItemIndex = cart.findIndex(
@@ -510,6 +523,22 @@ const AdvancedSearchPage = () => {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+                              const isAdmin = role === "Admin";
+                              if (isAdmin) {
+                                toast.error(
+                                  "Bạn không thể thêm món vào giỏ hàng khi đăng nhập với vai trò quản trị viên!",
+                                  {
+                                    duration: 2000,
+                                    position: "top-right",
+                                    style: {
+                                      backgroundColor: "#f44336",
+                                      color: "#fff",
+                                      fontSize: "16px",
+                                    },
+                                  }
+                                );
+                                return;
+                              }
                               addToCart(dish);
                             }}
                             className={`absolute top-2 right-2 p-2.5 rounded-full shadow-md transition-all duration-200 ${

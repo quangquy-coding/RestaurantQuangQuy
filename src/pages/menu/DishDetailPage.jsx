@@ -13,7 +13,7 @@ const DishDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [relatedDishes, setRelatedDishes] = useState([]);
-
+  const role = localStorage.getItem("role");
   useEffect(() => {
     const fetchDishDetail = async () => {
       try {
@@ -60,6 +60,19 @@ const DishDetailPage = () => {
   };
 
   const addToCart = () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Bạn cần đăng nhập để thêm món vào giỏ hàng!", {
+        duration: 2000,
+        position: "top-right",
+        style: {
+          backgroundColor: "#f44336",
+          color: "#fff",
+          fontSize: "16px",
+        },
+      });
+      return;
+    }
     if (!dish) return;
     const savedCart = localStorage.getItem("cart");
     const cart = savedCart ? JSON.parse(savedCart) : [];
@@ -328,7 +341,29 @@ const DishDetailPage = () => {
 
                 <div className="flex space-x-4">
                   <button
-                    onClick={addToCart}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+
+                      const isAdmin = role === "Admin";
+                      if (isAdmin) {
+                        toast.error(
+                          "Bạn không thể thêm món vào giỏ hàng khi đăng nhập với vai trò quản trị viên!",
+                          {
+                            duration: 2000,
+                            position: "top-right",
+                            style: {
+                              backgroundColor: "#f44336",
+                              color: "#fff",
+                              fontSize: "16px",
+                            },
+                          }
+                        );
+                        return;
+                      }
+
+                      addToCart(dish);
+                    }}
                     disabled={dish.tinhTrang === "Hết hàng"}
                     className={`flex-1 py-2 sm:py-3 px-4 sm:px-6 rounded-lg font-medium transition-all duration-300 flex items-center justify-center ${
                       dish.tinhTrang === "Hết hàng"

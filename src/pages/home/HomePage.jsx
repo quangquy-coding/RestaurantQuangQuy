@@ -21,7 +21,7 @@ const HomePage = () => {
 
   // Images for carousel
   const carouselImages = [Nhahang1, Nhahang2, Nhahang3];
-
+  const role = localStorage.getItem("role");
   // Auto-slide for carousel
   useEffect(() => {
     if (!isPaused) {
@@ -95,6 +95,36 @@ const HomePage = () => {
 
   // Add to cart function
   const addToCart = (dish) => {
+    const isAdmin = role === "admin";
+    if (isAdmin) {
+      toast.error(
+        "Bạn không thể thêm món vào giỏ hàng khi đăng nhập với vai trò quản trị viên!",
+        {
+          duration: 2000,
+          position: "top-right",
+          style: {
+            backgroundColor: "#f44336",
+            color: "#fff",
+            fontSize: "16px",
+          },
+        }
+      );
+      return;
+    }
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Bạn cần đăng nhập để thêm món vào giỏ hàng!", {
+        duration: 2000,
+        position: "top-right",
+        style: {
+          backgroundColor: "#f44336",
+          color: "#fff",
+          fontSize: "16px",
+        },
+      });
+      return;
+    }
+
     const savedCart = localStorage.getItem("cart");
     const cart = savedCart ? JSON.parse(savedCart) : [];
     const existingIndex = cart.findIndex((item) => item.id === dish.id);
@@ -292,6 +322,23 @@ const HomePage = () => {
                       <button
                         onClick={(e) => {
                           e.preventDefault();
+                          const isAdmin = role === "Admin";
+
+                          if (isAdmin) {
+                            toast.error(
+                              "Bạn không thể thêm món vào giỏ hàng khi đăng nhập với vai trò quản trị viên!",
+                              {
+                                duration: 2000,
+                                position: "top-right",
+                                style: {
+                                  backgroundColor: "#f44336",
+                                  color: "#fff",
+                                  fontSize: "16px",
+                                },
+                              }
+                            );
+                            return;
+                          }
                           addToCart({
                             id: dish.maMon,
                             name: dish.tenMon,

@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Info,
 } from "lucide-react";
+import Swal from "sweetalert2";
 
 // Axios import
 import axios from "axios";
@@ -231,6 +232,30 @@ const AdvancedReservationPage = () => {
   };
 
   const handleNextStep = () => {
+    const role = localStorage.getItem("role");
+    if (role && role !== "Khách hàng") {
+      Swal.fire({
+        icon: "error",
+        title: "Không đủ quyền hạn",
+        text: "Chỉ khách hàng mới có thể đặt bàn.",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+    const token = localStorage.getItem("token");
+    if (!token) {
+      Swal.fire({
+        icon: "warning",
+        title: "Chưa đăng nhập",
+        text: "Vui lòng đăng nhập để đặt bàn.",
+        confirmButtonText: "Đăng nhập",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = "/login";
+        }
+      });
+      return;
+    }
     if (step === 1 && selectedDate && selectedTime) {
       setStep(2);
     } else if (step === 2) {

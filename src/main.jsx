@@ -62,6 +62,7 @@ import AdminPromotionsPage from "./pages/admin/AdminPromotionsPage";
 import AdminReviewsPage from "./pages/admin/AdminReviewsPage";
 import ProfilePage from "./pages/admin/ProfilePage";
 import RoleGuard from "./components/common/RoleGuard";
+import PublicRoute from "./components/common/PublicRoute";
 import "./index.css";
 import "./App.css";
 import Forbidden from "./pages/error/forbidden";
@@ -79,24 +80,43 @@ const router = createBrowserRouter([
   },
   {
     path: "login",
-    element: <LoginPage />,
-  },
-  {
-    path: "verify",
-    element: <VerifyPage />,
+    element: (
+      <PublicRoute>
+        <LoginPage />
+      </PublicRoute>
+    ),
   },
   {
     path: "register",
-    element: <RegisterPage />,
+    element: (
+      <PublicRoute>
+        <RegisterPage />
+      </PublicRoute>
+    ),
   },
-
+  {
+    path: "verify",
+    element: (
+      <PublicRoute>
+        <VerifyPage />
+      </PublicRoute>
+    ),
+  },
   {
     path: "forgot-password",
-    element: <ForgotPasswordPage />,
+    element: (
+      <PublicRoute>
+        <ForgotPasswordPage />
+      </PublicRoute>
+    ),
   },
   {
     path: "reset-password",
-    element: <ResetPasswordPage />,
+    element: (
+      <PublicRoute>
+        <ResetPasswordPage />
+      </PublicRoute>
+    ),
   },
   {
     path: "/",

@@ -16,15 +16,19 @@ import {
   History,
 } from "lucide-react";
 import Logo from "../../assets/logo.png";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 const Header = () => {
+  const token = localStorage.getItem("token");
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const location = useLocation();
-
+  const role = localStorage.getItem("role");
   // Listen for login state (token in localStorage)
   useEffect(() => {
     const checkLogin = () => {
@@ -41,7 +45,49 @@ const Header = () => {
       window.removeEventListener("loginSuccess", checkLogin);
     };
   }, []);
+  const handleClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
+    if (!token) {
+      Swal.fire({
+        icon: "warning",
+        title: "Vui lòng đăng nhập",
+        text: "Bạn cần đăng nhập để xem giỏ hàng.",
+        confirmButtonText: "Đăng nhập",
+        showCancelButton: true,
+        cancelButtonText: "Hủy",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate("/login");
+        }
+      });
+      return;
+    }
+    if (role === "Admin") {
+      Swal.fire({
+        icon: "error",
+        title: "Không có quyền",
+        text: "Bạn không thể xem đơn hàng với vai trò quản trị viên!",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    navigate("/orders");
+
+    if (role === "Admin") {
+      Swal.fire({
+        icon: "error",
+        title: "Không có quyền",
+        text: "Bạn không thể xem giỏ hàng với vai trò quản trị viên!",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    navigate("/cart");
+  };
   // Listen for cart updates
   useEffect(() => {
     // Tính số loại sản phẩm khác nhau trong giỏ hàng (không phải tổng quantity)
@@ -131,8 +177,11 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
+          <Link to="/">
             <img src={Logo} alt="logo" className="h-8 md:h-10" />
+          </Link>
+
+          <div className="flex items-center space-x-2">
             <Link
               to="/"
               className="text-lg md:text-2xl font-bold text-blue-600 hidden sm:inline"
@@ -162,11 +211,12 @@ const Header = () => {
           <div className="flex items-center gap-2 relative" ref={dropdownRef}>
             {/* Cart */}
             <Link
-              to="/cart"
+              to="#" // hoặc to="javascript:void(0)"
+              onClick={handleClick}
               className="relative flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full hover:text-rose-600 transition"
             >
               <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
+              {cartCount > 0 && token && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center font-bold border border-white">
                   {cartCount}
                 </span>
@@ -197,6 +247,7 @@ const Header = () => {
                       <li>
                         <Link
                           to="/orders"
+                          onClick={handleClick}
                           className="flex items-center gap-2 px-4 py-2 hover:text-rose-600"
                         >
                           <History className="h-4 w-4" />
