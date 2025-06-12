@@ -160,7 +160,7 @@ const AdvancedSearchPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-white-100 flex flex-col">
       {/* Header with search and filters */}
       <div className="bg-white shadow-lg sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4">

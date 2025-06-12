@@ -1,6 +1,16 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { User, Lock, Bell, CreditCard, AlertCircle, Edit, X, Check, Loader2 } from "lucide-react";
+import {
+  User,
+  Lock,
+  Bell,
+  CreditCard,
+  AlertCircle,
+  Edit,
+  X,
+  Check,
+  Loader2,
+} from "lucide-react";
 import axios from "axios";
 
 const AccountSettingsPage = () => {
@@ -29,8 +39,20 @@ const AccountSettingsPage = () => {
     smsNotifications: false,
     promotionalEmails: true,
     cards: [
-      { id: 1, type: "visa", number: "**** **** **** 4242", expiry: "12/25", isDefault: true },
-      { id: 2, type: "mastercard", number: "**** **** **** 5555", expiry: "08/24", isDefault: false },
+      {
+        id: 1,
+        type: "visa",
+        number: "**** **** **** 4242",
+        expiry: "12/25",
+        isDefault: true,
+      },
+      {
+        id: 2,
+        type: "mastercard",
+        number: "**** **** **** 5555",
+        expiry: "08/24",
+        isDefault: false,
+      },
     ],
   });
 
@@ -68,11 +90,9 @@ const AccountSettingsPage = () => {
       });
     },
     updateNotifications: (userId, notifications, token) =>
-      axios.put(
-        `${USER_API_URL}/${userId}/notifications`,
-        notifications,
-        { headers: { Authorization: `Bearer ${token}` } }
-      ),
+      axios.put(`${USER_API_URL}/${userId}/notifications`, notifications, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
   };
 
   // Initialize user data
@@ -148,7 +168,9 @@ const AccountSettingsPage = () => {
       const errorData = err.response.data;
 
       if (status === 404) {
-        setErrorMessage("Không tìm thấy thông tin người dùng. Vui lòng kiểm tra ID tài khoản hoặc đăng nhập lại.");
+        setErrorMessage(
+          "Không tìm thấy thông tin người dùng. Vui lòng kiểm tra ID tài khoản hoặc đăng nhập lại."
+        );
       } else if (status === 401) {
         setErrorMessage("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
         localStorage.removeItem("token");
@@ -159,46 +181,53 @@ const AccountSettingsPage = () => {
           .join("; ");
         setErrorMessage(`Lỗi cập nhật: ${errorMessages}`);
       } else if (status === 405) {
-        setErrorMessage("Yêu cầu không được hỗ trợ bởi server. Vui lòng kiểm tra cấu hình API.");
+        setErrorMessage(
+          "Yêu cầu không được hỗ trợ bởi server. Vui lòng kiểm tra cấu hình API."
+        );
       } else {
         setErrorMessage(
           errorData.message || "Lỗi xử lý yêu cầu: " + JSON.stringify(errorData)
         );
       }
     } else {
-      setErrorMessage("Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.");
+      setErrorMessage(
+        "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng."
+      );
     }
   };
 
   // Handle avatar upload
   const handleAvatarChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const formDataUpload = new FormData();
-  formDataUpload.append("file", file);
-  formDataUpload.append("upload_preset", "demo_preset"); // Thay bằng preset Cloudinary của bạn
+    const formDataUpload = new FormData();
+    formDataUpload.append("file", file);
+    formDataUpload.append("upload_preset", "demo_preset"); // Thay bằng preset Cloudinary của bạn
 
-  try {
-    const res = await fetch("https://api.cloudinary.com/v1_1/dlozjvjhf/image/upload", {
-      method: "POST",
-      body: formDataUpload,
-    });
-    const data = await res.json();
-    if (data.secure_url) {
-      setFormData((prev) => ({
-        ...prev,
-        hinhAnh: data.secure_url,
-      }));
-      setSuccessMessage("Tải ảnh thành công!");
-    } else {
+    try {
+      const res = await fetch(
+        "https://api.cloudinary.com/v1_1/dlozjvjhf/image/upload",
+        {
+          method: "POST",
+          body: formDataUpload,
+        }
+      );
+      const data = await res.json();
+      if (data.secure_url) {
+        setFormData((prev) => ({
+          ...prev,
+          hinhAnh: data.secure_url,
+        }));
+        setSuccessMessage("Tải ảnh thành công!");
+      } else {
+        setErrorMessage("Lỗi upload ảnh Cloudinary");
+      }
+    } catch (err) {
       setErrorMessage("Lỗi upload ảnh Cloudinary");
+      console.error(err);
     }
-  } catch (err) {
-    setErrorMessage("Lỗi upload ảnh Cloudinary");
-    console.error(err);
-  }
-};
+  };
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -265,7 +294,9 @@ const AccountSettingsPage = () => {
         return;
       }
       if (!formData.currentPassword) {
-        setErrorMessage("Vui lòng nhập mật khẩu hiện tại để cập nhật thông tin cá nhân");
+        setErrorMessage(
+          "Vui lòng nhập mật khẩu hiện tại để cập nhật thông tin cá nhân"
+        );
         return;
       }
     }
@@ -279,7 +310,11 @@ const AccountSettingsPage = () => {
           smsNotifications: formData.smsNotifications,
           promotionalEmails: formData.promotionalEmails,
         };
-        await api.updateNotifications(formData.maTaiKhoan, notificationData, token);
+        await api.updateNotifications(
+          formData.maTaiKhoan,
+          notificationData,
+          token
+        );
       } else {
         const updateData = {
           maTaiKhoan: formData.maTaiKhoan,
@@ -291,7 +326,10 @@ const AccountSettingsPage = () => {
           hinhAnh: formData.hinhAnh || null,
           maQuyen: formData.maQuyen,
           tenKhachHang: formData.tenKhachHang,
-          matKhau: section === "password" ? formData.newPassword : formData.currentPassword,
+          matKhau:
+            section === "password"
+              ? formData.newPassword
+              : formData.currentPassword,
         };
 
         console.log("🔄 Đang cập nhật với payload:", updateData);
@@ -332,7 +370,10 @@ const AccountSettingsPage = () => {
       }, 3000);
     } catch (error) {
       console.error("❌ Lỗi cập nhật:", error);
-      if (error.response?.status === 400 && error.response.data.errors?.MatKhau) {
+      if (
+        error.response?.status === 400 &&
+        error.response.data.errors?.MatKhau
+      ) {
         setErrorMessage("Mật khẩu hiện tại không đúng");
       } else {
         handleApiError(error);
@@ -340,24 +381,6 @@ const AccountSettingsPage = () => {
     } finally {
       setSaving(false);
     }
-  };
-
-  // Set default card
-  const handleSetDefaultCard = (cardId) => {
-    setFormData((prev) => ({
-      ...prev,
-      cards: prev.cards.map((card) => ({
-        ...card,
-        isDefault: card.id === cardId,
-      })),
-    }));
-    setSuccessMessage("Đã cập nhật thẻ mặc định!");
-    setTimeout(() => setSuccessMessage(""), 3000);
-  };
-
-  // Add new card (placeholder)
-  const handleAddCard = () => {
-    alert("Chức năng thêm thẻ mới sẽ được triển khai");
   };
 
   // Get display name
@@ -374,7 +397,7 @@ const AccountSettingsPage = () => {
       return (
         <div className="flex items-center justify-center h-64">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          <span className="ml-2 text-gray-600">Đang tải thông tin...</span>
+          <span className="ml-2 text-white-50">Đang tải thông tin...</span>
         </div>
       );
     }
@@ -408,7 +431,11 @@ const AccountSettingsPage = () => {
                     className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                     disabled={saving}
                   >
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4 mr-2" />
+                    )}
                     {saving ? "Đang lưu..." : "Lưu"}
                   </button>
                 </div>
@@ -416,11 +443,19 @@ const AccountSettingsPage = () => {
             </div>
 
             <div className="flex flex-row gap-6 items-start">
-              <div className="relative w-32 h-32 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+              <div className="relative w-32 h-32 rounded-full overflow-hidden bg-white-50-200 flex-shrink-0">
                 {formData.hinhAnh ? (
-                  <img src={formData.hinhAnh} alt="Profile" className="w-full h-full object-cover" />
+                  <img
+                    src={formData.hinhAnh}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <img src={DEFAULT_AVATAR} alt="Profile" className="w-full h-full object-cover" />
+                  <img
+                    src={DEFAULT_AVATAR}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
                 )}
                 {isEditing.profile && (
                   <label
@@ -438,20 +473,11 @@ const AccountSettingsPage = () => {
                   </label>
                 )}
               </div>
-
               <div className="flex-1 space-y-4">
-                {/* <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mã tài khoản</label>
-                  <input
-                    type="text"
-                    value={formData.maTaiKhoan}
-                    disabled
-                    className="w-full px-4 py-2 border rounded-md bg-gray-100 text-gray-500"
-                  />
-                </div> */}
-
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên tài khoản</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tên tài khoản
+                  </label>
                   <input
                     type="text"
                     name="tenTaiKhoan"
@@ -464,7 +490,9 @@ const AccountSettingsPage = () => {
 
                 {formData.maQuyen === "Q006" && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tên khách hàng</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tên khách hàng
+                    </label>
                     <input
                       type="text"
                       name="tenKhachHang"
@@ -477,7 +505,9 @@ const AccountSettingsPage = () => {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email
+                  </label>
                   <input
                     type="email"
                     name="email"
@@ -489,7 +519,9 @@ const AccountSettingsPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số điện thoại
+                  </label>
                   <input
                     type="tel"
                     name="soDienThoai"
@@ -501,7 +533,9 @@ const AccountSettingsPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Ngày sinh</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ngày sinh
+                  </label>
                   <input
                     type="date"
                     name="ngaySinh"
@@ -513,7 +547,9 @@ const AccountSettingsPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Địa chỉ
+                  </label>
                   <textarea
                     name="diaChi"
                     value={formData.diaChi}
@@ -526,7 +562,9 @@ const AccountSettingsPage = () => {
 
                 {isEditing.profile && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu hiện tại</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Mật khẩu hiện tại
+                    </label>
                     <input
                       type="password"
                       name="currentPassword"
@@ -570,7 +608,11 @@ const AccountSettingsPage = () => {
                     className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                     disabled={saving}
                   >
-                    {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />}
+                    {saving ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4 mr-2" />
+                    )}
                     {saving ? "Đang lưu..." : "Lưu"}
                   </button>
                 </div>
@@ -580,7 +622,9 @@ const AccountSettingsPage = () => {
             {isEditing.password ? (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu hiện tại</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mật khẩu hiện tại
+                  </label>
                   <input
                     type="password"
                     name="currentPassword"
@@ -592,7 +636,9 @@ const AccountSettingsPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu mới</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mật khẩu mới
+                  </label>
                   <input
                     type="password"
                     name="newPassword"
@@ -604,7 +650,9 @@ const AccountSettingsPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Xác nhận mật khẩu mới</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Xác nhận mật khẩu mới
+                  </label>
                   <input
                     type="password"
                     name="confirmPassword"
@@ -617,7 +665,8 @@ const AccountSettingsPage = () => {
 
                 <div className="bg-blue-50 p-4 rounded-md">
                   <p className="text-sm text-blue-800">
-                    Mật khẩu phải có ít nhất 8 ký tự và bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.
+                    Mật khẩu phải có ít nhất 8 ký tự và bao gồm chữ hoa, chữ
+                    thường, số và ký tự đặc biệt.
                   </p>
                 </div>
               </div>
@@ -629,147 +678,6 @@ const AccountSettingsPage = () => {
           </div>
         );
 
-      case "notifications":
-        return (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Cài đặt thông báo</h2>
-              {!isEditing.notifications ? (
-                <button
-                  onClick={() => handleEdit("notifications")}
-                  className="flex items-center px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Chỉnh sửa
-                </button>
-              ) : (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleCancel("notifications")}
-                    className="flex items-center px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-md"
-                    disabled={saving}
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Hủy
-                  </button>
-                  <button
-                    onClick={() => handleSave("notifications")}
-                    className="flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                    disabled={saving}
-                  >
-                    <Check className="w-4 h-4 mr-2" />
-                    Lưu
-                  </button>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium">Thông báo qua email</h3>
-                  <p className="text-sm text-gray-500">Nhận thông báo về đơn hàng qua email</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="emailNotifications"
-                    checked={formData.emailNotifications}
-                    onChange={handleInputChange}
-                    disabled={!isEditing.notifications}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium">Thông báo qua SMS</h3>
-                  <p className="text-sm text-gray-500">Nhận thông báo về đơn hàng qua tin nhắn SMS</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="smsNotifications"
-                    checked={formData.smsNotifications}
-                    onChange={handleInputChange}
-                    disabled={!isEditing.notifications}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium">Email khuyến mãi</h3>
-                  <p className="text-sm text-gray-500">Nhận thông tin về khuyến mãi và ưu đãi đặc biệt</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="promotionalEmails"
-                    checked={formData.promotionalEmails}
-                    onChange={handleInputChange}
-                    disabled={!isEditing.notifications}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-disabled:opacity-50"></div>
-                </label>
-              </div>
-            </div>
-          </div>
-        );
-
-      case "payment":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold">Phương thức thanh toán</h2>
-
-            <div className="space-y-4">
-              {formData.cards.map((card) => (
-                <div key={card.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-8 rounded-md bg-gray-100 flex items-center justify-center">
-                      {card.type === "visa" ? (
-                        <span className="text-blue-600 font-bold">VISA</span>
-                      ) : (
-                        <span className="text-red-600 font-bold">MC</span>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">{card.number}</p>
-                      <p className="text-sm text-gray-600">Hết hạn: {card.expiry}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    {card.isDefault ? (
-                      <span className="text-sm font-medium text-green-600">Mặc định</span>
-                    ) : (
-                      <button
-                        onClick={() => handleSetDefaultCard(card.id)}
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        Đặt làm mặc định
-                      </button>
-                    )}
-                    <button className="text-sm text-gray-600 hover:underline">Chỉnh sửa</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={handleAddCard}
-              className="flex items-center text-blue-600 font-medium hover:text-blue-700"
-            >
-              <CreditCard className="w-4 h-4 mr-2" />
-              Thêm phương thức thanh toán mới
-            </button>
-          </div>
-        );
-
       default:
         return null;
     }
@@ -777,9 +685,9 @@ const AccountSettingsPage = () => {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-white-50-50 py-8">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="p-4 bg-red-100 text-red-800 rounded-md flex items-center">
+          <div className="p-4 bg-white-400-100 text-red-800 rounded-md flex items-center">
             <AlertCircle className="h-5 w-5 mr-3" />
             <span>{errorMessage}</span>
           </div>
@@ -789,13 +697,17 @@ const AccountSettingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-red-50 py-8">
+    <div className="min-h-screen bg-white-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-3xl font-bold mb-8">Cài đặt tài khoản</h1>
 
         {successMessage && (
           <div className="mb-4 p-4 bg-green-100 text-green-800 rounded-md flex items-center">
-            <svg className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <svg
+              className="h-5 w-5 mr-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
               <path
                 fillRule="evenodd"
                 d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -807,7 +719,7 @@ const AccountSettingsPage = () => {
         )}
 
         {errorMessage && (
-          <div className="mb-4 p-4 bg-red-100 text-red-800 rounded-md flex items-center">
+          <div className="mb-4 p-4 bg-white-50-100 text-red-800 rounded-md flex items-center">
             <AlertCircle className="h-5 w-5 mr-2" />
             <span>{errorMessage}</span>
           </div>
@@ -815,18 +727,28 @@ const AccountSettingsPage = () => {
 
         <div className="bg-white shadow-md rounded-lg overflow-hidden">
           <div className="md:flex">
-            <div className="md:w-80 bg-gray-50 p-6 border-r">
+            <div className="md:w-80 bg-white-50-50 p-6 border-r">
               <div className="mb-6">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
+                  <div className="w-12 h-12 rounded-full overflow-hidden bg-white-50-50">
                     {formData.hinhAnh ? (
-                      <img src={formData.hinhAnh} alt="Avatar" className="w-full h-full object-cover" />
+                      <img
+                        src={formData.hinhAnh}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <img src={DEFAULT_AVATAR} alt="Avatar" className="w-full h-full object-cover" />
+                      <img
+                        src={DEFAULT_AVATAR}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
                     )}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{getDisplayName()}</h3>
+                    <h3 className="font-semibold text-gray-900">
+                      {getDisplayName()}
+                    </h3>
                     {/* <p className="text-sm text-gray-600">{formData.maQuyen || "Không xác định"}</p> */}
                   </div>
                 </div>
@@ -855,30 +777,6 @@ const AccountSettingsPage = () => {
                 >
                   <Lock className="h-5 w-5 mr-2" />
                   Đổi mật khẩu
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("notifications")}
-                  className={`flex items-center w-full px-4 py-3 rounded-md transition-colors ${
-                    activeTab === "notifications"
-                      ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <Bell className="h-5 w-5 mr-2" />
-                  Thông báo
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("payment")}
-                  className={`flex items-center w-full px-4 py-3 rounded-md transition-colors ${
-                    activeTab === "payment"
-                      ? "bg-blue-50 text-blue-700 border-l-4 border-blue-700"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <CreditCard className="h-5 w-5 mr-2" />
-                  Phương thức thanh toán
                 </button>
               </nav>
             </div>

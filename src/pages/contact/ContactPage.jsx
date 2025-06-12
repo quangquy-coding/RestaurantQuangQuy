@@ -43,7 +43,7 @@ const ContactPage = () => {
   };
 
   return (
-    <div className="py-16 bg-red-50 min-h-screen">
+    <div className="py-16 bg-white min-h-screen">
       <div className="container mx-auto px-4 pt-8">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">

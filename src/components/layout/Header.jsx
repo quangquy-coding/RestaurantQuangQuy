@@ -203,7 +203,7 @@ const Header = () => {
                           Đơn hàng
                         </Link>
                       </li>
-                      <li>
+                      {/* <li>
                         <Link
                           to="/loyalty-program"
                           className="flex items-center gap-2 px-4 py-2 hover:text-rose-600"
@@ -211,7 +211,7 @@ const Header = () => {
                           <Trophy className="h-4 w-4" />
                           Ưu đãi
                         </Link>
-                      </li>
+                      </li> */}
                       <li>
                         <button
                           onClick={handleLogout}

@@ -144,7 +144,7 @@ const DishDetailPage = () => {
     : ["/placeholder-dish.jpg"];
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 animate-fade-in">
+    <div className="min-h-screen bg-white py-8 animate-fade-in">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Back button */}
         <Link

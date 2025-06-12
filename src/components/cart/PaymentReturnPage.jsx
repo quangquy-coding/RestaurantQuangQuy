@@ -109,7 +109,7 @@ const PaymentReturnPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-red-50 p-4 flex items-center justify-center">
+      <div className="min-h-screen bg-white p-4 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
           <Clock className="animate-spin mx-auto h-16 w-16 text-blue-500 mb-4" />
           <p className="text-gray-600">Đang xử lý kết quả đặt cọc...</p>
@@ -120,7 +120,7 @@ const PaymentReturnPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-red-50 p-4 flex items-center justify-center">
+      <div className="min-h-screen bg-white p-4 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
           <XCircle className="mx-auto h-16 w-16 text-red-500 mb-4" />
           <h1 className="text-2xl font-bold mb-2">Đặt cọc thất bại</h1>
@@ -159,7 +159,7 @@ const PaymentReturnPage = () => {
 
   if (paymentResult?.success) {
     return (
-      <div className="min-h-screen bg-green-50 p-4 flex items-center justify-center">
+      <div className="min-h-screen bg-white-50 p-4 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
           <CheckCircle2 className="mx-auto h-16 w-16 text-green-500 mb-4" />
           <h1 className="text-2xl font-bold mb-2">Đặt cọc thành công!</h1>
@@ -167,7 +167,7 @@ const PaymentReturnPage = () => {
             Cảm ơn bạn đã đặt cọc tại Nhà Hàng Quang Quý
           </p>
 
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-md mb-6 text-left">
+          <div className="bg-gradient-to-r from-green-50 to-white p-4 rounded-md mb-6 text-left">
             <p className="text-sm">
               <strong>Mã hóa đơn:</strong> {paymentResult.orderId}
             </p>
@@ -224,7 +224,7 @@ const PaymentReturnPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-red-50 p-4 flex items-center justify-center">
+    <div className="min-h-screen bg-white p-4 flex items-center justify-center">
       <div className="bg-white rounded-lg shadow-md p-8 max-w-md w-full text-center">
         <p className="text-gray-600">Đang xử lý...</p>
       </div>

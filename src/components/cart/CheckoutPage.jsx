@@ -319,7 +319,7 @@ const CheckoutPage = () => {
 
   if (redirecting) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-xl shadow-xl p-8 max-w-md w-full text-center">
           <Clock className="animate-spin mx-auto h-16 w-16 text-blue-600 mb-4" />
           <h1 className="text-2xl font-bold text-gray-800 mb-2">
@@ -335,7 +335,7 @@ const CheckoutPage = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-gray-600 mb-4">
             Không có món nào để thanh toán. Quay lại{" "}
@@ -354,7 +354,7 @@ const CheckoutPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <button
@@ -372,9 +372,9 @@ const CheckoutPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-100 py-8 px-4">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl font-bold text-amber-700 mb-4 tracking-tight">
+        <h1 className="text-3xl font-bold text-black mb-4 tracking-tight">
           Đặt cọc bàn ăn
         </h1>
 
@@ -447,7 +447,7 @@ const CheckoutPage = () => {
                 </li>
               ))}
             </ul>
-            <div className="p-6 bg-gradient-to-r from-blue-50 to-teal-50">
+            <div className="p-6 bg-gradient-to-r from-white to-teal-50">
               <div className="flex justify-between mb-2 text-gray-700">
                 <span>Tạm tính:</span>
                 <span>{total.toLocaleString("vi-VN")} ₫</span>
@@ -493,7 +493,7 @@ const CheckoutPage = () => {
                   name="name"
                   value={customerInfo.name}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md transition-all duration-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-white0 shadow-sm hover:shadow-md transition-all duration-300"
                   required
                 />
               </div>
@@ -506,7 +506,7 @@ const CheckoutPage = () => {
                   name="phone"
                   value={customerInfo.phone}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md transition-all duration-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-white0 shadow-sm hover:shadow-md transition-all duration-300"
                   required
                 />
               </div>
@@ -519,7 +519,7 @@ const CheckoutPage = () => {
                   name="email"
                   value={customerInfo.email}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md transition-all duration-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-white0 shadow-sm hover:shadow-md transition-all duration-300"
                   required
                 />
               </div>
@@ -532,7 +532,7 @@ const CheckoutPage = () => {
                   name="tableNumber"
                   value={customerInfo.tableNumber}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md transition-all duration-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-white0 shadow-sm hover:shadow-md transition-all duration-300"
                   required
                 />
               </div>
@@ -576,7 +576,7 @@ const CheckoutPage = () => {
                   value={customerInfo.note}
                   onChange={handleInputChange}
                   rows="4"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm hover:shadow-md transition-all duration-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-white0 shadow-sm hover:shadow-md transition-all duration-300"
                   placeholder="Yêu cầu đặc biệt về món ăn, thời gian..."
                 ></textarea>
               </div>

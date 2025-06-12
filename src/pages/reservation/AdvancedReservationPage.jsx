@@ -446,7 +446,7 @@ const AdvancedReservationPage = () => {
           <div className="flex items-center">
             <button
               onClick={prevMonth}
-              className="p-2 rounded-full hover:bg-gray-100 border-none bg-transparent cursor-pointerbg-red-50 "
+              className="p-2 rounded-full hover:bg-gray-100 border-none bg-transparent cursor-pointerbg-white "
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
@@ -612,7 +612,7 @@ const AdvancedReservationPage = () => {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+        <div className="mb-6 p-4 bg-white border border-red-200 rounded-md">
           <p className="text-red-800">{error}</p>
         </div>
       )}
@@ -850,7 +850,7 @@ const AdvancedReservationPage = () => {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8 min-h-screen bg-red-50">
+    <div className="container mx-auto px-4 py-8 min-h-screen bg-white">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">Đặt bàn trực tuyến</h1>
         <p className="text-gray-600">

@@ -22,7 +22,7 @@ import CheckoutPage from "./components/cart/CheckoutPage";
 // import ReservationPage from "./pages/reservation/ReservationPage"
 import AboutPage from "./pages/about/AboutPage";
 import ContactPage from "./pages/contact/ContactPage";
-import ProfilePage from "./pages/user/ProfilePage";
+
 import UserOrdersPage from "./pages/user/OrdersPage";
 import LoginPage from "./pages/login";
 import RegisterPage from "./pages/register";
@@ -60,6 +60,7 @@ import BlogPostDetailPage from "./pages/blog/BlogPostDetailPage";
 import AdminCustomerAnalyticsPage from "./pages/admin/AdminCustomerAnalyticsPage";
 import AdminPromotionsPage from "./pages/admin/AdminPromotionsPage";
 import AdminReviewsPage from "./pages/admin/AdminReviewsPage";
+import ProfilePage from "./pages/admin/ProfilePage";
 import RoleGuard from "./components/common/RoleGuard";
 import "./index.css";
 import "./App.css";
@@ -136,10 +137,10 @@ const router = createBrowserRouter([
         path: "contact",
         element: <ContactPage />,
       },
-      {
-        path: "profile",
-        element: <ProfilePage />,
-      },
+      // {
+      //   path: "profile",
+      //   element: <ProfilePage />,
+      // },
       {
         path: "menu/:id",
         element: <DishDetailPage />,
@@ -238,6 +239,10 @@ const router = createBrowserRouter([
       {
         path: "staff",
         element: <StaffOrdersPage />,
+      },
+      {
+        path: "profile",
+        element: <ProfilePage />,
       },
     ],
   },

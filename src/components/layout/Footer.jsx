@@ -12,19 +12,19 @@ import React from "react";
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-b from-gray-700 to-gray-900 text-white pt-16 pb-8">
+    <footer className="bg-gradient-to-b from-gray-700 to-gray-900 text-white pt-12 pb-8 animate-fade-in">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-4 gap-12">
+        <div className="grid  gap-8 md:grid-cols-4 md:gap-12">
           {/* Restaurant Info */}
-          <div className="text-center sm:text-left">
-            <h3 className="text-2xl font-extrabold mb-4 text-gray-100">
+          <div className="text-left py-6 md:py-4">
+            <h3 className="text-lg font-extrabold mb-4 text-gray-100 md:text-xl">
               Nhà hàng Quang Quý
             </h3>
-            <p className="text-gray-300 mb-6 text-sm leading-relaxed max-w-xs mx-auto sm:mx-0">
+            <p className="text-gray-300 mb-6 text-sm leading-relaxed max-w-xs">
               Tự hào mang đến trải nghiệm ẩm thực tuyệt vời với không gian sang
               trọng và món ăn đặc sắc.
             </p>
-            <div className="flex justify-center sm:justify-start space-x-4">
+            <div className="flex space-x-4">
               <a
                 href="https://www.facebook.com/nqq23/"
                 className="text-gray-400 hover:text-blue-400 transition-all duration-300 transform hover:scale-110"
@@ -50,8 +50,8 @@ const Footer = () => {
           </div>
 
           {/* Quick Links */}
-          <div className="text-center sm:text-left">
-            <h3 className="text-xl font-bold mb-4 text-white">
+          <div className="text-left py-6 md:py-4">
+            <h3 className="text-lg font-bold mb-4 text-white md:text-xl">
               Liên kết nhanh
             </h3>
             <ul className="space-y-3">
@@ -78,18 +78,18 @@ const Footer = () => {
           </div>
 
           {/* Contact Info */}
-          <div className="text-center sm:text-left">
-            <h3 className="text-xl font-bold mb-4 text-white">
+          <div className="text-left py-6 md:py-4">
+            <h3 className="text-lg font-bold mb-4 text-white md:text-xl">
               Thông tin liên hệ
             </h3>
             <ul className="space-y-4">
-              <li className="flex items-start justify-center sm:justify-start">
+              <li className="flex items-start">
                 <MapPin className="h-5 w-5 text-blue-400 mr-3 mt-1 animate-pulse" />
                 <span className="text-gray-300 text-sm max-w-[200px]">
                   106 Phạm Nhữ Tăng, Hòa Khê, Thanh Khê, Đà Nẵng
                 </span>
               </li>
-              <li className="flex items-center justify-center sm:justify-start">
+              <li className="flex items-center">
                 <Phone className="h-5 w-5 text-blue-400 mr-3 animate-pulse" />
                 <a
                   href="tel:+84382208154"
@@ -98,7 +98,7 @@ const Footer = () => {
                   +84 382 208 154
                 </a>
               </li>
-              <li className="flex items-center justify-center sm:justify-start">
+              <li className="flex items-center">
                 <Mail className="h-5 w-5 text-blue-400 mr-3 animate-pulse" />
                 <a
                   href="mailto:quangquy822003@gmail.com"
@@ -111,10 +111,12 @@ const Footer = () => {
           </div>
 
           {/* Opening Hours */}
-          <div className="text-center sm:text-left">
-            <h3 className="text-xl font-bold mb-4 text-white">Giờ mở cửa</h3>
+          <div className="text-left py-6 md:py-4">
+            <h3 className="text-lg font-bold mb-4 text-white md:text-xl">
+              Giờ mở cửa
+            </h3>
             <ul className="space-y-4">
-              <li className="flex items-start justify-center sm:justify-start">
+              <li className="flex items-start">
                 <Clock className="h-5 w-5 text-blue-400 mr-3 mt-1 animate-pulse" />
                 <div>
                   <p className="text-gray-300 text-sm">Thứ 2 - Thứ 6</p>
@@ -123,7 +125,7 @@ const Footer = () => {
                   </p>
                 </div>
               </li>
-              <li className="flex items-start justify-center sm:justify-start">
+              <li className="flex items-start">
                 <Clock className="h-5 w-5 text-blue-400 mr-3 mt-1 animate-pulse" />
                 <div>
                   <p className="text-gray-300 text-sm">Thứ 7</p>
@@ -132,7 +134,7 @@ const Footer = () => {
                   </p>
                 </div>
               </li>
-              <li className="flex items-start justify-center sm:justify-start">
+              <li className="flex items-start">
                 <Clock className="h-5 w-5 text-blue-400 mr-3 mt-1 animate-pulse" />
                 <div>
                   <p className="text-gray-300 text-sm">Chủ nhật</p>
@@ -146,19 +148,19 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-700 mt-12 pt-6">
-          <div className="flex flex-row justify-between items-center gap-4 text-center">
+        <div className="border-t border-gray-700 mt-8 pt-6">
+          <div className="flex justify-between md:items-center w-full gap-4">
             <p className="text-gray-400 text-sm">
               © 2025 Nhà hàng Quang Quý. Tất cả quyền được bảo lưu.
             </p>
-            <ul className="flex flex-wrap justify-center sm:justify-end gap-6 text-sm">
+            <ul className="flex gap-6 text-sm">
               <li>
                 <a
                   href="#"
                   className="text-gray-300 hover:text-blue-400 transition-all duration-300 relative group"
                 >
                   Điều khoản sử dụng
-                  <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
+                  <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
                 </a>
               </li>
               <li>
@@ -167,7 +169,7 @@ const Footer = () => {
                   className="text-gray-300 hover:text-blue-400 transition-all duration-300 relative group"
                 >
                   Chính sách bảo mật
-                  <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
+                  <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
                 </a>
               </li>
             </ul>

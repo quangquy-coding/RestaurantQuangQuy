@@ -8,7 +8,7 @@ import Tan from "../../assets/tan.jpeg";
 
 const AboutPage = () => {
   return (
-    <div className="py-16  bg-red-50 min-h-screen">
+    <div className="py-16  bg-white min-h-screen">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">

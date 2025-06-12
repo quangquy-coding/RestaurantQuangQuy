@@ -126,9 +126,9 @@ const PromotionsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-white-50 to-gray-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-amber-800 mb-10 text-center tracking-tight">
+        <h1 className="text-3xl font-extrabold text-black mb-10 text-center tracking-tight">
           Khuyến Mãi Đặc Biệt
         </h1>
 

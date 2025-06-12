@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
-import { motion } from "framer-motion"
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const BlogPage = () => {
-  const [posts, setPosts] = useState([])
-  const [categories, setCategories] = useState([])
-  const [selectedCategory, setSelectedCategory] = useState("all")
-  const [loading, setLoading] = useState(true)
+  const [posts, setPosts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setTimeout(() => {
@@ -14,8 +14,10 @@ const BlogPage = () => {
         {
           id: 1,
           title: "Khám phá hương vị mới trong mùa thu này",
-          excerpt: "Nhà hàng chúng tôi vừa cập nhật thực đơn với các món ăn đặc biệt cho mùa thu...",
-          image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+          excerpt:
+            "Nhà hàng chúng tôi vừa cập nhật thực đơn với các món ăn đặc biệt cho mùa thu...",
+          image:
+            "https://images.unsplash.com/photo-1504674900247-0877df9cc836?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
           date: "2023-09-15",
           author: "Nguyễn Văn A",
           category: "Thực đơn mới",
@@ -24,8 +26,10 @@ const BlogPage = () => {
         {
           id: 2,
           title: "Bí quyết nấu ăn từ bếp trưởng của chúng tôi",
-          excerpt: "Bếp trưởng Trần Văn B chia sẻ những bí quyết nấu ăn độc đáo giúp món ăn thêm hấp dẫn...",
-          image: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+          excerpt:
+            "Bếp trưởng Trần Văn B chia sẻ những bí quyết nấu ăn độc đáo giúp món ăn thêm hấp dẫn...",
+          image:
+            "https://images.unsplash.com/photo-1556910103-1c02745aae4d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
           date: "2023-09-10",
           author: "Trần Văn B",
           category: "Mẹo nấu ăn",
@@ -34,8 +38,10 @@ const BlogPage = () => {
         {
           id: 3,
           title: "Sự kiện ẩm thực sắp tới tại nhà hàng",
-          excerpt: "Đừng bỏ lỡ sự kiện ẩm thực đặc biệt vào cuối tháng này với nhiều hoạt động thú vị...",
-          image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+          excerpt:
+            "Đừng bỏ lỡ sự kiện ẩm thực đặc biệt vào cuối tháng này với nhiều hoạt động thú vị...",
+          image:
+            "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
           date: "2023-09-05",
           author: "Lê Thị C",
           category: "Sự kiện",
@@ -44,8 +50,10 @@ const BlogPage = () => {
         {
           id: 4,
           title: "Nguồn gốc nguyên liệu tại nhà hàng chúng tôi",
-          excerpt: "Tìm hiểu về cách chúng tôi lựa chọn nguyên liệu tươi ngon và hữu cơ từ các nhà cung cấp địa phương...",
-          image: "https://images.unsplash.com/photo-1470549638415-0a0755be0619?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+          excerpt:
+            "Tìm hiểu về cách chúng tôi lựa chọn nguyên liệu tươi ngon và hữu cơ từ các nhà cung cấp địa phương...",
+          image:
+            "https://images.unsplash.com/photo-1470549638415-0a0755be0619?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
           date: "2023-08-28",
           author: "Phạm Văn D",
           category: "Nguyên liệu",
@@ -54,25 +62,30 @@ const BlogPage = () => {
         {
           id: 5,
           title: "Cách thưởng thức rượu vang đúng cách",
-          excerpt: "Hướng dẫn chi tiết về cách chọn và thưởng thức rượu vang phù hợp với từng món ăn...",
-          image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+          excerpt:
+            "Hướng dẫn chi tiết về cách chọn và thưởng thức rượu vang phù hợp với từng món ăn...",
+          image:
+            "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
           date: "2023-08-20",
           author: "Hoàng Thị E",
           category: "Đồ uống",
           readTime: "7 phút",
         },
-      ]
+      ];
 
-      const uniqueCategories = [...new Set(mockPosts.map((post) => post.category))]
-      setPosts(mockPosts)
-      setCategories(uniqueCategories)
-      setLoading(false)
-    }, 1000)
-  }, [])
+      const uniqueCategories = [
+        ...new Set(mockPosts.map((post) => post.category)),
+      ];
+      setPosts(mockPosts);
+      setCategories(uniqueCategories);
+      setLoading(false);
+    }, 1000);
+  }, []);
 
-  const filteredPosts = selectedCategory === "all"
-    ? posts
-    : posts.filter(post => post.category === selectedCategory)
+  const filteredPosts =
+    selectedCategory === "all"
+      ? posts
+      : posts.filter((post) => post.category === selectedCategory);
 
   if (loading) {
     return (
@@ -81,15 +94,18 @@ const BlogPage = () => {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16  bg-red-50">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16  bg-white">
       <div className="text-center mb-16">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">Blog Ẩm Thực</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-4">
+          Blog Ẩm Thực
+        </h1>
         <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
-          Khám phá những bài viết thú vị về ẩm thực, mẹo nấu ăn, và tin tức mới nhất từ nhà hàng chúng tôi.
+          Khám phá những bài viết thú vị về ẩm thực, mẹo nấu ăn, và tin tức mới
+          nhất từ nhà hàng chúng tôi.
         </p>
       </div>
 
@@ -148,9 +164,13 @@ const BlogPage = () => {
                   {post.title}
                 </h2>
               </Link>
-              <p className="text-gray-600 mb-4 text-sm sm:text-base">{post.excerpt}</p>
+              <p className="text-gray-600 mb-4 text-sm sm:text-base">
+                {post.excerpt}
+              </p>
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-blue-600">{post.category}</span>
+                <span className="text-sm font-medium text-blue-600">
+                  {post.category}
+                </span>
                 <Link
                   to={`/blog/${post.id}`}
                   className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
@@ -166,9 +186,12 @@ const BlogPage = () => {
       {/* Newsletter Subscription */}
       <div className="mt-20 bg-blue-50 rounded-xl px-6 py-10 sm:px-10 sm:py-12 md:py-16">
         <div className="max-w-2xl mx-auto text-center">
-          <h3 className="text-2xl font-bold text-gray-800 mb-4">Đăng ký nhận bản tin</h3>
+          <h3 className="text-2xl font-bold text-gray-800 mb-4">
+            Đăng ký nhận bản tin
+          </h3>
           <p className="text-gray-600 mb-6">
-            Nhận thông báo về các bài viết mới và ưu đãi đặc biệt từ nhà hàng chúng tôi.
+            Nhận thông báo về các bài viết mới và ưu đãi đặc biệt từ nhà hàng
+            chúng tôi.
           </p>
           <form className="flex flex-col sm:flex-row gap-4 sm:gap-2 px-2">
             <input
@@ -187,7 +210,7 @@ const BlogPage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default BlogPage
+export default BlogPage;
