@@ -45,7 +45,7 @@ const Header = () => {
       window.removeEventListener("loginSuccess", checkLogin);
     };
   }, []);
-  const handleClick = (e) => {
+  const handleCartClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -64,22 +64,11 @@ const Header = () => {
       });
       return;
     }
-    if (role === "Admin") {
-      Swal.fire({
-        icon: "error",
-        title: "Không có quyền",
-        text: "Bạn không thể xem đơn hàng với vai trò quản trị viên!",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
-
-    navigate("/orders");
 
     if (role === "Admin") {
       Swal.fire({
         icon: "error",
-        title: "Không có quyền",
+        title: "Trang không dành cho quản trị viên",
         text: "Bạn không thể xem giỏ hàng với vai trò quản trị viên!",
         confirmButtonText: "OK",
       });
@@ -88,10 +77,32 @@ const Header = () => {
 
     navigate("/cart");
   };
+
+  const handleOrdersClick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (role === "Admin") {
+      Swal.fire({
+        icon: "error",
+        title: "Trang không dành cho quản trị viên",
+        text: "Bạn không thể xem đơn hàng với vai trò quản trị viên!",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    navigate("/orders");
+  };
   // Listen for cart updates
   useEffect(() => {
     // Tính số loại sản phẩm khác nhau trong giỏ hàng (không phải tổng quantity)
     const updateCartCount = (cart) => {
+      // không cho hiển thị giỏ hàng nếu không phải khách hàng
+      if (role === "Admin") {
+        setCartCount(0);
+        return;
+      }
       if (cart && Array.isArray(cart)) {
         // Đếm số loại sản phẩm khác nhau (mỗi id là 1 loại)
         const count = cart.length;
@@ -212,7 +223,7 @@ const Header = () => {
             {/* Cart */}
             <Link
               to="#" // hoặc to="javascript:void(0)"
-              onClick={handleClick}
+              onClick={handleCartClick}
               className="relative flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full hover:text-rose-600 transition"
             >
               <ShoppingCart className="h-5 w-5" />
@@ -247,7 +258,7 @@ const Header = () => {
                       <li>
                         <Link
                           to="/orders"
-                          onClick={handleClick}
+                          onClick={handleOrdersClick}
                           className="flex items-center gap-2 px-4 py-2 hover:text-rose-600"
                         >
                           <History className="h-4 w-4" />

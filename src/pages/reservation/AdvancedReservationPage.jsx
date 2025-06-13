@@ -236,7 +236,7 @@ const AdvancedReservationPage = () => {
     if (role && role !== "Khách hàng") {
       Swal.fire({
         icon: "error",
-        title: "Không đủ quyền hạn",
+        title: "Trang không dành cho quản trị viên",
         text: "Chỉ khách hàng mới có thể đặt bàn.",
         confirmButtonText: "OK",
       });
