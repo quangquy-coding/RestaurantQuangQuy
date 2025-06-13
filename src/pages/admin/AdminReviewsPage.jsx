@@ -58,7 +58,7 @@ const AdminReviewsPage = () => {
           ? {
               content: review.phanHoiDanhGia,
               date: new Date().toISOString().split("T")[0], // Simulated date
-              staffName: "Quản lý nhà hàng",
+              staffName: "Chủ nhà hàng",
             }
           : null,
         images: review.hinhAnhDanhGia ? [review.hinhAnhDanhGia] : [],
@@ -173,7 +173,7 @@ const AdminReviewsPage = () => {
                 reply: {
                   content: replyText,
                   date: new Date().toISOString().split("T")[0],
-                  staffName: "Quản lý nhà hàng",
+                  staffName: "Chủ nhà hàng",
                 },
               }
             : r

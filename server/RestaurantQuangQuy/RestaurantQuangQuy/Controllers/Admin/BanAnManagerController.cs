@@ -120,17 +120,10 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			int count = _context.Banans.Count() + 1;
 			return $"BA{count:D3}"; // VD: BA001, BA002
 		}
-
 		[HttpPost]
-		public IActionResult CreateBanAn([FromBody] BanAnDTO bananDTO)
+		public async Task<IActionResult> CreateBanAn([FromBody] CreateBanAnDTO bananDTO)
 		{
-			if (bananDTO == null)
-			{
-				return BadRequest("Dữ liệu không hợp lệ.");
-			}
-
-			// Kiểm tra giá trị không được rỗng
-			if (string.IsNullOrWhiteSpace(bananDTO.TenBan))
+			if (bananDTO == null || string.IsNullOrWhiteSpace(bananDTO.TenBan))
 			{
 				return BadRequest("Tên bàn không được để trống.");
 			}
@@ -140,32 +133,54 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				return BadRequest("Số ghế phải lớn hơn 0.");
 			}
 
-			// Danh sách hợp lệ cho ViTri
 			var validViTriValues = new List<string> { "Tầng 1", "Tầng 2", "Tầng 3", "Ngoài trời" };
 			if (!validViTriValues.Contains(bananDTO.ViTri))
 			{
 				return BadRequest("Giá trị 'ViTri' không hợp lệ. Chỉ chấp nhận: Tầng 1, Tầng 2, Tầng 3, Ngoài trời.");
 			}
 
+			if (await _context.Banans.AnyAsync(b => b.TenBan.ToLower() == bananDTO.TenBan.ToLower()))
+			{
+				return BadRequest("Tên bàn đã tồn tại.");
+			}
+
 			try
 			{
-				// Sinh mã bàn tự động
-				string newMaBan = GenerateMaBan();
+				var lastMaBan = await _context.Banans
+					.OrderByDescending(b => b.MaBan)
+					.Select(b => b.MaBan)
+					.FirstOrDefaultAsync();
 
-				var banan = new Models.Banan
+				int nextNumber = 1;
+				if (!string.IsNullOrEmpty(lastMaBan) && lastMaBan.StartsWith("BA") && lastMaBan.Length >= 5)
+				{
+					var numberPart = lastMaBan.Substring(2);
+					if (int.TryParse(numberPart, out int parsedNumber))
+					{
+						nextNumber = parsedNumber + 1;
+					}
+				}
+
+				string newMaBan = $"BA{nextNumber:D3}";
+				while (await _context.Banans.AnyAsync(b => b.MaBan == newMaBan))
+				{
+					nextNumber++;
+					newMaBan = $"BA{nextNumber:D3}";
+				}
+
+				var banan = new Banan
 				{
 					MaBan = newMaBan,
 					TenBan = bananDTO.TenBan,
 					ViTri = bananDTO.ViTri,
 					SoChoNgoi = bananDTO.SoGhe,
-					GhiChu = bananDTO.GhiChu
+					GhiChu = bananDTO.GhiChu ?? ""
 				};
 
 				_context.Banans.Add(banan);
-				_context.SaveChanges();
+				await _context.SaveChangesAsync();
 
-				// Trả về thông tin bàn vừa thêm
-				var result = new
+				var result = new BanAnDTO
 				{
 					MaBan = banan.MaBan,
 					TenBan = banan.TenBan,
@@ -178,26 +193,23 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 			catch (Exception ex)
 			{
-				return StatusCode(StatusCodes.Status500InternalServerError, $"Lỗi hệ thống: {ex.Message}");
+				return StatusCode(StatusCodes.Status500InternalServerError, new { message = "Lỗi hệ thống khi tạo bàn ăn", error = ex.Message });
 			}
 		}
-
 		[HttpPut("{id}")]
-		public IActionResult UpdateBanAn(string id, [FromBody] BanAnDTO bananDTO)
+		public IActionResult UpdateBanAn(string id, [FromBody] UpdateBanAnDTO bananDTO)
 		{
-			if (bananDTO == null)
+			if (bananDTO == null || bananDTO.MaBan != id)
 			{
-				return BadRequest("Dữ liệu không hợp lệ.");
+				return BadRequest("Dữ liệu không hợp lệ hoặc mã bàn không khớp.");
 			}
 
-			// Kiểm tra nếu Bàn ăn có tồn tại không
 			var existingBanAn = _context.Banans.FirstOrDefault(b => b.MaBan == id);
 			if (existingBanAn == null)
 			{
 				return NotFound("Bàn ăn không tồn tại.");
 			}
 
-			// Kiểm tra giá trị không được rỗng
 			if (string.IsNullOrWhiteSpace(bananDTO.TenBan))
 			{
 				return BadRequest("Tên bàn không được để trống.");
@@ -208,7 +220,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				return BadRequest("Số ghế phải lớn hơn 0.");
 			}
 
-			// Danh sách hợp lệ cho ViTri
 			var validViTriValues = new List<string> { "Tầng 1", "Tầng 2", "Tầng 3", "Ngoài trời" };
 			if (!validViTriValues.Contains(bananDTO.ViTri))
 			{
@@ -217,7 +228,6 @@ namespace RestaurantQuangQuy.Controllers.Admin
 
 			try
 			{
-				// Cập nhật thông tin bàn ăn
 				existingBanAn.TenBan = bananDTO.TenBan;
 				existingBanAn.ViTri = bananDTO.ViTri;
 				existingBanAn.SoChoNgoi = bananDTO.SoGhe;
@@ -226,8 +236,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				_context.Banans.Update(existingBanAn);
 				_context.SaveChanges();
 
-				// Trả về dữ liệu bàn ăn đã cập nhật
-				var result = new
+				var result = new BanAnDTO
 				{
 					MaBan = existingBanAn.MaBan,
 					TenBan = existingBanAn.TenBan,

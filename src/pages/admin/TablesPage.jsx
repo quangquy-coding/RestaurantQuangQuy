@@ -1,7 +1,6 @@
-"use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import { useState, useEffect } from "react";
+import { toast } from "react-hot-toast"; // Thêm react-hot-toast
 import {
   Search,
   Plus,
@@ -38,6 +37,8 @@ const TablesPage = () => {
   });
   const [editingTable, setEditingTable] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [formErrors, setFormErrors] = useState({}); // Thêm state cho lỗi
+  const [isSubmitting, setIsSubmitting] = useState(false); // Thêm state cho trạng thái gửi
   const role = localStorage.getItem("role");
   const isAdmin =
     role === "Admin" ||
@@ -62,7 +63,7 @@ const TablesPage = () => {
       setFilteredTables(data);
     } catch (error) {
       console.error("Error fetching tables:", error);
-      alert("Lỗi khi tải danh sách bàn");
+      toast.error("Lỗi khi tải danh sách bàn");
     } finally {
       setLoading(false);
     }
@@ -85,12 +86,23 @@ const TablesPage = () => {
   };
 
   const openCreateModal = () => {
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Chỉ quản trị viên mới được thêm bàn.",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+      });
+      return;
+    }
     setNewTable({
       tenBan: "",
       viTri: "Tầng 1",
       soGhe: 4,
       ghiChu: "",
     });
+    setFormErrors({});
     setIsCreateModalOpen(true);
   };
 
@@ -106,6 +118,7 @@ const TablesPage = () => {
       return;
     }
     setEditingTable({ ...table });
+    setFormErrors({});
     setIsEditModalOpen(true);
   };
 
@@ -124,65 +137,155 @@ const TablesPage = () => {
     setIsDeleteModalOpen(true);
   };
 
-  // Hàm mở modal xem chi tiết bàn
   const openViewModal = (table) => {
     setCurrentTable(table);
     setIsViewModalOpen(true);
   };
 
-  const handleCreateTable = async () => {
-    try {
-      if (!newTable.tenBan) {
-        alert("Vui lòng nhập tên bàn");
-        return;
-      }
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewTable({
+      ...newTable,
+      [name]: name === "soGhe" ? Number.parseInt(value) || 1 : value,
+    });
 
-      if (newTable.soGhe <= 0) {
-        alert("Số ghế phải lớn hơn 0");
-        return;
-      }
-
-      await createTable(newTable);
-      await fetchTables();
-      setIsCreateModalOpen(false);
-      alert("Tạo bàn thành công!");
-    } catch (error) {
-      console.error("Error creating table:", error);
-      alert("Lỗi khi tạo bàn");
+    // Xóa lỗi khi người dùng nhập
+    if (formErrors[name]) {
+      setFormErrors({
+        ...formErrors,
+        [name]: "",
+      });
     }
   };
 
-  const handleUpdateTable = async () => {
+  const handleCreateTable = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    // Validate form
+    const errors = {};
+    if (!newTable.tenBan.trim()) {
+      errors.tenBan = "Tên bàn không được để trống";
+    }
+    if (newTable.soGhe <= 0) {
+      errors.soGhe = "Số ghế phải lớn hơn 0";
+    }
+    if (!locations.includes(newTable.viTri)) {
+      errors.viTri = "Vị trí không hợp lệ";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      if (!editingTable.tenBan) {
-        alert("Vui lòng nhập tên bàn");
-        return;
-      }
+      const data = {
+        tenBan: newTable.tenBan,
+        viTri: newTable.viTri,
+        soGhe: newTable.soGhe,
+        ghiChu: newTable.ghiChu || "",
+      };
 
-      if (editingTable.soGhe <= 0) {
-        alert("Số ghế phải lớn hơn 0");
-        return;
+      await createTable(data);
+      await fetchTables();
+      setIsCreateModalOpen(false);
+      setNewTable({
+        tenBan: "",
+        viTri: "Tầng 1",
+        soGhe: 4,
+        ghiChu: "",
+      });
+      setFormErrors({});
+      toast.success(`Thêm bàn ${newTable.tenBan} thành công!`);
+    } catch (error) {
+      console.error("Error creating table:", error);
+      let errorMessage = "Tên bàn đã bị trùng";
+      if (error.response?.data?.errors) {
+        // Xử lý lỗi validation từ backend
+        const backendErrors = error.response.data.errors;
+        const newErrors = {};
+        Object.keys(backendErrors).forEach((key) => {
+          newErrors[key.toLowerCase()] = backendErrors[key][0];
+        });
+        setFormErrors(newErrors);
+        errorMessage = Object.values(backendErrors)
+          .map((err) => err[0])
+          .join(", ");
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
       }
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-      await updateTable(editingTable.maBan, editingTable);
+  const handleUpdateTable = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
+    const errors = {};
+    if (!editingTable.tenBan.trim()) {
+      errors.tenBan = "Tên bàn không được để trống";
+    }
+    if (editingTable.soGhe <= 0) {
+      errors.soGhe = "Số ghế phải lớn hơn 0";
+    }
+    if (!locations.includes(editingTable.viTri)) {
+      errors.viTri = "Vị trí không hợp lệ";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const data = {
+        maBan: editingTable.maBan,
+        tenBan: editingTable.tenBan,
+        viTri: editingTable.viTri,
+        soGhe: editingTable.soGhe,
+        ghiChu: editingTable.ghiChu || "",
+      };
+
+      await updateTable(editingTable.maBan, data);
       await fetchTables();
       setIsEditModalOpen(false);
-      alert("Cập nhật bàn thành công!");
+      setEditingTable(null);
+      setFormErrors({});
+      toast.success(`Cập nhật bàn ${editingTable.tenBan} thành công!`);
     } catch (error) {
       console.error("Error updating table:", error);
-      alert("Lỗi khi cập nhật bàn");
+      const errorMessage =
+        error.response?.data?.message || "Lỗi khi cập nhật bàn";
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteTable = async () => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+
     try {
       await deleteTable(currentTable.maBan);
       await fetchTables();
       setIsDeleteModalOpen(false);
-      alert("Xóa bàn thành công!");
+      toast.success(`Xóa bàn ${currentTable.tenBan} thành công!`);
     } catch (error) {
       console.error("Error deleting table:", error);
-      alert("Lỗi khi xóa bàn");
+      const errorMessage = error.response?.data?.message || "Lỗi khi xóa bàn";
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -231,19 +334,7 @@ const TablesPage = () => {
 
           <button
             className="flex items-center px-4 py-2 text-white bg-gradient-to-r from-green-500 to-green-600 rounded-lg hover:from-green-600 hover:to-green-700 shadow-md font-semibold"
-            onClick={() => {
-              if (!isAdmin) {
-                Swal.fire({
-                  icon: "warning",
-                  title: "⚠️ Cảnh báo",
-                  text: "Chỉ quản trị viên mới được thêm bàn.",
-                  confirmButtonColor: "#d33",
-                  confirmButtonText: "Tôi đã hiểu",
-                });
-                return;
-              }
-              openCreateModal();
-            }}
+            onClick={openCreateModal}
           >
             <Plus className="w-4 h-4 mr-2" />
             Thêm bàn
@@ -336,90 +427,108 @@ const TablesPage = () => {
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tên bàn
-                </label>
-                <input
-                  type="text"
-                  value={newTable.tenBan}
-                  onChange={(e) =>
-                    setNewTable({ ...newTable, tenBan: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Nhập tên bàn"
-                />
+            <form onSubmit={handleCreateTable}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tên bàn <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="tenBan"
+                    value={newTable.tenBan}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      formErrors.tenBan ? "border-red-500" : "border-gray-300"
+                    }`}
+                    placeholder="Nhập tên bàn"
+                  />
+                  {formErrors.tenBan && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {formErrors.tenBan}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Vị trí
+                  </label>
+                  <select
+                    name="viTri"
+                    value={newTable.viTri}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      formErrors.viTri ? "border-red-500" : "border-gray-300"
+                    }`}
+                  >
+                    {locations.map((location) => (
+                      <option key={location} value={location}>
+                        {location}
+                      </option>
+                    ))}
+                  </select>
+                  {formErrors.viTri && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {formErrors.viTri}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số ghế <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="soGhe"
+                    min="1"
+                    value={newTable.soGhe}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      formErrors.soGhe ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {formErrors.soGhe && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {formErrors.soGhe}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ghi chú
+                  </label>
+                  <textarea
+                    name="ghiChu"
+                    value={newTable.ghiChu}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows="3"
+                    placeholder="Ghi chú (tùy chọn)"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Vị trí
-                </label>
-                <select
-                  value={newTable.viTri}
-                  onChange={(e) =>
-                    setNewTable({ ...newTable, viTri: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
                 >
-                  {locations.map((location) => (
-                    <option key={location} value={location}>
-                      {location}
-                    </option>
-                  ))}
-                </select>
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center disabled:opacity-50"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSubmitting ? "Đang xử lý..." : "Tạo bàn"}
+                </button>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Số ghế
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={newTable.soGhe}
-                  onChange={(e) =>
-                    setNewTable({
-                      ...newTable,
-                      soGhe: Number.parseInt(e.target.value) || 1,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Ghi chú
-                </label>
-                <textarea
-                  value={newTable.ghiChu}
-                  onChange={(e) =>
-                    setNewTable({ ...newTable, ghiChu: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows="3"
-                  placeholder="Ghi chú (tùy chọn)"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setIsCreateModalOpen(false)}
-                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleCreateTable}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Tạo bàn
-              </button>
-            </div>
+            </form>
           </div>
         </div>
       )}
@@ -440,88 +549,126 @@ const TablesPage = () => {
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tên bàn
-                </label>
-                <input
-                  type="text"
-                  value={editingTable.tenBan}
-                  onChange={(e) =>
-                    setEditingTable({ ...editingTable, tenBan: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+            <form onSubmit={handleUpdateTable}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tên bàn <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="tenBan"
+                    value={editingTable.tenBan}
+                    onChange={(e) =>
+                      setEditingTable({
+                        ...editingTable,
+                        tenBan: e.target.value,
+                      })
+                    }
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      formErrors.tenBan ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {formErrors.tenBan && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {formErrors.tenBan}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Vị trí
+                  </label>
+                  <select
+                    name="viTri"
+                    value={editingTable.viTri}
+                    onChange={(e) =>
+                      setEditingTable({
+                        ...editingTable,
+                        viTri: e.target.value,
+                      })
+                    }
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      formErrors.viTri ? "border-red-500" : "border-gray-300"
+                    }`}
+                  >
+                    {locations.map((location) => (
+                      <option key={location} value={location}>
+                        {location}
+                      </option>
+                    ))}
+                  </select>
+                  {formErrors.viTri && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {formErrors.viTri}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số ghế <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="soGhe"
+                    min="1"
+                    value={editingTable.soGhe}
+                    onChange={(e) =>
+                      setEditingTable({
+                        ...editingTable,
+                        soGhe: Number.parseInt(e.target.value) || 1,
+                      })
+                    }
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      formErrors.soGhe ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {formErrors.soGhe && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {formErrors.soGhe}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ghi chú
+                  </label>
+                  <textarea
+                    name="ghiChu"
+                    value={editingTable.ghiChu || ""}
+                    onChange={(e) =>
+                      setEditingTable({
+                        ...editingTable,
+                        ghiChu: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows="3"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Vị trí
-                </label>
-                <select
-                  value={editingTable.viTri}
-                  onChange={(e) =>
-                    setEditingTable({ ...editingTable, viTri: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
                 >
-                  {locations.map((location) => (
-                    <option key={location} value={location}>
-                      {location}
-                    </option>
-                  ))}
-                </select>
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center disabled:opacity-50"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSubmitting ? "Đang xử lý..." : "Cập nhật"}
+                </button>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Số ghế
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  value={editingTable.soGhe}
-                  onChange={(e) =>
-                    setEditingTable({
-                      ...editingTable,
-                      soGhe: Number.parseInt(e.target.value) || 1,
-                    })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Ghi chú
-                </label>
-                <textarea
-                  value={editingTable.ghiChu || ""}
-                  onChange={(e) =>
-                    setEditingTable({ ...editingTable, ghiChu: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows="3"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleUpdateTable}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Cập nhật
-              </button>
-            </div>
+            </form>
           </div>
         </div>
       )}
@@ -545,9 +692,10 @@ const TablesPage = () => {
               <button
                 onClick={handleDeleteTable}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center"
+                disabled={isSubmitting}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Xóa bàn
+                {isSubmitting ? "Đang xử lý..." : "Xóa bàn"}
               </button>
             </div>
           </div>
