@@ -61,6 +61,7 @@ const OrdersPage = () => {
     tableIds: [],
     tableNumber: "",
     status: "pending",
+    foodStatus: "pending",
     paymentMethod: "cash",
     items: [],
     total: 0,
@@ -549,7 +550,6 @@ const OrdersPage = () => {
       alert("Vui lòng chọn món ăn");
       return;
     }
-
     const menuItem = menuItems.find(
       (item) => item.id.toString() === selectedMenuItem
     );
@@ -557,42 +557,44 @@ const OrdersPage = () => {
       alert("Không tìm thấy món ăn");
       return;
     }
-
     if (!menuItem.isAvailable) {
       alert("Món ăn này hiện không có sẵn");
       return;
     }
-
-    const quantity = Number.parseInt(selectedMenuItemQuantity) || 1;
-
-    const existingItemIndex = orderObj.items.findIndex(
-      (item) => item.id.toString() === selectedMenuItem
-    );
-
-    let updatedItems;
-    if (existingItemIndex >= 0) {
-      updatedItems = [...orderObj.items];
-      updatedItems[existingItemIndex].quantity += quantity;
-    } else {
-      updatedItems = [
-        ...orderObj.items,
-        {
-          id: menuItem.id,
-          name: menuItem.name,
-          price: menuItem.price,
-          quantity: quantity,
-        },
-      ];
-    }
-
-    setOrderObj({
-      ...orderObj,
-      items: updatedItems,
+    setOrderObj((prev) => {
+      const existingItem = prev.items.find(
+        (item) => item.menuItemId === menuItem.id
+      );
+      if (existingItem) {
+        return {
+          ...prev,
+          items: prev.items.map((item) =>
+            item.menuItemId === menuItem.id
+              ? { ...item, quantity: item.quantity + selectedMenuItemQuantity }
+              : item
+          ),
+        };
+      }
+      return {
+        ...prev,
+        items: [
+          ...prev.items,
+          {
+            menuItemId: menuItem.id,
+            menuItemName: menuItem.name,
+            quantity: selectedMenuItemQuantity,
+            price: menuItem.price,
+          },
+        ],
+      };
     });
-
     setSelectedMenuItem("");
     setSelectedMenuItemQuantity(1);
   };
+
+  useEffect(() => {
+    fetchMenuItems();
+  }, []);
 
   const handleRemoveItemFromOrder = (orderObj, setOrderObj, itemId) => {
     const updatedItems = orderObj.items.filter((item) => item.id !== itemId);
@@ -1590,26 +1592,26 @@ const OrdersPage = () => {
                       .map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.name} - {item.price.toLocaleString("vi-VN")} ₫ (
-                          {item.category})
+                          {item.category}, {item.status})
                         </option>
                       ))}
                   </select>
                   <input
                     type="number"
-                    min="1"
                     value={selectedMenuItemQuantity}
                     onChange={(e) =>
-                      setSelectedMenuItemQuantity(e.target.value)
+                      setSelectedMenuItemQuantity(
+                        Math.max(1, parseInt(e.target.value) || 1)
+                      )
                     }
-                    className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min="1"
+                    className="w-20 px-3 py-2 border border-gray-300 rounded-md"
                   />
                   <button
-                    onClick={() =>
-                      handleAddItemToOrder(editingOrder, setEditingOrder)
-                    }
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    onClick={() => handleAddItemToOrder(newOrder, setNewOrder)}
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                   >
-                    Thêm
+                    Thêm món
                   </button>
                 </div>
                 {menuItems.length === 0 && (

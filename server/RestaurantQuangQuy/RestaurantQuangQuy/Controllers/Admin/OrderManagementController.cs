@@ -247,12 +247,15 @@ namespace RestaurantQuangQuy.Controllers.Admin
 		}
 
 		// Lấy menu items
+
 		[HttpGet("menu-items")]
 		public async Task<IActionResult> GetMenuItems()
 		{
 			try
 			{
+				var validStatuses = new[] { "Còn hàng", "Món đặc biệt", "Món mới" };
 				var menuItems = await _context.Monans
+					.Where(m => validStatuses.Contains(m.TinhTrang))
 					.Select(m => new
 					{
 						id = m.MaMon,
@@ -260,13 +263,13 @@ namespace RestaurantQuangQuy.Controllers.Admin
 						price = m.Gia,
 						description = m.MoTa ?? "",
 						image = m.HinhAnh ?? "",
-						status = m.TinhTrang ?? "Còn",
+						status = m.TinhTrang ?? "Còn hàng",
 						category = _context.Danhmucs
 							.Where(d => d.MaDanhMuc == m.MaDanhMuc)
 							.Select(d => d.TenDanhMuc)
 							.FirstOrDefault() ?? "Khác",
 						categoryId = m.MaDanhMuc,
-						isAvailable = m.TinhTrang == "Còn"
+						isAvailable = validStatuses.Contains(m.TinhTrang)
 					})
 					.OrderBy(m => m.category)
 					.ThenBy(m => m.name)
@@ -276,7 +279,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 			catch (Exception ex)
 			{
-				return BadRequest(new { message = "Lỗi khi lấy menu", error = ex.Message });
+				return BadRequest(new { message = "Lỗi khi lấy danh sách món ăn", error = ex.Message });
 			}
 		}
 
