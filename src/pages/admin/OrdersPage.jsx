@@ -1,4 +1,3 @@
-"use client";
 import React from "react";
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
@@ -39,6 +38,7 @@ import {
 } from "../../api/orderApi";
 
 const OrdersPage = () => {
+  // State declarations
   const [orders, setOrders] = useState([]);
   const [tables, setTables] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
@@ -58,6 +58,7 @@ const OrdersPage = () => {
     customerName: "",
     customerPhone: "",
     customerEmail: "",
+    orderDate: new Date().toISOString().slice(0, 10),
     tableIds: [],
     tableNumber: "",
     status: "pending",
@@ -65,8 +66,10 @@ const OrdersPage = () => {
     paymentMethod: "cash",
     items: [],
     total: 0,
-    orderDate: new Date().toISOString(),
-    arrivalTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour later
+    discount: 0, // Added for discount
+    deposit: 0, // Added for deposit
+    remaining: 0, // Added for remaining
+    arrivalTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
     guestCount: 2,
     notes: "",
   });
@@ -74,7 +77,28 @@ const OrdersPage = () => {
   const [selectedMenuItemQuantity, setSelectedMenuItemQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [menuLoading, setMenuLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(10);
 
+  // Pagination logic
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = filteredOrders.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder
+  );
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+
+  // Pagination handlers
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const prevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+  const nextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  // Fetch data
   useEffect(() => {
     fetchData();
   }, []);
@@ -87,10 +111,8 @@ const OrdersPage = () => {
     try {
       setLoading(true);
       const [ordersData] = await Promise.all([getAllOrders()]);
-
       setOrders(ordersData);
       setFilteredOrders(ordersData);
-
       await fetchMenuItems();
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -108,7 +130,7 @@ const OrdersPage = () => {
       setMenuItems(menuData);
     } catch (error) {
       console.error("Error fetching menu items:", error);
-      alert("Lỗi khi tải menu");
+      alert("Lỗi khi tải danh sách món ăn");
     } finally {
       setMenuLoading(false);
     }
@@ -161,6 +183,7 @@ const OrdersPage = () => {
     }
 
     setFilteredOrders(filtered);
+    setCurrentPage(1);
   };
 
   const openViewModal = (order) => {
@@ -170,6 +193,7 @@ const OrdersPage = () => {
   };
 
   const openEditModal = (order) => {
+    console.log("Opening Edit Modal with order:", order);
     setEditingOrder({
       ...order,
       tableIds:
@@ -179,6 +203,21 @@ const OrdersPage = () => {
           ? order.tables.map((t) => t.maBan).filter(Boolean)
           : [],
       guestCount: order.guestCount || order.bookingInfo?.soLuongKhach || 1,
+      items: order.items.map((item) => ({
+        id: item.id,
+        menuItemId: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      total:
+        order.total ||
+        order.items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      discount: order.discount || 0, // Added for discount
+      deposit: order.deposit || 0, // Added for deposit
+      remaining:
+        order.remaining ||
+        order.total - (order.discount || 0) - (order.deposit || 0), // Added for remaining
     });
     fetchAvailableTables(order.orderDate);
     setIsEditModalOpen(true);
@@ -195,6 +234,9 @@ const OrdersPage = () => {
       paymentMethod: "cash",
       items: [],
       total: 0,
+      discount: 0, // Added for discount
+      deposit: 0, // Added for deposit
+      remaining: 0, // Added for remaining
       orderDate: new Date().toISOString(),
       arrivalTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       guestCount: 2,
@@ -426,6 +468,8 @@ const OrdersPage = () => {
         PaymentMethod: editingOrder.paymentMethod,
         Notes: editingOrder.ghiChu || editingOrder.bookingInfo?.ghiChu || "",
         Guest: editingOrder.guestCount,
+        Discount: editingOrder.discount, // Added for discount
+        Deposit: editingOrder.deposit, // Added for deposit
         Items: editingOrder.items.map((item) => ({
           Id: item.id,
           Name: item.name,
@@ -464,6 +508,8 @@ const OrdersPage = () => {
         guestCount: newOrder.guestCount,
         paymentMethod: newOrder.paymentMethod,
         notes: newOrder.notes || "",
+        discount: newOrder.discount, // Added for discount
+        deposit: newOrder.deposit, // Added for deposit
         items: newOrder.items.map((item) => ({
           id: item.id.toString(),
           name: item.name,
@@ -546,48 +592,68 @@ const OrdersPage = () => {
   };
 
   const handleAddItemToOrder = (orderObj, setOrderObj) => {
+    console.log(
+      "handleAddItemToOrder called with selectedMenuItem:",
+      selectedMenuItem
+    );
+    console.log("Current menuItems:", menuItems);
+
     if (!selectedMenuItem) {
       alert("Vui lòng chọn món ăn");
       return;
     }
-    const menuItem = menuItems.find(
-      (item) => item.id.toString() === selectedMenuItem
-    );
+
+    const menuItem = menuItems.find((item) => item.id === selectedMenuItem);
     if (!menuItem) {
+      console.error("Menu item not found for ID:", selectedMenuItem);
       alert("Không tìm thấy món ăn");
       return;
     }
-    if (!menuItem.isAvailable) {
-      alert("Món ăn này hiện không có sẵn");
-      return;
-    }
+
     setOrderObj((prev) => {
+      console.log("Current items before update:", prev.items);
       const existingItem = prev.items.find(
         (item) => item.menuItemId === menuItem.id
       );
+      let updatedItems;
+
       if (existingItem) {
-        return {
-          ...prev,
-          items: prev.items.map((item) =>
-            item.menuItemId === menuItem.id
-              ? { ...item, quantity: item.quantity + selectedMenuItemQuantity }
-              : item
-          ),
+        updatedItems = prev.items.map((item) =>
+          item.menuItemId === menuItem.id
+            ? {
+                ...item,
+                quantity: item.quantity + Number(selectedMenuItemQuantity),
+              }
+            : item
+        );
+      } else {
+        const newItem = {
+          id: menuItem.id,
+          menuItemId: menuItem.id,
+          name: menuItem.name,
+          quantity: Number(selectedMenuItemQuantity),
+          price: menuItem.price,
         };
+        console.log("Adding new item:", newItem);
+        updatedItems = [...prev.items, newItem];
       }
+
+      const newTotal = updatedItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
+      const newRemaining = newTotal - prev.discount - prev.deposit; // Calculate remaining
+      console.log("Updated items:", updatedItems);
+      console.log("New total:", newTotal);
+
       return {
         ...prev,
-        items: [
-          ...prev.items,
-          {
-            menuItemId: menuItem.id,
-            menuItemName: menuItem.name,
-            quantity: selectedMenuItemQuantity,
-            price: menuItem.price,
-          },
-        ],
+        items: updatedItems,
+        total: newTotal,
+        remaining: newRemaining, // Update remaining
       };
     });
+
     setSelectedMenuItem("");
     setSelectedMenuItemQuantity(1);
   };
@@ -596,12 +662,31 @@ const OrdersPage = () => {
     fetchMenuItems();
   }, []);
 
-  const handleRemoveItemFromOrder = (orderObj, setOrderObj, itemId) => {
-    const updatedItems = orderObj.items.filter((item) => item.id !== itemId);
+  const handleRemoveItemFromOrder = (orderObj, setOrderObj, menuItemId) => {
+    console.log(
+      "handleRemoveItemFromOrder called with menuItemId:",
+      menuItemId
+    );
+    console.log("Current items before removal:", orderObj.items);
 
-    setOrderObj({
-      ...orderObj,
-      items: updatedItems,
+    setOrderObj((prev) => {
+      const updatedItems = prev.items.filter(
+        (item) => item.menuItemId !== menuItemId
+      );
+      const newTotal = updatedItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
+      const newRemaining = newTotal - prev.discount - prev.deposit; // Calculate remaining
+      console.log("Items after removal:", updatedItems);
+      console.log("New total:", newTotal);
+
+      return {
+        ...prev,
+        items: updatedItems,
+        total: newTotal,
+        remaining: newRemaining, // Update remaining
+      };
     });
   };
 
@@ -783,7 +868,7 @@ const OrdersPage = () => {
                   Thời gian
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trạng thái
+                  Trạng thái thanh toán
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Tổng tiền
@@ -794,7 +879,7 @@ const OrdersPage = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredOrders.map((order) => (
+              {currentOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {order.id}
@@ -808,14 +893,9 @@ const OrdersPage = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div>
                       <div className="font-medium">{order.customerName}</div>
-                      {order.customerPhone && (
-                        <div className="text-xs text-gray-400">
-                          {order.customerPhone}
-                        </div>
-                      )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-3 py-2 whitespace-normal text-sm text-gray-500 break-words">
                     {order.tables && order.tables.length > 0 ? (
                       order.tables.map((table) => table.tenBan).join(", ")
                     ) : (
@@ -827,20 +907,14 @@ const OrdersPage = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div>
                       <div>Đặt: {formatDate(order.orderDate)}</div>
-                      {order.paymentDate && (
-                        <div className="text-xs text-gray-400">
-                          TT: {formatDate(order.paymentDate)}
-                        </div>
-                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="space-y-1">
-                      {getStatusBadge(order.status)}
-                      {getStatusBadgeOrderFood(order.orderInfo?.trangThai)}
+                      {getStatusBadgeOrderFood(order.status)}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right text-center">
                     <div>
                       <div className="font-medium">
                         {order.total.toLocaleString("vi-VN")} ₫
@@ -905,6 +979,54 @@ const OrdersPage = () => {
             </tbody>
           </table>
         </div>
+        {filteredOrders.length > ordersPerPage && (
+          <div className="p-4 border-t flex justify-between items-center">
+            <div className="text-sm text-gray-600">
+              Hiển thị {indexOfFirstOrder + 1} đến{" "}
+              {Math.min(indexOfLastOrder, filteredOrders.length)} của{" "}
+              {filteredOrders.length} đơn hàng
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={prevPage}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded-md ${
+                  currentPage === 1
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
+              >
+                Trước
+              </button>
+              {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+                (page) => (
+                  <button
+                    key={page}
+                    onClick={() => paginate(page)}
+                    className={`px-3 py-1 rounded-md ${
+                      currentPage === page
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              )}
+              <button
+                onClick={nextPage}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1 rounded-md ${
+                  currentPage === totalPages
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
+              >
+                Sau
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* View Order Modal */}
@@ -1077,77 +1199,77 @@ const OrdersPage = () => {
                       </div>
                     )}
                     {currentOrder.customerEmail && (
-                      <div className="flex items-center mb-2">
-                        <span className="font-medium mr-2">Email:</span>
+                      <div className="flex items-center mb-3">
+                        <span className="font-medium mr-3">Email:</span>
                         <span>{currentOrder.customerEmail}</span>
                       </div>
                     )}
-                    <div className="flex items-center mb-2">
-                      <span className="font-medium mr-2">
+                    <div className="flex items-center mb-3">
+                      <span className="font-medium mr-3">
                         Phương thức thanh toán:
                       </span>
                       <span>
                         {getPaymentMethodText(currentOrder.paymentMethod)}
                       </span>
                     </div>
-                    <div className="flex items-center mb-2">
-                      <CreditCard className="h-4 w-4 text-gray-400 mr-2" />
+                    <div className="flex items-center justify-between mb-6">
                       <span className="font-medium">
-                        Tổng: {currentOrder.total.toLocaleString("vi-VN")} ₫
+                        Tổng: {currentOrder.total.toLocaleString("vi-VN")} VND
                       </span>
+                      <CreditCard className="h-4 w-4 text-gray-600 mr-2" />
                     </div>
-                    <div className="flex items-center mb-2">
-                      <span className="font-medium mr-2">Tiền cọc:</span>
+                    <div className="flex items-center mb-3">
+                      <span className="font-medium mr-3">Tiền cọc:</span>
                       <span>
-                        {currentOrder.deposit.toLocaleString("vi-VN")} ₫
+                        {currentOrder.deposit.toLocaleString("vi-VN")} VND
                       </span>
                     </div>
                     <div className="flex items-center">
-                      <span className="font-medium mr-2">Còn lại:</span>
+                      <span className="font-medium mr-3">Còn lại:</span>
                       <span>
-                        {currentOrder.remaining.toLocaleString("vi-VN")} ₫
+                        {currentOrder.remaining.toLocaleString("vi-VN")} VND
                       </span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <h3 className="text-sm font-medium text-gray-500 mb-2">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">
                 Các món đã đặt
               </h3>
-              <div className="bg-gray-50 rounded-md overflow-hidden mb-6">
+              <div className="bg-gray-50 rounded-lg overflow-hidden mb-6">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 font-semibold uppercase tracking-wider">
                         Món ăn
                       </th>
-                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
                         Số lượng
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Đơn giá
+                      <th className="px-6 py-3 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Đơn giá trị
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Thành tiền
+                      <th className="px-6 py-3 text-right font-semibold text-xs text-gray-700 uppercase tracking-wider">
+                        Thành phần tiền
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-gray-100">
                     {currentOrder.items.map((item) => (
                       <tr key={item.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">
                           {item.name}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-center">
                           {item.quantity}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                          {item.price.toLocaleString("vi-VN")} ₫
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 text-right">
+                          {item.price.toLocaleString("vi-VN")} VND
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-semibold text-right">
                           {(item.price * item.quantity).toLocaleString("vi-VN")}{" "}
-                          ₫
+                          VND
                         </td>
                       </tr>
                     ))}
@@ -1156,36 +1278,36 @@ const OrdersPage = () => {
                     <tr>
                       <td
                         colSpan="3"
-                        className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
+                        className="px-6 py-4 text-sm font-semibold text-gray-800 text-right"
                       >
                         Tạm tính:
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                        {currentOrder.total.toLocaleString("vi-VN")} ₫
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-bold text-right">
+                        {currentOrder.total.toLocaleString("vi-VN")} VND
                       </td>
                     </tr>
                     {currentOrder.discount > 0 && (
                       <tr>
                         <td
                           colSpan="3"
-                          className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
+                          className="px-6 py-4 text-sm font-semibold text-gray-800 text-right"
                         >
                           Giảm giá:
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 text-right">
-                          -{currentOrder.discount.toLocaleString("vi-VN")} ₫
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-700 font-bold text-right">
+                          -{currentOrder.discount.toLocaleString("vi-VN")} VND
                         </td>
                       </tr>
                     )}
                     <tr>
                       <td
                         colSpan="3"
-                        className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
+                        className="px-6 py-4 text-sm font-semibold text-gray-800 text-right"
                       >
                         Tiền cọc:
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 text-right">
-                        {currentOrder.deposit.toLocaleString("vi-VN")} ₫
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-700 font-semibold text-right">
+                        {currentOrder.deposit.toLocaleString("vi-VN")} VND
                       </td>
                     </tr>
                     <tr>
@@ -1195,8 +1317,8 @@ const OrdersPage = () => {
                       >
                         Còn lại:
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-orange-600 text-right">
-                        {currentOrder.remaining.toLocaleString("vi-VN")} ₫
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-orange-700 text-right">
+                        {currentOrder.remaining.toLocaleString("vi-VN")} VND
                       </td>
                     </tr>
                   </tfoot>
@@ -1483,7 +1605,7 @@ const OrdersPage = () => {
                               })
                             }
                           >
-                            &times;
+                            ×
                           </button>
                         </span>
                       );
@@ -1554,8 +1676,51 @@ const OrdersPage = () => {
                     <option value="vnpay">VNPay</option>
                   </select>
                 </div>
-              </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Giảm giá (₫)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editingOrder.discount}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        discount: Number(e.target.value) || 0,
+                        remaining:
+                          editingOrder.total -
+                          (Number(e.target.value) || 0) -
+                          editingOrder.deposit,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tiền cọc (₫)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={editingOrder.deposit}
+                    onChange={(e) =>
+                      setEditingOrder({
+                        ...editingOrder,
+                        deposit: Number(e.target.value) || 0,
+                        remaining:
+                          editingOrder.total -
+                          editingOrder.discount -
+                          (Number(e.target.value) || 0),
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Ghi chú
@@ -1575,7 +1740,6 @@ const OrdersPage = () => {
                   placeholder="Nhập ghi chú (nếu có)"
                 />
               </div>
-
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Thêm món
@@ -1585,6 +1749,7 @@ const OrdersPage = () => {
                     value={selectedMenuItem}
                     onChange={(e) => setSelectedMenuItem(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={menuLoading}
                   >
                     <option value="">-- Chọn món --</option>
                     {menuItems
@@ -1608,7 +1773,9 @@ const OrdersPage = () => {
                     className="w-20 px-3 py-2 border border-gray-300 rounded-md"
                   />
                   <button
-                    onClick={() => handleAddItemToOrder(newOrder, setNewOrder)}
+                    onClick={() =>
+                      handleAddItemToOrder(editingOrder, setEditingOrder)
+                    }
                     className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                   >
                     Thêm món
@@ -1620,7 +1787,6 @@ const OrdersPage = () => {
                   </p>
                 )}
               </div>
-
               <h3 className="text-sm font-medium text-gray-700 mb-2">
                 Các món đã đặt
               </h3>
@@ -1666,9 +1832,18 @@ const OrdersPage = () => {
                                     }
                                   : i
                               );
+                              const newTotal = updatedItems.reduce(
+                                (sum, i) => sum + i.price * i.quantity,
+                                0
+                              );
                               setEditingOrder({
                                 ...editingOrder,
                                 items: updatedItems,
+                                total: newTotal,
+                                remaining:
+                                  newTotal -
+                                  editingOrder.discount -
+                                  editingOrder.deposit,
                               });
                             }}
                             className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center"
@@ -1704,16 +1879,48 @@ const OrdersPage = () => {
                         colSpan="3"
                         className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
                       >
-                        Tổng cộng:
+                        Tạm tính:
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                        {editingOrder.items
-                          .reduce(
-                            (sum, item) => sum + item.price * item.quantity,
-                            0
-                          )
-                          .toLocaleString("vi-VN")}{" "}
-                        ₫
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {editingOrder.total.toLocaleString("vi-VN")} ₫
+                      </td>
+                      <td></td>
+                    </tr>
+                    {editingOrder.discount > 0 && (
+                      <tr>
+                        <td
+                          colSpan="3"
+                          className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
+                        >
+                          Giảm giá:
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 text-right">
+                          -{editingOrder.discount.toLocaleString("vi-VN")} ₫
+                        </td>
+                        <td></td>
+                      </tr>
+                    )}
+                    <tr>
+                      <td
+                        colSpan="3"
+                        className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
+                      >
+                        Tiền cọc:
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 text-right">
+                        {editingOrder.deposit.toLocaleString("vi-VN")} ₫
+                      </td>
+                      <td></td>
+                    </tr>
+                    <tr>
+                      <td
+                        colSpan="3"
+                        className="px-6 py-4 text-sm font-bold text-gray-900 text-right"
+                      >
+                        Còn lại:
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-orange-600 text-right">
+                        {editingOrder.remaining.toLocaleString("vi-VN")} ₫
                       </td>
                       <td></td>
                     </tr>
@@ -1822,34 +2029,6 @@ const OrdersPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ngày giờ đặt món
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={newOrder.orderDate.slice(0, 16)}
-                    onChange={(e) =>
-                      setNewOrder({ ...newOrder, orderDate: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Ngày giờ đến bàn
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={newOrder.arrivalTime.slice(0, 16)}
-                    onChange={(e) =>
-                      setNewOrder({ ...newOrder, arrivalTime: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Chọn bàn
                   </label>
                   <div className="flex gap-2">
@@ -1879,7 +2058,10 @@ const OrdersPage = () => {
                         ) {
                           setNewOrder({
                             ...newOrder,
-                            tableIds: [...newOrder.tableIds, selectedTableId],
+                            tableIds: [
+                              ...newOrder.tableIds,
+                              String(selectedTableId),
+                            ].filter(Boolean),
                           });
                           setSelectedTableId("");
                         }
@@ -1911,12 +2093,40 @@ const OrdersPage = () => {
                               })
                             }
                           >
-                            &times;
+                            ×
                           </button>
                         </span>
                       );
                     })}
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ngày giờ đặt hàng
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={newOrder.orderDate.slice(0, 16)}
+                    onChange={(e) =>
+                      setNewOrder({ ...newOrder, orderDate: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ngày giờ đến
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={newOrder.arrivalTime.slice(0, 16)}
+                    onChange={(e) =>
+                      setNewOrder({ ...newOrder, arrivalTime: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
 
                 <div>
@@ -1934,8 +2144,52 @@ const OrdersPage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cash">Tiền mặt</option>
-                    <option value="VNPay">VNPay</option>
+                    <option value="vnpay">VNPay</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Giảm giá (₫)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={newOrder.discount}
+                    onChange={(e) =>
+                      setNewOrder({
+                        ...newOrder,
+                        discount: Number(e.target.value) || 0,
+                        remaining:
+                          newOrder.total -
+                          (Number(e.target.value) || 0) -
+                          newOrder.deposit,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tiền cọc (₫)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={newOrder.deposit}
+                    onChange={(e) =>
+                      setNewOrder({
+                        ...newOrder,
+                        deposit: Number(e.target.value) || 0,
+                        remaining:
+                          newOrder.total -
+                          newOrder.discount -
+                          (Number(e.target.value) || 0),
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
               </div>
 
@@ -1963,6 +2217,7 @@ const OrdersPage = () => {
                     value={selectedMenuItem}
                     onChange={(e) => setSelectedMenuItem(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={menuLoading}
                   >
                     <option value="">-- Chọn món --</option>
                     {menuItems
@@ -1970,24 +2225,26 @@ const OrdersPage = () => {
                       .map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.name} - {item.price.toLocaleString("vi-VN")} ₫ (
-                          {item.category})
+                          {item.category}, {item.status})
                         </option>
                       ))}
                   </select>
                   <input
                     type="number"
-                    min="1"
                     value={selectedMenuItemQuantity}
                     onChange={(e) =>
-                      setSelectedMenuItemQuantity(e.target.value)
+                      setSelectedMenuItemQuantity(
+                        Math.max(1, parseInt(e.target.value) || 1)
+                      )
                     }
-                    className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    min="1"
+                    className="w-20 px-3 py-2 border border-gray-300 rounded-md"
                   />
                   <button
                     onClick={() => handleAddItemToOrder(newOrder, setNewOrder)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                   >
-                    Thêm
+                    Thêm món
                   </button>
                 </div>
                 {menuItems.length === 0 && (
@@ -1997,112 +2254,146 @@ const OrdersPage = () => {
                 )}
               </div>
 
-              {newOrder.items.length > 0 && (
-                <>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">
-                    Các món đã đặt
-                  </h3>
-                  <div className="bg-gray-50 rounded-md overflow-hidden mb-6">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Món ăn
-                          </th>
-                          <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Số lượng
-                          </th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Đơn giá
-                          </th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Thành tiền
-                          </th>
-                          <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Thao tác
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {newOrder.items.map((item) => (
-                          <tr key={item.id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                              {item.name}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                              <input
-                                type="number"
-                                min="1"
-                                value={item.quantity}
-                                onChange={(e) => {
-                                  const updatedItems = newOrder.items.map((i) =>
-                                    i.id === item.id
-                                      ? {
-                                          ...i,
-                                          quantity:
-                                            Number.parseInt(e.target.value) ||
-                                            1,
-                                        }
-                                      : i
-                                  );
-                                  setNewOrder({
-                                    ...newOrder,
-                                    items: updatedItems,
-                                  });
-                                }}
-                                className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center"
-                              />
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                              {item.price.toLocaleString("vi-VN")} ₫
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                              {(item.price * item.quantity).toLocaleString(
-                                "vi-VN"
-                              )}{" "}
-                              ₫
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-center">
-                              <button
-                                onClick={() =>
-                                  handleRemoveItemFromOrder(
-                                    newOrder,
-                                    setNewOrder,
-                                    item.id
-                                  )
-                                }
-                                className="text-red-600 hover:text-red-900"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot className="bg-gray-50">
-                        <tr>
-                          <td
-                            colSpan="3"
-                            className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
-                          >
-                            Tổng cộng:
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                            {newOrder.items
-                              .reduce(
-                                (sum, item) => sum + item.price * item.quantity,
+              <h3 className="text-sm font-medium text-gray-700 mb-2">
+                Các món đã đặt
+              </h3>
+              <div className="bg-gray-50 rounded-md overflow-hidden mb-6">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Món ăn
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Số lượng
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Đơn giá
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Thành tiền
+                      </th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Thao tác
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {newOrder.items.map((item) => (
+                      <tr key={item.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {item.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+                          <input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => {
+                              const updatedItems = newOrder.items.map((i) =>
+                                i.id === item.id
+                                  ? {
+                                      ...i,
+                                      quantity:
+                                        Number.parseInt(e.target.value) || 1,
+                                    }
+                                  : i
+                              );
+                              const newTotal = updatedItems.reduce(
+                                (sum, i) => sum + i.price * i.quantity,
                                 0
+                              );
+                              setNewOrder({
+                                ...newOrder,
+                                items: updatedItems,
+                                total: newTotal,
+                                remaining:
+                                  newTotal -
+                                  newOrder.discount -
+                                  newOrder.deposit,
+                              });
+                            }}
+                            className="w-16 px-2 py-1 border border-gray-300 rounded-md text-center"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                          {item.price.toLocaleString("vi-VN")} ₫
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                          {(item.price * item.quantity).toLocaleString("vi-VN")}{" "}
+                          ₫
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <button
+                            onClick={() =>
+                              handleRemoveItemFromOrder(
+                                newOrder,
+                                setNewOrder,
+                                item.id
                               )
-                              .toLocaleString("vi-VN")}{" "}
-                            ₫
-                          </td>
-                          <td></td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </>
-              )}
+                            }
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-gray-50">
+                    <tr>
+                      <td
+                        colSpan="3"
+                        className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
+                      >
+                        Tạm tính:
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
+                        {newOrder.total.toLocaleString("vi-VN")} ₫
+                      </td>
+                      <td></td>
+                    </tr>
+                    {newOrder.discount > 0 && (
+                      <tr>
+                        <td
+                          colSpan="3"
+                          className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
+                        >
+                          Giảm giá:
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 text-right">
+                          -{newOrder.discount.toLocaleString("vi-VN")} ₫
+                        </td>
+                        <td></td>
+                      </tr>
+                    )}
+                    <tr>
+                      <td
+                        colSpan="3"
+                        className="px-6 py-4 text-sm font-medium text-gray-900 text-right"
+                      >
+                        Tiền cọc:
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 text-right">
+                        {newOrder.deposit.toLocaleString("vi-VN")} ₫
+                      </td>
+                      <td></td>
+                    </tr>
+                    <tr>
+                      <td
+                        colSpan="3"
+                        className="px-6 py-4 text-sm font-bold text-gray-900 text-right uppercase"
+                      >
+                        Còn lại:
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-orange-600 text-right">
+                        {newOrder.remaining.toLocaleString("vi-VN")} ₫
+                      </td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
 
             <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
@@ -2114,61 +2405,10 @@ const OrdersPage = () => {
               </button>
               <button
                 onClick={handleCreateOrder}
-                disabled={!newOrder.customerName || newOrder.items.length === 0}
-                className={`px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center ${
-                  !newOrder.customerName || newOrder.items.length === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Save className="h-4 w-4 mr-2" />
                 Tạo đơn hàng
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Order Confirmation Modal */}
-      {isDeleteModalOpen && currentOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">Xác nhận xóa</h2>
-            <p className="mb-6">
-              Bạn có chắc chắn muốn xóa đơn hàng{" "}
-              <span className="font-semibold">{currentOrder.id}</span> của khách
-              hàng{" "}
-              <span className="font-semibold">{currentOrder.customerName}</span>
-              ?
-            </p>
-            {currentOrder.status === "completed" && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                <div className="flex items-center">
-                  <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
-                  <span className="text-red-800 text-sm font-medium">
-                    Không thể xóa đơn hàng đã hoàn thành thanh toán
-                  </span>
-                </div>
-              </div>
-            )}
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setIsDeleteModalOpen(false)}
-                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleDeleteOrder}
-                disabled={currentOrder.status === "completed"}
-                className={`px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center ${
-                  currentOrder.status === "completed"
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Xóa đơn hàng
               </button>
             </div>
           </div>
