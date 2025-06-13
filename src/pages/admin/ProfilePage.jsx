@@ -795,11 +795,9 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-16">
+    <div className="min-h-screen bg-gray-50 pt-8 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-10 tracking-tight text-center">
-          Hồ sơ cá nhân
-        </h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Hồ sơ cá nhân</h1>
 
         {successMessage && (
           <div className="mb-8 p-6 bg-gradient-to-r from-green-50 to-green-100 text-green-800 rounded-2xl flex items-center shadow-lg animate-fade-in">
