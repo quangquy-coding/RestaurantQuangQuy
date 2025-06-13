@@ -4,7 +4,8 @@ import SidebarMenuItem from "./SidebarMenuItem";
 import { useLocation } from "react-router-dom";
 
 const SidebarMenu = () => {
-  const { isMobile, toggleSidebar } = useSidebar();
+  const { isMobile, toggleSidebar, isCollapsed } = useSidebar();
+
   const location = useLocation(); // Get current location
 
   const handleItemClick = () => {
@@ -102,19 +103,14 @@ const SidebarMenu = () => {
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
           viewBox="0 0 24 24"
-          stroke="currentColor"
+          fill="currentColor"
+          className="h-6 w-6"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-          />
+          <path d="M4 4h16v2H4V4zm1 4h14v3a7 7 0 11-14 0V8z" />
         </svg>
       ),
+
       to: "/admin/dishes",
     },
     {
@@ -131,10 +127,11 @@ const SidebarMenu = () => {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M4 6h16M4 10h16M4 14h16M4 18h16"
+            d="M4 6h16M4 10h16M6 10v8M18 10v8"
           />
         </svg>
       ),
+
       to: "/admin/tables",
     },
     {
@@ -241,14 +238,14 @@ const SidebarMenu = () => {
 
   return (
     <div className="flex-1 overflow-y-auto py-4 px-3">
-      <ul className="space-y-2">
+      <ul className={isCollapsed ? "space-y-1" : "space-y-2"}>
         {menuItems.map((item) => (
           <li key={item.to}>
             <SidebarMenuItem
               title={item.title}
               icon={item.icon}
               to={item.to}
-              end={item.end || false} // Lấy đúng end từ item
+              end={item.end || false}
               onClick={handleItemClick}
             />
           </li>

@@ -1,21 +1,21 @@
-import { Outlet } from "react-router-dom"
-import Sidebar from "../components/sidebar/Sidebar"
-import { SidebarProvider } from "../contexts/SidebarContext"
-import React from "react"
-import { useSidebar } from "../hooks/useSidebar"
+import { Outlet } from "react-router-dom";
+import Sidebar from "../components/sidebar/Sidebar";
+import { SidebarProvider } from "../contexts/SidebarContext";
+import React from "react";
+import { useSidebar } from "../hooks/useSidebar";
 
 const AdminLayout = () => {
   return (
     <SidebarProvider>
       <AdminLayoutContent />
     </SidebarProvider>
-  )
-}
+  );
+};
 
 const AdminLayoutContent = () => {
-  const { isOpen, isMobile, toggleSidebar } = useSidebar()
+  const { isOpen, isMobile, toggleSidebar } = useSidebar();
 
-  const sidebarWidth = isMobile ? 0 : isOpen ? 256 : 80
+  const sidebarWidth = isMobile ? 0 : isOpen ? 256 : 80;
 
   return (
     <div className="flex h-screen bg-gray-50 relative">
@@ -42,7 +42,7 @@ const AdminLayoutContent = () => {
         </main>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AdminLayout
+export default AdminLayout;
