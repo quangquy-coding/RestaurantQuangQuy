@@ -57,7 +57,7 @@ import AdvancedReservationPage from "./pages/reservation/AdvancedReservationPage
 import BlogPage from "./pages/blog/BlogPage";
 import BlogPostDetailPage from "./pages/blog/BlogPostDetailPage";
 
-import AdminCustomerAnalyticsPage from "./pages/admin/AdminCustomerAnalyticsPage";
+// import AdminCustomerAnalyticsPage from "./pages/admin/AdminCustomerAnalyticsPage";
 import AdminPromotionsPage from "./pages/admin/AdminPromotionsPage";
 import AdminReviewsPage from "./pages/admin/AdminReviewsPage";
 import ProfilePage from "./pages/admin/ProfilePage";
@@ -244,10 +244,10 @@ const router = createBrowserRouter([
         path: "reports",
         element: <ReportsPage />,
       },
-      {
-        path: "customer-analytics",
-        element: <AdminCustomerAnalyticsPage />,
-      },
+      // {
+      //   path: "customer-analytics",
+      //   element: <AdminCustomerAnalyticsPage />,
+      // },
       {
         path: "promotions",
         element: <AdminPromotionsPage />,

@@ -174,26 +174,26 @@ const SidebarMenu = () => {
       ),
       to: "/admin/reports",
     },
-    {
-      title: "Phân tích",
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="h-6 w-6"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M11 5a7 7 0 107 7 7 7 0 00-7-7zm0 0v4m4.293 4.293l4.414 4.414"
-          />
-        </svg>
-      ),
-      to: "/admin/customer-analytics",
-    },
+    // {
+    //   title: "Phân tích",
+    //   icon: (
+    //     <svg
+    //       xmlns="http://www.w3.org/2000/svg"
+    //       className="h-6 w-6"
+    //       fill="none"
+    //       viewBox="0 0 24 24"
+    //       stroke="currentColor"
+    //     >
+    //       <path
+    //         strokeLinecap="round"
+    //         strokeLinejoin="round"
+    //         strokeWidth={2}
+    //         d="M11 5a7 7 0 107 7 7 7 0 00-7-7zm0 0v4m4.293 4.293l4.414 4.414"
+    //       />
+    //     </svg>
+    //   ),
+    //   to: "/admin/customer-analytics",
+    // },
     {
       title: "Quản lý khuyến mãi",
       icon: (

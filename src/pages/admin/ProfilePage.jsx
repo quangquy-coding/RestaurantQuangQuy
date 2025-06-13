@@ -349,13 +349,13 @@ const ProfilePage = () => {
         return (
           <div className="space-y-10 animate-fade-in">
             <div className="flex justify-between items-center">
-              <h2 className="text-xl font-bold text-gray-800">
+              <h2 className="text-lg font-bold text-gray-800">
                 Thông tin cá nhân
               </h2>
               {!isEditing.profile ? (
                 <button
                   onClick={() => handleEdit("profile")}
-                  className="flex items-center px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                  className="flex items-center px-2 py-1 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-100 shadow-md hover:shadow-lg"
                 >
                   <Edit3 className="w-5 h-5 mr-2" />
                   Chỉnh sửa
@@ -687,11 +687,11 @@ const ProfilePage = () => {
         return (
           <div className="space-y-10 animate-fade-in">
             <div className="flex justify-between items-center">
-              <h2 className="text-3xl font-bold text-gray-800">Đổi mật khẩu</h2>
+              <h2 className="text-lg font-bold text-gray-800">Đổi mật khẩu</h2>
               {!isEditing.password ? (
                 <button
                   onClick={() => handleEdit("password")}
-                  className="flex items-center px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                  className="flex items-center px-2 py-1 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-300 shadow-md hover:shadow-md"
                 >
                   <Edit3 className="w-5 h-5 mr-2" />
                   Đổi mật khẩu
@@ -797,7 +797,7 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-10 tracking-tight text-center">
+        <h1 className="text-3xl font-extrabold text-gray-900 mb-10 tracking-tight text-center">
           Hồ sơ cá nhân
         </h1>
 
@@ -882,7 +882,7 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
-      <style jsx>{`
+      {/* <style jsx>{`
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -896,7 +896,7 @@ const ProfilePage = () => {
         .animate-fade-in {
           animation: fadeIn 0.5s ease-out;
         }
-      `}</style>
+      `}</style> */}
     </div>
   );
 };
