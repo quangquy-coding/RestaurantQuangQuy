@@ -191,13 +191,15 @@ const HomePage = () => {
         </div>
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-2xl text-center md:text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 text-shadow-md">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 drop-shadow-lg">
               Trải nghiệm ẩm thực tuyệt vời tại Nhà hàng Quang Quý
             </h1>
-            <p className="text-xl text-white mb-8 text-shadow-sm">
+
+            <p className="text-xl text-white mb-8 drop-shadow-md">
               Khám phá hương vị đặc trưng với các món ăn được chế biến từ nguyên
               liệu tươi ngon nhất
             </p>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
               <Link
                 to="/menu"
