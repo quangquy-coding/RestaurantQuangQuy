@@ -9,40 +9,43 @@ import {
   Clock,
 } from "lucide-react";
 import React from "react";
+import logo from "../../assets/logo.png"; // Adjust the path as necessary
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-b from-gray-700 to-gray-900 text-white pt-12 pb-8 animate-fade-in">
-      <div className="container mx-auto px-4">
-        <div className="grid  gap-8 md:grid-cols-4 md:gap-12">
-          {/* Restaurant Info */}
-          <div className="text-left py-6 md:py-4">
-            <h3 className="text-lg font-extrabold mb-4 text-gray-100 md:text-xl">
-              Nhà hàng Quang Quý
-            </h3>
-            <p className="text-gray-300 mb-6 text-sm leading-relaxed max-w-xs">
+    <footer className="bg-gradient-to-b from-gray-800 to-gray-900 text-white pt-12 pb-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Logo & Info */}
+          <div className="text-center sm:text-left">
+            <div className="flex justify-center sm:justify-start mb-4">
+              <img
+                src={logo}
+                alt="Restaurant Logo"
+                className="h-20 w-20 rounded-full border-4 border-white shadow-lg"
+              />
+            </div>
+            <h3 className="text-2xl font-bold mb-2">Nhà hàng Quang Quý</h3>
+            <p className="text-sm text-gray-300 leading-relaxed">
               Tự hào mang đến trải nghiệm ẩm thực tuyệt vời với không gian sang
               trọng và món ăn đặc sắc.
             </p>
-            <div className="flex space-x-4">
+            <div className="flex justify-center sm:justify-start mt-4 space-x-5">
               <a
                 href="https://www.facebook.com/nqq23/"
-                className="text-gray-400 hover:text-blue-400 transition-all duration-300 transform hover:scale-110"
-                aria-label="Facebook"
+                className="text-gray-400 hover:text-blue-400 transition hover:scale-110"
               >
                 <Facebook size={22} />
               </a>
               <a
                 href="https://www.instagram.com/ng_quang_quy/"
-                className="text-gray-400 hover:text-blue-400 transition-all duration-300 transform hover:scale-110"
-                aria-label="Instagram"
+                className="text-gray-400 hover:text-pink-400 transition hover:scale-110"
               >
                 <Instagram size={22} />
               </a>
               <a
                 href="#"
-                className="text-gray-400 hover:text-blue-400 transition-all duration-300 transform hover:scale-110"
-                aria-label="Twitter"
+                className="text-gray-400 hover:text-sky-400 transition hover:scale-110"
               >
                 <Twitter size={22} />
               </a>
@@ -50,11 +53,9 @@ const Footer = () => {
           </div>
 
           {/* Quick Links */}
-          <div className="text-left py-6 md:py-4">
-            <h3 className="text-lg font-bold mb-4 text-white md:text-xl">
-              Liên kết nhanh
-            </h3>
-            <ul className="space-y-3">
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Liên kết nhanh</h3>
+            <ul className="space-y-2 text-sm">
               {[
                 { to: "/", label: "Trang chủ" },
                 { to: "/reservation", label: "Đặt bàn" },
@@ -67,7 +68,7 @@ const Footer = () => {
                 <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="text-gray-300 hover:text-blue-400 transition-all duration-300 text-sm relative group"
+                    className="text-gray-300 hover:text-blue-400 transition-all duration-300 relative group"
                   >
                     {link.label}
                     <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
@@ -78,31 +79,27 @@ const Footer = () => {
           </div>
 
           {/* Contact Info */}
-          <div className="text-left py-6 md:py-4">
-            <h3 className="text-lg font-bold mb-4 text-white md:text-xl">
-              Thông tin liên hệ
-            </h3>
-            <ul className="space-y-4">
-              <li className="flex items-start">
-                <MapPin className="h-5 w-5 text-blue-400 mr-3 mt-1 animate-pulse" />
-                <span className="text-gray-300 text-sm max-w-[200px]">
-                  106 Phạm Nhữ Tăng, Hòa Khê, Thanh Khê, Đà Nẵng
-                </span>
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Thông tin liên hệ</h3>
+            <ul className="space-y-3 text-sm text-gray-300">
+              <li className="flex items-start gap-3">
+                <MapPin className="text-blue-400 animate-pulse" size={20} />
+                <span>106 Phạm Nhữ Tăng, Hòa Khê, Thanh Khê, Đà Nẵng</span>
               </li>
-              <li className="flex items-center">
-                <Phone className="h-5 w-5 text-blue-400 mr-3 animate-pulse" />
+              <li className="flex items-center gap-3">
+                <Phone className="text-blue-400 animate-pulse" size={20} />
                 <a
                   href="tel:+84382208154"
-                  className="text-gray-300 hover:text-blue-400 transition-all duration-300 text-sm"
+                  className="hover:text-blue-400 transition"
                 >
                   +84 382 208 154
                 </a>
               </li>
-              <li className="flex items-center">
-                <Mail className="h-5 w-5 text-blue-400 mr-3 animate-pulse" />
+              <li className="flex items-center gap-3">
+                <Mail className="text-blue-400 animate-pulse" size={20} />
                 <a
                   href="mailto:quangquy822003@gmail.com"
-                  className="text-gray-300 hover:text-blue-400 transition-all duration-300 text-sm"
+                  className="hover:text-blue-400 transition"
                 >
                   quangquy822003@gmail.com
                 </a>
@@ -111,68 +108,52 @@ const Footer = () => {
           </div>
 
           {/* Opening Hours */}
-          <div className="text-left py-6 md:py-4">
-            <h3 className="text-lg font-bold mb-4 text-white md:text-xl">
-              Giờ mở cửa
-            </h3>
-            <ul className="space-y-4">
-              <li className="flex items-start">
-                <Clock className="h-5 w-5 text-blue-400 mr-3 mt-1 animate-pulse" />
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Giờ mở cửa</h3>
+            <ul className="space-y-3 text-sm text-gray-300">
+              <li className="flex items-start gap-3">
+                <Clock className="text-blue-400 animate-pulse mt-1" size={20} />
                 <div>
-                  <p className="text-gray-300 text-sm">Thứ 2 - Thứ 6</p>
-                  <p className="text-white text-sm font-medium">
-                    10:00 - 22:00
-                  </p>
+                  <p>Thứ 2 - Thứ 6</p>
+                  <p className="text-white font-medium">10:00 - 22:00</p>
                 </div>
               </li>
-              <li className="flex items-start">
-                <Clock className="h-5 w-5 text-blue-400 mr-3 mt-1 animate-pulse" />
+              <li className="flex items-start gap-3">
+                <Clock className="text-blue-400 animate-pulse mt-1" size={20} />
                 <div>
-                  <p className="text-gray-300 text-sm">Thứ 7</p>
-                  <p className="text-white text-sm font-medium">
-                    09:00 - 23:00
-                  </p>
+                  <p>Thứ 7</p>
+                  <p className="text-white font-medium">09:00 - 23:00</p>
                 </div>
               </li>
-              <li className="flex items-start">
-                <Clock className="h-5 w-5 text-blue-400 mr-3 mt-1 animate-pulse" />
+              <li className="flex items-start gap-3">
+                <Clock className="text-blue-400 animate-pulse mt-1" size={20} />
                 <div>
-                  <p className="text-gray-300 text-sm">Chủ nhật</p>
-                  <p className="text-white text-sm font-medium">
-                    09:00 - 22:00
-                  </p>
+                  <p>Chủ nhật</p>
+                  <p className="text-white font-medium">09:00 - 22:00</p>
                 </div>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-gray-700 mt-8 pt-6">
-          <div className="flex justify-between md:items-center w-full gap-4">
-            <p className="text-gray-400 text-sm">
-              © 2025 Nhà hàng Quang Quý. Tất cả quyền được bảo lưu.
-            </p>
-            <ul className="flex gap-6 text-sm">
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-300 hover:text-blue-400 transition-all duration-300 relative group"
-                >
-                  Điều khoản sử dụng
-                  <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  className="text-gray-300 hover:text-blue-400 transition-all duration-300 relative group"
-                >
-                  Chính sách bảo mật
-                  <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
-                </a>
-              </li>
-            </ul>
+        {/* Footer bottom */}
+        <div className="mt-10 border-t border-gray-700 pt-6 text-sm text-gray-400 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p>© 2025 Nhà hàng Quang Quý. Tất cả quyền được bảo lưu.</p>
+          <div className="flex gap-6">
+            <a
+              href="#"
+              className="hover:text-blue-400 transition relative group"
+            >
+              Điều khoản sử dụng
+              <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
+            </a>
+            <a
+              href="#"
+              className="hover:text-blue-400 transition relative group"
+            >
+              Chính sách bảo mật
+              <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
+            </a>
           </div>
         </div>
       </div>
