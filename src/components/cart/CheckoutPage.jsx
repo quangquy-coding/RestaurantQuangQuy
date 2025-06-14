@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Swal from "sweetalert2";
 import axios from "axios";
 import { Clock, CreditCard, Tag, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -95,7 +96,18 @@ const CheckoutPage = () => {
       const maDatBan = localStorage.getItem("maDatBan") || "";
 
       if (!maDatBan) {
-        setError("Vui lòng đặt bàn trước khi thanh toán.");
+        // thông báo bằng sweetalert
+        Swal.fire({
+          icon: "warning",
+          title: "Chưa đặt bàn",
+          text: "Vui lòng đặt bàn trước khi thanh toán.",
+          confirmButtonText: "Đặt bàn ngay",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate("/reservation");
+          }
+        });
+
         // Chuyển hướng trang sau 3 giây
         setTimeout(function () {
           window.location.href = "/reservation";

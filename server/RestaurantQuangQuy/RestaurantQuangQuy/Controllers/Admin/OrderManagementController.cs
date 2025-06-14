@@ -218,7 +218,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				var occupiedTableIds = await _context.Hoadonthanhtoans
 					.Where(h => h.ThoiGianDat >= startTime && h.ThoiGianDat <= endTime &&
 							   (h.TrangThaiThanhToan == "pending" ||
-								h.TrangThaiThanhToan == "processing" ||
+								h.TrangThaiThanhToan == "deposit" ||
 								h.TrangThaiThanhToan == "completed") &&
 							   !string.IsNullOrEmpty(h.MaBanAn))
 					.Select(h => h.MaBanAn)
@@ -424,7 +424,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 					.AnyAsync(h => h.MaBanAn == request.TableId &&
 								  h.ThoiGianDat >= startTime && h.ThoiGianDat <= endTime &&
 								  (h.TrangThaiThanhToan == "pending" ||
-								   h.TrangThaiThanhToan == "processing" ||
+								   h.TrangThaiThanhToan == "deposit" ||
 								   h.TrangThaiThanhToan == "completed") &&
 								  h.MaHoaDon != orderId);
 
@@ -564,8 +564,9 @@ namespace RestaurantQuangQuy.Controllers.Admin
                     SoTienConLai = remaining,
                     TienGiam = request.Discount,
                     PhuongThucThanhToan = paymentVN,
-                    TrangThaiThanhToan = "pending",
-                    MaNhanVien = request.StaffId ?? "NV001",
+					TrangThaiThanhToan = paymentVN == "VNPay" ? "completed" : "pending",
+
+					MaNhanVien = request.StaffId ?? "NV001",
                     GhiChu = request.Notes
                 };
                 _context.Hoadonthanhtoans.Add(hoaDon);
