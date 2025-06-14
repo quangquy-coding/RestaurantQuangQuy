@@ -149,9 +149,20 @@ namespace RestaurantQuangQuy.Controllers
 				decimal tongTienSauGiam = tongTien - tienGiam;
 				decimal soTienCoc = result.Amount;
 				decimal soTienConLai = tongTienSauGiam - soTienCoc;
+				// Trước khi tạo hóa đơn, kiểm tra xem đã tồn tại hóa đơn cho đơn đặt món chưa
+				var existingInvoice = await _dbContext.Hoadonthanhtoans
+					.FirstOrDefaultAsync(h => h.MaDatMon == result.OrderId);
 
+				if (existingInvoice != null)
+				{
+					_logger.LogInformation($"Hóa đơn đã tồn tại cho đơn đặt món {result.OrderId}, không tạo lại.");
+
+					// Cập nhật kết quả để trả về mã hóa đơn đã tồn tại
+					result.OrderId = existingInvoice.MaHoaDon;
+					return;
+				}
 				// Tạo hóa đơn
-				string maHoaDon = "HDMM" + Guid.NewGuid().ToString().Substring(0, 6);
+				string maHoaDon = "HDTT" + Guid.NewGuid().ToString().Substring(0, 6);
 				var hoadon = new Hoadonthanhtoan
 				{
 					MaHoaDon = maHoaDon,
