@@ -80,6 +80,12 @@ const OrdersPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [ordersPerPage] = useState(10);
 
+  function getLocalDateTimeString() {
+    const now = new Date();
+    const offset = now.getTimezoneOffset();
+    const local = new Date(now.getTime() - offset * 60 * 1000);
+    return local.toISOString().slice(0, 16); // yyyy-MM-ddTHH:mm
+  }
   // Pagination logic
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
@@ -2147,8 +2153,9 @@ const OrdersPage = () => {
                     Ngày giờ đặt hàng
                   </label>
                   <input
+                    id="orderDate"
                     type="datetime-local"
-                    value={newOrder.orderDate.slice(0, 16)}
+                    value={getLocalDateTimeString()}
                     onChange={(e) =>
                       setNewOrder({ ...newOrder, orderDate: e.target.value })
                     }
