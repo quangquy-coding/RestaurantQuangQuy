@@ -468,8 +468,8 @@ const OrdersPage = () => {
         PaymentMethod: editingOrder.paymentMethod,
         Notes: editingOrder.ghiChu || editingOrder.bookingInfo?.ghiChu || "",
         Guest: editingOrder.guestCount,
-        Discount: editingOrder.discount, // Added for discount
-        Deposit: editingOrder.deposit, // Added for deposit
+        Discount: editingOrder.discount,
+        Deposit: editingOrder.deposit,
         Items: editingOrder.items.map((item) => ({
           Id: item.id,
           Name: item.name,
@@ -508,8 +508,8 @@ const OrdersPage = () => {
         guestCount: newOrder.guestCount,
         paymentMethod: newOrder.paymentMethod,
         notes: newOrder.notes || "",
-        discount: newOrder.discount, // Added for discount
-        deposit: newOrder.deposit, // Added for deposit
+        discount: newOrder.discount,
+        deposit: newOrder.deposit,
         items: newOrder.items.map((item) => ({
           id: item.id.toString(),
           name: item.name,
