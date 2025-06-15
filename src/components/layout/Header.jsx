@@ -180,11 +180,7 @@ const Header = () => {
   ];
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 font-sans font-medium ${
-        isScrolled ? "bg-black shadow-md py-2" : "bg-transparent py-4"
-      }`}
-    >
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md py-4 transition-all duration-300 font-sans font-medium">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
@@ -226,7 +222,7 @@ const Header = () => {
               onClick={handleCartClick}
               className="relative flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full hover:text-rose-600 transition"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart className="h-5 w-5 text-gray-600" />
               {cartCount > 0 && token && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center font-bold border border-white">
                   {cartCount}
