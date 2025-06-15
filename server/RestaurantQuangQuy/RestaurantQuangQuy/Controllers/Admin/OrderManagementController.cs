@@ -674,6 +674,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
                 if (datBan != null)
                 {
                     datBan.SoLuongKhach = request.Guest;
+					datBan.ThoiGianDen = request.DateComming;
                     datBan.GhiChu = request.Notes;
                     _context.Datbans.Update(datBan);
 
@@ -985,6 +986,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
         public int Guest { get; set; }
         public decimal Discount { get; set; }                      // thêm trường Discount
         public decimal Deposit { get; set; }                      // thêm trường Deposit
+		public DateTime DateComming { get; set; } = DateTime.Now; // thời gian đến bàn
         public List<OrderItemRequest> Items { get; set; } = new();
     }
 

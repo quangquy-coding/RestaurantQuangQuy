@@ -510,6 +510,8 @@ const OrdersPage = () => {
         Guest: editingOrder.guestCount,
         Discount: editingOrder.discount,
         Deposit: editingOrder.deposit,
+        DateComming:
+          editingOrder.bookingInfo?.thoiGianDen || editingOrder.arrivalTime,
         Items: editingOrder.items.map((item) => ({
           Id: item.id,
           Name: item.name,
@@ -548,8 +550,8 @@ const OrdersPage = () => {
         guestCount: newOrder.guestCount,
         paymentMethod: newOrder.paymentMethod,
         notes: newOrder.notes || "",
-        discount: newOrder.discount,
-        deposit: newOrder.deposit,
+        discount: 0,
+        deposit: 0,
         items: newOrder.items.map((item) => ({
           id: item.id.toString(),
           name: item.name,
@@ -799,6 +801,12 @@ const OrdersPage = () => {
       </div>
     );
   }
+
+  const now = new Date();
+  const arrival = currentOrder?.bookingInfo
+    ? new Date(currentOrder.bookingInfo.thoiGianDen)
+    : null;
+  const tooEarly = arrival ? now < arrival : false;
 
   return (
     <div className="p-6">
@@ -1440,56 +1448,70 @@ const OrdersPage = () => {
                 )}
 
               {/* Payment status update buttons */}
-              {currentOrder.status !== "cancelled" && (
-                <div className="flex flex-wrap gap-3">
-                  <h4 className="w-full text-sm font-medium text-gray-700 mb-2">
-                    Cập nhật trạng thái thanh toán:
-                  </h4>
+              <div className="flex flex-wrap gap-3">
+                <h4 className="w-full text-sm font-medium text-gray-700 mb-2">
+                  Cập nhật trạng thái thanh toán:
+                </h4>
 
-                  {currentOrder.status === "pending" && (
-                    <button
-                      onClick={() =>
-                        handleUpdateStatus(currentOrder.id, "processing")
-                      }
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                      Xác nhận thanh toán
-                    </button>
-                  )}
+                {/* Xác nhận thanh toán */}
+                <button
+                  onClick={() =>
+                    handleUpdateStatus(currentOrder.id, "processing")
+                  }
+                  disabled={currentOrder.status !== "pending" || tooEarly}
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    currentOrder.status === "pending" && !tooEarly
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  }`}
+                >
+                  Xác nhận thanh toán
+                </button>
 
-                  {(currentOrder.status === "pending" ||
-                    currentOrder.status === "processing") && (
-                    <button
-                      onClick={() => {
-                        const statusCheck = canUpdateStatus(
-                          currentOrder,
-                          "completed"
-                        );
-                        if (!statusCheck.canUpdate) {
-                          alert(statusCheck.reason);
-                          return;
-                        }
-                        handleUpdateStatus(currentOrder.id, "completed");
-                      }}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                    >
-                      Hoàn thành thanh toán
-                    </button>
-                  )}
+                {/* Hoàn thành thanh toán */}
+                <button
+                  onClick={() => {
+                    const { canUpdate, reason } = canUpdateStatus(
+                      currentOrder,
+                      "completed"
+                    );
+                    if (!canUpdate) {
+                      alert(reason);
+                      return;
+                    }
+                    handleUpdateStatus(currentOrder.id, "completed");
+                  }}
+                  disabled={
+                    !["pending", "processing"].includes(currentOrder.status) ||
+                    tooEarly
+                  }
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    ["pending", "processing"].includes(currentOrder.status) &&
+                    !tooEarly
+                      ? "bg-green-600 text-white hover:bg-green-700"
+                      : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  }`}
+                >
+                  Hoàn thành thanh toán
+                </button>
 
-                  {/* {(currentOrder.status === "pending" ||
-                    currentOrder.status === "processing") && (
-                    <button
-                      onClick={() =>
-                        handleUpdateStatus(currentOrder.id, "cancelled")
-                      }
-                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-                    >
-                      Hủy thanh toán
-                    </button>
-                  )} */}
-                </div>
-              )}
+                {/* Hủy thanh toán */}
+                <button
+                  onClick={() =>
+                    handleUpdateStatus(currentOrder.id, "cancelled")
+                  }
+                  disabled={
+                    !["pending", "processing"].includes(currentOrder.status)
+                  }
+                  className={`px-4 py-2 rounded-md transition-colors ${
+                    ["pending", "processing"].includes(currentOrder.status)
+                      ? "bg-red-600 text-white hover:bg-red-700"
+                      : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  }`}
+                >
+                  Hủy thanh toán
+                </button>
+              </div>
             </div>
 
             <div className="p-6 border-t bg-gray-50 flex justify-end">
@@ -1568,6 +1590,57 @@ const OrdersPage = () => {
                   />
                 </div>
 
+                {editingOrder.bookingInfo && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Ngày giờ đặt bàn
+                      </label>
+                      <input
+                        readOnly
+                        type="datetime-local"
+                        value={editingOrder.bookingInfo.thoiGianDat.slice(
+                          0,
+                          16
+                        )}
+                        onChange={(e) =>
+                          setEditingOrder({
+                            ...editingOrder,
+                            bookingInfo: {
+                              ...editingOrder.bookingInfo,
+                              thoiGianDat: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    {/* Ngày giờ đến */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Ngày giờ đến
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={editingOrder.bookingInfo.thoiGianDen.slice(
+                          0,
+                          16
+                        )}
+                        onChange={(e) =>
+                          setEditingOrder({
+                            ...editingOrder,
+                            bookingInfo: {
+                              ...editingOrder.bookingInfo,
+                              thoiGianDen: e.target.value,
+                            },
+                          })
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Số lượng người
@@ -1676,8 +1749,10 @@ const OrdersPage = () => {
                   >
                     <option value="pending">Chưa thanh toán</option>
                     <option value="deposit">Đã cọc</option>
-                    <option value="completed">Đã thanh toán</option>
+
                     {/* <option value="cancelled">Đã hủy</option> */}
+
+                    <option value="completed">Đã thanh toán</option>
                   </select>
                 </div>
 
@@ -2194,50 +2269,6 @@ const OrdersPage = () => {
                     <option value="cash">Tiền mặt</option>
                     <option value="vnpay">VNPay</option>
                   </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Giảm giá (₫)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={newOrder.discount}
-                    onChange={(e) =>
-                      setNewOrder({
-                        ...newOrder,
-                        discount: Number(e.target.value) || 0,
-                        remaining:
-                          newOrder.total -
-                          (Number(e.target.value) || 0) -
-                          newOrder.deposit,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tiền cọc (₫)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={newOrder.deposit}
-                    onChange={(e) =>
-                      setNewOrder({
-                        ...newOrder,
-                        deposit: Number(e.target.value) || 0,
-                        remaining:
-                          newOrder.total -
-                          newOrder.discount -
-                          (Number(e.target.value) || 0),
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
                 </div>
               </div>
 
