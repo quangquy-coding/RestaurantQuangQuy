@@ -314,21 +314,21 @@ const OrdersPage = () => {
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
             <Clock className="mr-1 h-3 w-3" />
-            Chưa xử lý
+            Chờ xử lý
           </span>
         );
       case "processing":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
             <Clock className="mr-1 h-3 w-3" />
-            Đang chuẩn bị
+            Đang xử lí
           </span>
         );
       case "completed":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircle className="mr-1 h-3 w-3" />
-            Hoàn tất
+            Hoàn thành
           </span>
         );
       case "cancelled":
@@ -1389,62 +1389,72 @@ const OrdersPage = () => {
                       Cập nhật trạng thái đặt món:
                     </h4>
 
-                  {(currentOrder.orderInfo?.trangThai === "processing" ||
-                    currentOrder.orderInfo?.trangThai === "Đang xử lí") &&
-                    !tooEarly &&  (
-                    <button
-                      onClick={() =>
-                        handleUpdateFoodStatus(
-                          currentOrder.orderInfo.maDatMon,
-                          "processing"
-                        )
-                      }
-                      disabled={tooEarly || currentOrder.orderInfo?.trangThai !== "pending"}
-                      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Xử lý đơn hàng
-                    </button>
-                    )}
+                    {(currentOrder.orderInfo?.trangThai === "processing" ||
+                      currentOrder.orderInfo?.trangThai === "Đang xử lí") &&
+                      !tooEarly && (
+                        <button
+                          onClick={() =>
+                            handleUpdateFoodStatus(
+                              currentOrder.orderInfo.maDatMon,
+                              "processing"
+                            )
+                          }
+                          disabled={
+                            tooEarly ||
+                            currentOrder.orderInfo?.trangThai !== "pending"
+                          }
+                          className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Xử lý đơn hàng
+                        </button>
+                      )}
 
                     {(currentOrder.orderInfo?.trangThai === "pending" ||
                       currentOrder.orderInfo?.trangThai === "Chờ xử lí" ||
-                      currentOrder.orderInfo?.trangThai === "processing" || 
-                    currentOrder.orderInfo?.trangThai === "Đang xử lí" ) && (
-                    <button
-                      onClick={() => {
-                        if (tooEarly) {
-                          alert("Chưa đến thời gian giao hàng");
-                          return;
+                      currentOrder.orderInfo?.trangThai === "processing" ||
+                      currentOrder.orderInfo?.trangThai === "Đang xử lí") && (
+                      <button
+                        onClick={() => {
+                          if (tooEarly) {
+                            alert("Chưa đến thời gian giao hàng");
+                            return;
+                          }
+                          const { canUpdate, reason } = canUpdateStatus(
+                            currentOrder,
+                            "completed"
+                          );
+                          if (!canUpdate) {
+                            alert(reason);
+                            return;
+                          }
+                          handleUpdateFoodStatus(
+                            currentOrder.orderInfo.maDatMon,
+                            "completed"
+                          );
+                        }}
+                        disabled={
+                          tooEarly ||
+                          ![
+                            "pending",
+                            "processing",
+                            "Chờ xử lí",
+                            "Đang xử lí",
+                          ].includes(currentOrder.orderInfo?.trangThai)
                         }
-                        const { canUpdate, reason } = canUpdateStatus(
-                          currentOrder,
-                          "completed"
-                        );
-                        if (!canUpdate) {
-                          alert(reason);
-                          return;
-                        }
-                        handleUpdateFoodStatus(
-                          currentOrder.orderInfo.maDatMon,
-                          "completed"
-                        );
-                      }}
-                      disabled={
-                        tooEarly ||
-                        !["pending", "processing", "Chờ xử lí", "Đang xử lí"].includes(
-                          currentOrder.orderInfo?.trangThai
-                        )
-                      }
-                      className={`px-4 py-2 rounded-md transition-colors ${!tooEarly &&
-                          ["pending", "processing", "Chờ xử lí", "Đang xử lí"].includes(
-                            currentOrder.orderInfo?.trangThai
-                          )
-                          ? "bg-green-600 text-white hover:bg-green-700"
-                          : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        className={`px-4 py-2 rounded-md transition-colors ${
+                          !tooEarly &&
+                          [
+                            "pending",
+                            "processing",
+                            "Chờ xử lí",
+                            "Đang xử lí",
+                          ].includes(currentOrder.orderInfo?.trangThai)
+                            ? "bg-green-600 text-white hover:bg-green-700"
+                            : "bg-gray-300 text-gray-600 cursor-not-allowed"
                         }`}
-                    >
-                      Hoàn thành đơn hàng
-                    </button>
+                      >
+                        Hoàn thành đơn hàng
+                      </button>
                     )}
 
                     {(currentOrder.orderInfo?.trangThai === "pending" ||
