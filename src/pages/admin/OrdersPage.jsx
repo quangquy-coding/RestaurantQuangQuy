@@ -224,6 +224,7 @@ const OrdersPage = () => {
       remaining:
         order.remaining ||
         order.total - (order.discount || 0) - (order.deposit || 0), // Added for remaining
+      paymentMethod: order.paymentMethod || "cash",
     });
     fetchAvailableTables(order.orderDate);
     setIsEditModalOpen(true);
@@ -1388,44 +1389,62 @@ const OrdersPage = () => {
                       Cập nhật trạng thái đặt món:
                     </h4>
 
-                    {(currentOrder.orderInfo?.trangThai === "pending" ||
-                      currentOrder.orderInfo?.trangThai === "Chờ xử lí") && (
-                      <button
-                        onClick={() =>
-                          handleUpdateFoodStatus(
-                            currentOrder.orderInfo.maDatMon,
-                            "processing"
-                          )
-                        }
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                      >
-                        Xử lý đơn hàng
-                      </button>
+                  {(currentOrder.orderInfo?.trangThai === "processing" ||
+                    currentOrder.orderInfo?.trangThai === "Đang xử lí") &&
+                    !tooEarly &&  (
+                    <button
+                      onClick={() =>
+                        handleUpdateFoodStatus(
+                          currentOrder.orderInfo.maDatMon,
+                          "processing"
+                        )
+                      }
+                      disabled={tooEarly || currentOrder.orderInfo?.trangThai !== "pending"}
+                      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Xử lý đơn hàng
+                    </button>
                     )}
 
                     {(currentOrder.orderInfo?.trangThai === "pending" ||
                       currentOrder.orderInfo?.trangThai === "Chờ xử lí" ||
-                      currentOrder.orderInfo?.trangThai === "processing" ||
-                      currentOrder.orderInfo?.trangThai === "Đang xử lí") && (
-                      <button
-                        onClick={() => {
-                          const statusCheck = canUpdateStatus(
-                            currentOrder,
-                            "completed"
-                          );
-                          if (!statusCheck.canUpdate) {
-                            alert(statusCheck.reason);
-                            return;
-                          }
-                          handleUpdateFoodStatus(
-                            currentOrder.orderInfo.maDatMon,
-                            "completed"
-                          );
-                        }}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                      >
-                        Hoàn thành đơn hàng
-                      </button>
+                      currentOrder.orderInfo?.trangThai === "processing" || 
+                    currentOrder.orderInfo?.trangThai === "Đang xử lí" ) && (
+                    <button
+                      onClick={() => {
+                        if (tooEarly) {
+                          alert("Chưa đến thời gian giao hàng");
+                          return;
+                        }
+                        const { canUpdate, reason } = canUpdateStatus(
+                          currentOrder,
+                          "completed"
+                        );
+                        if (!canUpdate) {
+                          alert(reason);
+                          return;
+                        }
+                        handleUpdateFoodStatus(
+                          currentOrder.orderInfo.maDatMon,
+                          "completed"
+                        );
+                      }}
+                      disabled={
+                        tooEarly ||
+                        !["pending", "processing", "Chờ xử lí", "Đang xử lí"].includes(
+                          currentOrder.orderInfo?.trangThai
+                        )
+                      }
+                      className={`px-4 py-2 rounded-md transition-colors ${!tooEarly &&
+                          ["pending", "processing", "Chờ xử lí", "Đang xử lí"].includes(
+                            currentOrder.orderInfo?.trangThai
+                          )
+                          ? "bg-green-600 text-white hover:bg-green-700"
+                          : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        }`}
+                    >
+                      Hoàn thành đơn hàng
+                    </button>
                     )}
 
                     {(currentOrder.orderInfo?.trangThai === "pending" ||
@@ -1749,9 +1768,6 @@ const OrdersPage = () => {
                   >
                     <option value="pending">Chưa thanh toán</option>
                     <option value="deposit">Đã cọc</option>
-
-                    {/* <option value="cancelled">Đã hủy</option> */}
-
                     <option value="completed">Đã thanh toán</option>
                   </select>
                 </div>
@@ -1795,7 +1811,7 @@ const OrdersPage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cash">Tiền mặt</option>
-                    <option value="vnpay">VNPay</option>
+                    <option value="VNPay">VNPay</option>
                   </select>
                 </div>
 

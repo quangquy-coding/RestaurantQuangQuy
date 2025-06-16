@@ -339,5 +339,119 @@ namespace RestaurantQuangQuy.Controllers.Client
 				return BadRequest(new { message = "Lỗi khi xóa hóa đơn", error = ex.Message });
 			}
 		}
-	}
+
+        // Lấy đơn hàng theo mã khách hàng
+        [HttpGet("by-customer/{customerId}")]
+        public async Task<IActionResult> GetOrdersByCustomer(string customerId)
+        {
+            try
+            {
+                var orders = await _context.Hoadonthanhtoans
+                    // Lọc theo mã khách hàng
+                    .Where(h => h.MaKhachHang == customerId)
+                    // Phần projection giữ nguyên y như bên GetAllOrders
+                    .Select(h => new
+                    {
+                        id = h.MaHoaDon,
+                        customerId = h.MaKhachHang,
+                        customerName = _context.Khachhangs
+                            .Where(k => k.MaKhachHang == h.MaKhachHang)
+                            .Select(k => k.TenKhachHang)
+                            .FirstOrDefault() ?? "Khách vãng lai",
+                        customerPhone = _context.Khachhangs
+                            .Where(k => k.MaKhachHang == h.MaKhachHang)
+                            .Select(k => k.SoDienThoai)
+                            .FirstOrDefault() ?? "",
+                        customerEmail = _context.Khachhangs
+                            .Where(k => k.MaKhachHang == h.MaKhachHang)
+                            .Select(k => k.Email)
+                            .FirstOrDefault() ?? "",
+                        tableNumber = _context.Banans
+                            .Where(b => b.MaBan == h.MaBanAn)
+                            .Select(b => b.TenBan)
+                            .FirstOrDefault() ?? "",
+                        tableId = h.MaBanAn ?? "",
+                        orderDate = h.ThoiGianDat,
+                        paymentDate = h.ThoiGianThanhToan,
+                        status = h.TrangThaiThanhToan,
+                        total = h.TongTien ?? 0,
+                        deposit = h.SoTienCoc ?? 0,
+                        remaining = h.SoTienConLai ?? 0,
+                        discount = h.TienGiam ?? 0,
+                        paymentMethod = h.PhuongThucThanhToan == "Tiền mặt" ? "cash" :
+                            h.PhuongThucThanhToan == "VNPay" ? "VNPay" : "cash",
+                        promoCode = h.MaKhuyenMai,
+                        staffId = h.MaNhanVien,
+                        notes = h.GhiChu,
+                        items = _context.Chitietdondatmons
+                            .Where(ct => ct.MaDatMon == h.MaDatMon)
+                            .Select(ct => new
+                            {
+                                id = ct.MaMon,
+                                name = _context.Monans
+                                    .Where(m => m.MaMon == ct.MaMon)
+                                    .Select(m => m.TenMon)
+                                    .FirstOrDefault(),
+                                quantity = ct.SoLuong,
+                                price = ct.Gia,
+                                total = ct.TongTien
+                            }).ToList(),
+                        orderInfo = _context.Dondatmons
+                            .Where(d => d.MaDatMon == h.MaDatMon)
+                            .Select(d => new
+                            {
+                                maDatMon = d.MaDatMon,
+                                soDienThoai = d.SoDienThoai,
+                                trangThai = d.TrangThai == null ? "pending" :
+                                    d.TrangThai.Trim() == "Chờ xử lí" ? "pending" :
+                                    d.TrangThai.Trim() == "Đang xử lí" ? "processing" :
+                                    d.TrangThai.Trim() == "Hoàn thành" ? "completed" :
+                                    d.TrangThai.Trim() == "Đã hủy" ? "cancelled" : d.TrangThai.ToLower(),
+                                soLuong = d.SoLuong,
+                                tongTien = d.TongTien,
+                                thoiGianDat = d.ThoiGianDat,
+                                ghiChu = d.GhiChu,
+                                canComplete = d.ThoiGianDat <= DateTime.Now // Kiểm tra có thể hoàn thành không
+                            })
+                            .FirstOrDefault(),
+                        bookingInfo = _context.Datbans
+                            .Where(db => db.MaBanAn == h.MaBanAn)
+                            .Select(db => new
+                            {
+                                maDatBan = db.MaBanAn,
+                                soLuongKhach = db.SoLuongKhach,
+                                thoiGianDat = db.ThoiGianDat,
+                                thoiGianDen = db.ThoiGianDen,
+                                trangThai = db.TrangThai,
+                                ghiChu = db.GhiChu,
+                                canServe = db.ThoiGianDen <= DateTime.Now // Kiểm tra có thể phục vụ không
+                            })
+                            .FirstOrDefault(),
+                        tables = (
+                            from dbba in _context.DatBanBanAns
+                            join b in _context.Banans on dbba.MaBanAn equals b.MaBan
+                            where dbba.MaDatBan == h.MaBanAn
+                            select new
+                            {
+                                maBan = b.MaBan,
+                                tenBan = b.TenBan,
+                                viTri = b.ViTri,
+                                soChoNgoi = b.SoChoNgoi,
+                                ghiChu = b.GhiChu
+                            }
+                        ).ToList(),
+                        canExportPdf = h.TrangThaiThanhToan == "completed" &&
+                                      _context.Dondatmons.Any(d => d.MaDatMon == h.MaDatMon && d.TrangThai == "Hoàn thành")
+                    })
+                    .OrderByDescending(h => h.orderDate)
+                    .ToListAsync();
+
+                return Ok(orders);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = "Lỗi khi lấy đơn hàng theo khách hàng", error = ex.Message });
+            }
+        }
+    }
 }

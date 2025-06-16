@@ -12,7 +12,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { getAllOrders, updateOrderFoodStatus } from "../../api/orderApi";
+import { getAllOrdersByCustomer, updateOrderFoodStatus } from "../../api/orderApi";
 import { getAllDanhGia, themDanhGia } from "../../api/danhGiaApi";
 
 const AdminOrdersPage = () => {
@@ -77,10 +77,12 @@ const AdminOrdersPage = () => {
 
   const fetchData = async () => {
     try {
+      const userId = localStorage.getItem("usersId");
+      if (!userId) return;
       setLoading(true);
       setError(null);
       const [ordersData, reviewsData] = await Promise.all([
-        getAllOrders(),
+        getAllOrdersByCustomer(userId),
         getAllDanhGia(),
       ]);
       // Map orders to match expected structure

@@ -2,6 +2,19 @@ import axios from "axios";
 
 const API_BASE_URL = "http://localhost:5080/api";
 
+// Get all orders (Admin)
+export const getAllOrdersByCustomer = async (customerId) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/HoaDonThanhToan/by-customer/${customerId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching customer orders:", error);
+    throw error;
+  }
+};
+
 // Lấy tất cả đơn hàng (Admin)
 export const getAllOrders = async () => {
   try {
