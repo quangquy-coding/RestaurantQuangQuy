@@ -134,13 +134,18 @@ const OrdersPage = () => {
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter((order) => {
-        const orderId = order.id?.toString().toLowerCase() || '';
-        const customerName = order.customerName?.toLowerCase() || '';
-        const tableNames = order.tables?.map(table => table.tenBan?.toLowerCase() || '').join(' ') || '';
-        
-        return orderId.includes(searchLower) || 
-               customerName.includes(searchLower) || 
-               tableNames.includes(searchLower);
+        const orderId = order.id?.toString().toLowerCase() || "";
+        const customerName = order.customerName?.toLowerCase() || "";
+        const tableNames =
+          order.tables
+            ?.map((table) => table.tenBan?.toLowerCase() || "")
+            .join(" ") || "";
+
+        return (
+          orderId.includes(searchLower) ||
+          customerName.includes(searchLower) ||
+          tableNames.includes(searchLower)
+        );
       });
     }
 
@@ -262,32 +267,34 @@ const OrdersPage = () => {
     try {
       console.log("Order data:", order);
 
-      toast((t) => (
-        <div className="flex flex-col items-center">
-          <p className="mb-4">Bạn có chắc chắn muốn hủy đơn hàng này?</p>
-          <div className="flex gap-2">
-            <button
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-              onClick={() => {
-                toast.dismiss(t.id);
-                confirmCancelOrder(order);
-              }}
-            >
-              Xác nhận
-            </button>
-            <button
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-              onClick={() => toast.dismiss(t.id)}
-            >
-              Hủy
-            </button>
+      toast(
+        (t) => (
+          <div className="flex flex-col items-center">
+            <p className="mb-4">Bạn có chắc chắn muốn hủy đơn hàng này?</p>
+            <div className="flex gap-2">
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  confirmCancelOrder(order);
+                }}
+              >
+                Xác nhận
+              </button>
+              <button
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                onClick={() => toast.dismiss(t.id)}
+              >
+                Hủy
+              </button>
+            </div>
           </div>
-        </div>
-      ), {
-        duration: 5000,
-        position: "top-center",
-      });
-
+        ),
+        {
+          duration: 5000,
+          position: "top-center",
+        }
+      );
     } catch (error) {
       console.error("Error cancelling order:", error);
       console.error("Error details:", {

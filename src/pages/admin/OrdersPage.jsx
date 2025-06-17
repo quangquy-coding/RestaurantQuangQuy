@@ -1,6 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
+import { toast } from "react-toastify";
 import { saveAs } from "file-saver";
 import {
   Search,
@@ -124,7 +125,7 @@ const OrdersPage = () => {
       await fetchMenuItems();
     } catch (error) {
       console.error("Error fetching data:", error);
-      alert("Lỗi khi tải dữ liệu");
+      toast.error("Lỗi khi tải dữ liệu");
     } finally {
       setLoading(false);
     }
@@ -138,7 +139,7 @@ const OrdersPage = () => {
       setMenuItems(menuData);
     } catch (error) {
       console.error("Error fetching menu items:", error);
-      alert("Lỗi khi tải danh sách món ăn");
+      toast.error("Lỗi khi tải danh sách món ăn");
     } finally {
       setMenuLoading(false);
     }
@@ -501,7 +502,9 @@ const OrdersPage = () => {
       const statusCheck = canUpdateStatus(order, newStatus);
 
       if (!statusCheck.canUpdate) {
-        alert(statusCheck.reason);
+        toast.error(statusCheck.reason);
+        console.error("Cannot update status:", statusCheck.reason);
+        // alert(statusCheck.reason);
         return;
       }
 
@@ -512,10 +515,14 @@ const OrdersPage = () => {
         setCurrentOrder({ ...currentOrder, status: newStatus });
       }
 
-      alert("Cập nhật trạng thái thành công!");
+      // alert("Cập nhật trạng thái thành công!");
+      toast.success("Cập nhật trạng thái thành công!");
     } catch (error) {
       console.error("Error updating status:", error);
-      alert(error.response?.data?.message || "Lỗi khi cập nhật trạng thái");
+      // alert(error.response?.data?.message || "Lỗi khi cập nhật trạng thái");
+      toast.error(
+        error.response?.data?.message || "Lỗi khi cập nhật trạng thái"
+      );
     }
   };
 
@@ -525,7 +532,9 @@ const OrdersPage = () => {
       const statusCheck = canUpdateStatus(order, newStatus);
 
       if (!statusCheck.canUpdate) {
-        alert(statusCheck.reason);
+        console.error("Cannot update food status:", statusCheck.reason);
+        toast.error(statusCheck.reason);
+        // alert(statusCheck.reason);
         return;
       }
 
@@ -545,10 +554,14 @@ const OrdersPage = () => {
           },
         });
       }
-      alert("Cập nhật trạng thái thành công!");
+      // alert("Cập nhật trạng thái thành công!");
+      toast.success("Cập nhật trạng thái thành công!");
     } catch (error) {
-      console.error("Error updating food status:", error);
-      alert(error.response?.data?.message || "Lỗi khi cập nhật trạng thái");
+      // console.error("Error updating food status:", error);
+      // alert(error.response?.data?.message || "Lỗi khi cập nhật trạng thái");
+      toast.error(
+        error.response?.data?.message || "Lỗi khi cập nhật trạng thái"
+      );
     }
   };
 
@@ -566,11 +579,14 @@ const OrdersPage = () => {
         });
       }
 
-      alert("Gán bàn thành công!");
+      // alert("Gán bàn thành công!");
+      toast.success("Gán bàn thành công!");
     } catch (error) {
       console.error("Error assigning table:", error);
-      alert("Lỗi khi gán bàn");
+      // alert("Lỗi khi gán bàn");
+      toast.error(error.response?.data?.message || "Lỗi khi gán bàn");
     }
+    1;
   };
 
   const handleSaveEditedOrder = async () => {
@@ -600,22 +616,26 @@ const OrdersPage = () => {
       });
       await fetchData();
       setIsEditModalOpen(false);
-      alert("Cập nhật đơn hàng thành công!");
+      // alert("Cập nhật đơn hàng thành công!");
+      toast.success("Cập nhật đơn hàng thành công!");
     } catch (error) {
       console.error("Error updating order:", error);
-      alert(error.response?.data?.message || "Lỗi khi cập nhật đơn hàng");
+      toast.error(error.response?.data?.message || "Lỗi khi cập nhật đơn hàng");
+      // alert(error.response?.data?.message || "Lỗi khi cập nhật đơn hàng");
     }
   };
 
   const handleCreateOrder = async () => {
     try {
       if (!newOrder.customerName) {
-        alert("Vui lòng nhập tên khách hàng");
+        // alert("Vui lòng nhập tên khách hàng");
+        toast.error("Vui lòng nhập tên khách hàng");
         return;
       }
 
       if (newOrder.items.length === 0) {
-        alert("Đơn hàng phải có ít nhất một món");
+        // alert("Đơn hàng phải có ít nhất một món");
+        toast.error("Đơn hàng phải có ít nhất một món");
         return;
       }
 
@@ -643,10 +663,15 @@ const OrdersPage = () => {
       await createOrder(orderData);
       await fetchData();
       setIsCreateModalOpen(false);
-      alert("Tạo đơn hàng thành công!");
+      // alert("Tạo đơn hàng thành công!");
+      toast.success("Tạo đơn hàng thành công!");
     } catch (error) {
       console.error("Error creating order:", error);
-      alert(
+      // alert(
+      //   error.response?.data?.message ||
+      //     `Lỗi khi tạo đơn hàng: ${error.message}`
+      // );
+      toast.error(
         error.response?.data?.message ||
           `Lỗi khi tạo đơn hàng: ${error.message}`
       );
@@ -656,13 +681,15 @@ const OrdersPage = () => {
   const handleDeleteOrder = async () => {
     try {
       if (!currentOrder) {
-        alert("Không tìm thấy đơn hàng cần xóa");
+        // alert("Không tìm thấy đơn hàng cần xóa");
+        toast.error("Không tìm thấy đơn hàng cần xóa");
         return;
       }
 
       // Kiểm tra trạng thái đơn hàng
       if (currentOrder.status === "completed") {
-        alert("Không thể xóa đơn hàng đã hoàn thành thanh toán");
+        // alert("Không thể xóa đơn hàng đã hoàn thành thanh toán");
+        toast.error("Không thể xóa đơn hàng đã hoàn thành thanh toán");
         return;
       }
 
@@ -671,7 +698,8 @@ const OrdersPage = () => {
         currentOrder.orderInfo?.trangThai === "completed" ||
         currentOrder.orderInfo?.trangThai === "hoàn thành"
       ) {
-        alert("Không thể xóa đơn hàng đã hoàn thành phục vụ");
+        // alert("Không thể xóa đơn hàng đã hoàn thành phục vụ");
+        toast.error("Không thể xóa đơn hàng đã hoàn thành phục vụ");
         return;
       }
 
@@ -679,10 +707,11 @@ const OrdersPage = () => {
       await deleteOrder(currentOrder.id);
       await fetchData();
       setIsDeleteModalOpen(false);
-      alert("Xóa đơn hàng thành công!");
+      // alert("Xóa đơn hàng thành công!");
+      toast.success("Xóa đơn hàng thành công!");
     } catch (error) {
       console.error("Error deleting order:", error);
-      alert(error.response?.data?.message || "Lỗi khi xóa đơn hàng");
+      toast.error(error.response?.data?.message || "Lỗi khi xóa đơn hàng");
     }
   };
 
@@ -690,12 +719,12 @@ const OrdersPage = () => {
     try {
       const order = orders.find((o) => o.id === orderId);
       if (!order) {
-        alert("Không tìm thấy đơn hàng");
+        toast.error("Không tìm thấy đơn hàng");
         return;
       }
 
       if (!order.canExportPdf) {
-        alert(
+        toast.error(
           "Chỉ có thể xuất PDF cho đơn hàng đã hoàn thành cả thanh toán và phục vụ"
         );
         return;
@@ -745,7 +774,7 @@ const OrdersPage = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error exporting PDF:", error);
-      alert(error.response?.data?.message || "Lỗi khi xuất PDF");
+      toast.error(error.response?.data?.message || "Lỗi khi xuất PDF");
     }
   };
 
@@ -753,15 +782,15 @@ const OrdersPage = () => {
     try {
       const order = orders.find((o) => o.id === orderId);
       if (!order.canExportPdf) {
-        alert("Chỉ có thể gửi hóa đơn cho đơn hàng đã hoàn thành");
+        toast.error("Chỉ có thể gửi hóa đơn cho đơn hàng đã hoàn thành");
         return;
       }
 
       await sendInvoiceEmail(orderId, { email });
-      alert("Gửi hóa đơn qua email thành công!");
+      toast.success("Gửi hóa đơn qua email thành công!");
     } catch (error) {
       console.error("Error sending email:", error);
-      alert(error.response?.data?.message || "Lỗi khi gửi email");
+      toast.error(error.response?.data?.message || "Lỗi khi gửi email");
     }
   };
 
@@ -773,14 +802,14 @@ const OrdersPage = () => {
     console.log("Current menuItems:", menuItems);
 
     if (!selectedMenuItem) {
-      alert("Vui lòng chọn món ăn");
+      toast.error("Vui lòng chọn món ăn");
       return;
     }
 
     const menuItem = menuItems.find((item) => item.id === selectedMenuItem);
     if (!menuItem) {
       console.error("Menu item not found for ID:", selectedMenuItem);
-      alert("Không tìm thấy món ăn");
+      toast.error("Không tìm thấy món ăn");
       return;
     }
 
@@ -922,7 +951,7 @@ const OrdersPage = () => {
       setTables(tables);
     } catch (error) {
       console.error("Error fetching available tables:", error);
-      alert("Lỗi khi lấy danh sách bàn trống");
+      toast.error("Lỗi khi lấy danh sách bàn trống");
     }
   };
 
@@ -1556,7 +1585,7 @@ const OrdersPage = () => {
                       <button
                         onClick={() => {
                           if (tooEarly) {
-                            alert("Chưa đến thời gian giao hàng");
+                            toast.error("Chưa đến thời gian giao hàng");
                             return;
                           }
                           const { canUpdate, reason } = canUpdateStatus(
@@ -1564,7 +1593,7 @@ const OrdersPage = () => {
                             "completed"
                           );
                           if (!canUpdate) {
-                            alert(reason);
+                            toast.error(reason);
                             return;
                           }
                           handleUpdateFoodStatus(
@@ -1645,7 +1674,7 @@ const OrdersPage = () => {
                       "completed"
                     );
                     if (!canUpdate) {
-                      alert(reason);
+                      toast.error(reason);
                       return;
                     }
                     handleUpdateStatus(currentOrder.id, "completed");
@@ -1934,7 +1963,7 @@ const OrdersPage = () => {
                         newStatus === "completed" &&
                         !canUpdateToCompleted(editingOrder)
                       ) {
-                        alert(
+                        toast.error(
                           "Không thể chọn trạng thái hoàn thành trước thời gian đến bàn!"
                         );
                         return;
