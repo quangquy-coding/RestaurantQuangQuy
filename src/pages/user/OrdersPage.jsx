@@ -709,30 +709,47 @@ const OrdersPage = () => {
                         </span>
                       </div>
 
-                      <div className="flex items-center">
-                        <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
-                        <span className="text-xl text-gray-900">
-                          Mã giảm giá:{currentOrder.promoCode || "Không có"}
-                        </span>
-                      </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center text-gray-800">
+                          <CreditCard className="h-5 w-5 text-indigo-500 mr-3" />
+                          <span className="text-lg font-medium">
+                            <span className="text-gray-600">Tổng tiền: </span>
+                            <span className="text-green-700 font-semibold">
+                              {currentOrder.total?.toLocaleString("vi-VN")} VNĐ
+                            </span>
+                          </span>
+                        </div>
+                        <div className="flex items-center text-gray-800">
+                          <CreditCard className="h-5 w-5 text-indigo-500 mr-3" />
+                          <span className="text-lg font-medium">
+                            <span className="text-gray-600">Mã giảm giá: </span>
+                            <span className="text-black">
+                              {currentOrder.promoCode || "Không có"}
+                            </span>
+                          </span>
+                        </div>
 
-                      <div className="flex items-center">
-                        <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
-                        <span className="text-xl text-gray-900">
-                          Tổng tiền:{currentOrder.total?.toLocaleString("vi-VN")} VNĐ
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
-                        <span className="text-xl text-red-700">
-                          Tiền cọc:{currentOrder.deposit?.toLocaleString("vi-VN")} VNĐ
-                        </span>
-                      </div>
-                      <div className="flex items-center">
-                        <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
-                        <span className=" text-xl text-red-700">
-                          Còn lại:{currentOrder.remaining?.toLocaleString("vi-VN")} VNĐ
-                        </span>
+                        <div className="flex items-center text-gray-800">
+                          <CreditCard className="h-5 w-5 text-indigo-500 mr-3" />
+                          <span className="text-lg font-medium">
+                            <span className="text-gray-600">Tiền cọc: </span>
+                            <span className="text-yellow-600 font-semibold">
+                              {currentOrder.deposit?.toLocaleString("vi-VN")}{" "}
+                              VNĐ
+                            </span>
+                          </span>
+                        </div>
+
+                        <div className="flex items-center text-gray-800">
+                          <CreditCard className="h-5 w-5 text-indigo-500 mr-3" />
+                          <span className="text-lg font-medium">
+                            <span className="text-gray-600">Còn lại: </span>
+                            <span className="text-red-600 font-semibold">
+                              {currentOrder.remaining?.toLocaleString("vi-VN")}{" "}
+                              VNĐ
+                            </span>
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
