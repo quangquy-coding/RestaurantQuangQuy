@@ -1791,7 +1791,7 @@ const OrdersPage = () => {
                   >
                     <option value="pending">Chờ xử lý</option>
                     <option value="processing">Đang xử lý</option>
-                    <option value="completed">Hoàn thành</option>
+                    {tooEarly && <option value="completed">Hoàn thành</option> }
                     <option value="cancelled">Đã hủy</option>
                   </select>
                 </div>

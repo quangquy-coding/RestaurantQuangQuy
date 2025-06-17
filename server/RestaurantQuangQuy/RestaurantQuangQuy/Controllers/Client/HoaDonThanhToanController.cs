@@ -348,7 +348,7 @@ namespace RestaurantQuangQuy.Controllers.Client
             {
                 var orders = await _context.Hoadonthanhtoans
                     // Lọc theo mã khách hàng
-                    .Where(h => h.MaKhachHang == customerId)
+                    .Where(h => h.MaKhachHangNavigation.MaTaiKhoan == customerId)
                     // Phần projection giữ nguyên y như bên GetAllOrders
                     .Select(h => new
                     {
