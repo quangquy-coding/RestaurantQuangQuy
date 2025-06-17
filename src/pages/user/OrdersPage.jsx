@@ -102,7 +102,7 @@ const OrdersPage = () => {
           total: order.tongTien || order.total,
           deposit: order.deposit || order.tienDatCoc,
           remaining: order.tienConLai || order.remaining,
-          promoCode: order.maGiamGia || order.promoCode,
+          discount: order.tienGiam || order.discount,
           paymentMethod: order.phuongThucThanhToan || order.paymentMethod,
           status: order.trangThai || order.status,
           tables: order.banList || order.tables || [],
@@ -722,9 +722,9 @@ const OrdersPage = () => {
                         <div className="flex items-center text-gray-800">
                           <CreditCard className="h-5 w-5 text-indigo-500 mr-3" />
                           <span className="text-lg font-medium">
-                            <span className="text-gray-600">Mã giảm giá: </span>
+                            <span className="text-gray-600">Giảm giá: </span>
                             <span className="text-black">
-                              {currentOrder.promoCode || "Không có"}
+                              {currentOrder.discount.toLocaleString("vi-VN") || 0} VNĐ
                             </span>
                           </span>
                         </div>
