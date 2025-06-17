@@ -1,6 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
+import { toast } from "react-hot-toast";
 import { saveAs } from "file-saver";
 import {
   Search,
@@ -22,6 +23,8 @@ import {
   Mail,
   AlertTriangle,
   Info,
+  HelpCircle,
+  X,
 } from "lucide-react";
 import {
   getAllOrders,
@@ -122,7 +125,7 @@ const OrdersPage = () => {
       await fetchMenuItems();
     } catch (error) {
       console.error("Error fetching data:", error);
-      alert("Lỗi khi tải dữ liệu");
+      toast.error("Lỗi khi tải dữ liệu");
     } finally {
       setLoading(false);
     }
@@ -136,7 +139,7 @@ const OrdersPage = () => {
       setMenuItems(menuData);
     } catch (error) {
       console.error("Error fetching menu items:", error);
-      alert("Lỗi khi tải danh sách món ăn");
+      toast.error("Lỗi khi tải danh sách món ăn");
     } finally {
       setMenuLoading(false);
     }
@@ -254,8 +257,11 @@ const OrdersPage = () => {
   };
 
   const openDeleteModal = (order) => {
+    console.log("Opening delete modal for order:", order);
+    console.log("Current isDeleteModalOpen:", isDeleteModalOpen);
     setCurrentOrder(order);
     setIsDeleteModalOpen(true);
+    console.log("After setting isDeleteModalOpen:", true);
   };
 
   const formatDate = (dateString) => {
@@ -271,46 +277,23 @@ const OrdersPage = () => {
   };
 
   const getStatusBadgeOrderFood = (status) => {
-    switch (status) {
-      case "pending":
-      case "Chưa thanh toán":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            <Clock className="mr-1 h-3 w-3" />
-            Chưa thanh toán
-          </span>
-        );
-      case "deposit":
-      case "Đã cọc":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            <Clock className="mr-1 h-3 w-3" />
-            Đã cọc
-          </span>
-        );
-      case "completed":
-      case "Đã thanh toán":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            <CheckCircle className="mr-1 h-3 w-3" />
-            Đã thanh toán
-          </span>
-        );
-      // case "cancelled":
-      // case "Đã hủy":
-      //   return (
-      //     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-      //       <XCircle className="mr-1 h-3 w-3" />
-      //       Đã hủy
-      //     </span>
-      //   );
-      default:
-        return null;
+    console.log("Current status:", status);
+    if (!status) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          <HelpCircle className="mr-1 h-3 w-3" />
+          Không xác định
+        </span>
+      );
     }
-  };
-  const getOrderStatusBadge = (status) => {
-    switch (status) {
+
+    const normalizedStatus = status.toLowerCase();
+    console.log("Normalized status:", normalizedStatus);
+
+    switch (normalizedStatus) {
       case "pending":
+      case "chờ xử lý":
+      case "chờ xử lí":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
             <Clock className="mr-1 h-3 w-3" />
@@ -318,13 +301,16 @@ const OrdersPage = () => {
           </span>
         );
       case "processing":
+      case "đang xử lý":
+      case "đang xử lí":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
             <Clock className="mr-1 h-3 w-3" />
-            Đang xử lí
+            Đang xử lý
           </span>
         );
       case "completed":
+      case "hoàn thành":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircle className="mr-1 h-3 w-3" />
@@ -332,6 +318,7 @@ const OrdersPage = () => {
           </span>
         );
       case "cancelled":
+      case "đã hủy":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
             <XCircle className="mr-1 h-3 w-3" />
@@ -339,54 +326,142 @@ const OrdersPage = () => {
           </span>
         );
       default:
-        return null;
+        console.log("Unknown status:", normalizedStatus);
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <HelpCircle className="mr-1 h-3 w-3" />
+            Không xác định
+          </span>
+        );
+    }
+  };
+  const getOrderStatusBadge = (status) => {
+    console.log("Order status:", status);
+    if (!status) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          <HelpCircle className="mr-1 h-3 w-3" />
+          Không xác định
+        </span>
+      );
+    }
+
+    const normalizedStatus = status.toLowerCase();
+    console.log("Normalized order status:", normalizedStatus);
+
+    switch (normalizedStatus) {
+      case "pending":
+      case "chờ xử lý":
+      case "chờ xử lí":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+            <Clock className="mr-1 h-3 w-3" />
+            Chờ xử lý
+          </span>
+        );
+      case "processing":
+      case "đang xử lý":
+      case "đang xử lí":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <Clock className="mr-1 h-3 w-3" />
+            Đang chuẩn bị
+          </span>
+        );
+      case "completed":
+      case "hoàn thành":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <CheckCircle className="mr-1 h-3 w-3" />
+            Hoàn thành
+          </span>
+        );
+      case "cancelled":
+      case "đã hủy":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <XCircle className="mr-1 h-3 w-3" />
+            Đã hủy
+          </span>
+        );
+      default:
+        console.log("Unknown order status:", normalizedStatus);
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <HelpCircle className="mr-1 h-3 w-3" />
+            Không xác định
+          </span>
+        );
     }
   };
 
   const getStatusBadge = (status) => {
-    switch (status) {
+    if (!status) return null;
+
+    // Normalize status string
+    const normalizedStatus = status.toLowerCase().trim();
+
+    switch (normalizedStatus) {
       case "pending":
+      case "chưa thanh toán":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
             <Clock className="mr-1 h-3 w-3" />
             Chưa thanh toán
           </span>
         );
-      case "deposit":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            <Clock className="mr-1 h-3 w-3" />
-            Đã cọc
-          </span>
-        );
+      case "paid":
       case "completed":
+      case "đã thanh toán":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircle className="mr-1 h-3 w-3" />
             Đã thanh toán
           </span>
         );
-      // case "cancelled":
-      //   return (
-      //     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-      //       <XCircle className="mr-1 h-3 w-3" />
-      //       Đã hủy
-      //     </span>
-      //   );
+      case "deposit":
+      case "đã cọc":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <Clock className="mr-1 h-3 w-3" />
+            Đã cọc
+          </span>
+        );
+      case "cancelled":
+      case "đã hủy":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <XCircle className="mr-1 h-3 w-3" />
+            Đã hủy
+          </span>
+        );
+      case "refunded":
+      case "đã hoàn tiền":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <RefreshCw className="mr-1 h-3 w-3" />
+            Đã hoàn tiền
+          </span>
+        );
       default:
-        return null;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <HelpCircle className="mr-1 h-3 w-3" />
+            {status}
+          </span>
+        );
     }
   };
 
   const getPaymentMethodText = (method) => {
-    switch (method) {
+    switch (method?.toLowerCase()) {
       case "cash":
-      case "Tiền mặt":
+      case "tiền mặt":
         return "Tiền mặt";
-      case "VNPay":
+      case "vnpay":
         return "VNPay";
       default:
-        return method;
+        return method || "Không xác định";
     }
   };
 
@@ -427,7 +502,9 @@ const OrdersPage = () => {
       const statusCheck = canUpdateStatus(order, newStatus);
 
       if (!statusCheck.canUpdate) {
-        alert(statusCheck.reason);
+        toast.error(statusCheck.reason);
+        console.error("Cannot update status:", statusCheck.reason);
+        // alert(statusCheck.reason);
         return;
       }
 
@@ -438,10 +515,14 @@ const OrdersPage = () => {
         setCurrentOrder({ ...currentOrder, status: newStatus });
       }
 
-      alert("Cập nhật trạng thái thành công!");
+      // alert("Cập nhật trạng thái thành công!");
+      toast.success("Cập nhật trạng thái thành công!");
     } catch (error) {
       console.error("Error updating status:", error);
-      alert(error.response?.data?.message || "Lỗi khi cập nhật trạng thái");
+      // alert(error.response?.data?.message || "Lỗi khi cập nhật trạng thái");
+      toast.error(
+        error.response?.data?.message || "Lỗi khi cập nhật trạng thái"
+      );
     }
   };
 
@@ -451,7 +532,9 @@ const OrdersPage = () => {
       const statusCheck = canUpdateStatus(order, newStatus);
 
       if (!statusCheck.canUpdate) {
-        alert(statusCheck.reason);
+        console.error("Cannot update food status:", statusCheck.reason);
+        toast.error(statusCheck.reason);
+        // alert(statusCheck.reason);
         return;
       }
 
@@ -471,10 +554,14 @@ const OrdersPage = () => {
           },
         });
       }
-      alert("Cập nhật trạng thái thành công!");
+      // alert("Cập nhật trạng thái thành công!");
+      toast.success("Cập nhật trạng thái thành công!");
     } catch (error) {
-      console.error("Error updating food status:", error);
-      alert(error.response?.data?.message || "Lỗi khi cập nhật trạng thái");
+      // console.error("Error updating food status:", error);
+      // alert(error.response?.data?.message || "Lỗi khi cập nhật trạng thái");
+      toast.error(
+        error.response?.data?.message || "Lỗi khi cập nhật trạng thái"
+      );
     }
   };
 
@@ -492,21 +579,28 @@ const OrdersPage = () => {
         });
       }
 
-      alert("Gán bàn thành công!");
+      // alert("Gán bàn thành công!");
+      toast.success("Gán bàn thành công!");
     } catch (error) {
       console.error("Error assigning table:", error);
-      alert("Lỗi khi gán bàn");
+      // alert("Lỗi khi gán bàn");
+      toast.error(error.response?.data?.message || "Lỗi khi gán bàn");
     }
+    1;
   };
 
   const handleSaveEditedOrder = async () => {
     try {
+      // Chuẩn hóa phương thức thanh toán trước khi gửi lên API
+      const normalizedPaymentMethod =
+        editingOrder.paymentMethod.toLowerCase() === "vnpay" ? "vnpay" : "cash";
+
       await updateOrder(editingOrder.id, {
         CustomerName: editingOrder.customerName,
         TableIds: editingOrder.tableIds,
         Status: editingOrder.status,
         StatusOrderFood: editingOrder.orderInfo.trangThai,
-        PaymentMethod: editingOrder.paymentMethod,
+        PaymentMethod: normalizedPaymentMethod,
         Notes: editingOrder.ghiChu || editingOrder.bookingInfo?.ghiChu || "",
         Guest: editingOrder.guestCount,
         Discount: editingOrder.discount,
@@ -522,22 +616,26 @@ const OrdersPage = () => {
       });
       await fetchData();
       setIsEditModalOpen(false);
-      alert("Cập nhật đơn hàng thành công!");
+      // alert("Cập nhật đơn hàng thành công!");
+      toast.success("Cập nhật đơn hàng thành công!");
     } catch (error) {
       console.error("Error updating order:", error);
-      alert(error.response?.data?.message || "Lỗi khi cập nhật đơn hàng");
+      toast.error(error.response?.data?.message || "Lỗi khi cập nhật đơn hàng");
+      // alert(error.response?.data?.message || "Lỗi khi cập nhật đơn hàng");
     }
   };
 
   const handleCreateOrder = async () => {
     try {
       if (!newOrder.customerName) {
-        alert("Vui lòng nhập tên khách hàng");
+        // alert("Vui lòng nhập tên khách hàng");
+        toast.error("Vui lòng nhập tên khách hàng");
         return;
       }
 
       if (newOrder.items.length === 0) {
-        alert("Đơn hàng phải có ít nhất một món");
+        // alert("Đơn hàng phải có ít nhất một món");
+        toast.error("Đơn hàng phải có ít nhất một món");
         return;
       }
 
@@ -565,10 +663,15 @@ const OrdersPage = () => {
       await createOrder(orderData);
       await fetchData();
       setIsCreateModalOpen(false);
-      alert("Tạo đơn hàng thành công!");
+      // alert("Tạo đơn hàng thành công!");
+      toast.success("Tạo đơn hàng thành công!");
     } catch (error) {
       console.error("Error creating order:", error);
-      alert(
+      // alert(
+      //   error.response?.data?.message ||
+      //     `Lỗi khi tạo đơn hàng: ${error.message}`
+      // );
+      toast.error(
         error.response?.data?.message ||
           `Lỗi khi tạo đơn hàng: ${error.message}`
       );
@@ -577,31 +680,88 @@ const OrdersPage = () => {
 
   const handleDeleteOrder = async () => {
     try {
-      if (currentOrder.status === "completed") {
-        alert("Không thể xóa đơn hàng đã hoàn thành thanh toán");
+      if (!currentOrder) {
+        // alert("Không tìm thấy đơn hàng cần xóa");
+        toast.error("Không tìm thấy đơn hàng cần xóa");
         return;
       }
 
+      // Kiểm tra trạng thái đơn hàng
+      if (currentOrder.status === "completed") {
+        // alert("Không thể xóa đơn hàng đã hoàn thành thanh toán");
+        toast.error("Không thể xóa đơn hàng đã hoàn thành thanh toán");
+        return;
+      }
+
+      // Kiểm tra trạng thái đặt món
+      if (
+        currentOrder.orderInfo?.trangThai === "completed" ||
+        currentOrder.orderInfo?.trangThai === "hoàn thành"
+      ) {
+        // alert("Không thể xóa đơn hàng đã hoàn thành phục vụ");
+        toast.error("Không thể xóa đơn hàng đã hoàn thành phục vụ");
+        return;
+      }
+
+      console.log("Deleting order:", currentOrder);
       await deleteOrder(currentOrder.id);
       await fetchData();
       setIsDeleteModalOpen(false);
-      alert("Xóa đơn hàng thành công!");
+      // alert("Xóa đơn hàng thành công!");
+      toast.success("Xóa đơn hàng thành công!");
     } catch (error) {
       console.error("Error deleting order:", error);
-      alert(error.response?.data?.message || "Lỗi khi xóa đơn hàng");
+      toast.error(error.response?.data?.message || "Lỗi khi xóa đơn hàng");
     }
   };
 
   const handleExportPdf = async (orderId) => {
     try {
       const order = orders.find((o) => o.id === orderId);
+      if (!order) {
+        toast.error("Không tìm thấy đơn hàng");
+        return;
+      }
+
       if (!order.canExportPdf) {
-        alert(
+        toast.error(
           "Chỉ có thể xuất PDF cho đơn hàng đã hoàn thành cả thanh toán và phục vụ"
         );
         return;
       }
 
+      // Chuẩn bị dữ liệu để gửi lên server
+      const orderData = {
+        id: order.id,
+        customerName: order.customerName,
+        customerPhone: order.customerPhone || "N/A",
+        customerEmail: order.customerEmail || "N/A",
+        tables: order.tables?.map((t) => t.tenBan).join(", ") || "Chưa gán bàn",
+        orderDate: formatDate(order.orderDate),
+        paymentDate: formatDate(order.paymentDate),
+        status:
+          order.status === "completed"
+            ? "Đã thanh toán"
+            : order.status === "deposit"
+            ? "Đã cọc"
+            : order.status === "processing"
+            ? "Chưa thanh toán"
+            : "N/A",
+        foodStatus: order.orderInfo?.trangThai || "N/A",
+        items: order.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.price * item.quantity,
+        })),
+        total: order.total,
+        deposit: order.deposit,
+        remaining: order.remaining,
+        paymentMethod: getPaymentMethodText(order.paymentMethod),
+        notes: order.notes || "Không có ghi chú",
+      };
+
+      console.log("Exporting PDF with data:", orderData);
       const response = await exportInvoicePdf(orderId);
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
@@ -614,7 +774,7 @@ const OrdersPage = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error exporting PDF:", error);
-      alert(error.response?.data?.message || "Lỗi khi xuất PDF");
+      toast.error(error.response?.data?.message || "Lỗi khi xuất PDF");
     }
   };
 
@@ -622,15 +782,15 @@ const OrdersPage = () => {
     try {
       const order = orders.find((o) => o.id === orderId);
       if (!order.canExportPdf) {
-        alert("Chỉ có thể gửi hóa đơn cho đơn hàng đã hoàn thành");
+        toast.error("Chỉ có thể gửi hóa đơn cho đơn hàng đã hoàn thành");
         return;
       }
 
       await sendInvoiceEmail(orderId, { email });
-      alert("Gửi hóa đơn qua email thành công!");
+      toast.success("Gửi hóa đơn qua email thành công!");
     } catch (error) {
       console.error("Error sending email:", error);
-      alert(error.response?.data?.message || "Lỗi khi gửi email");
+      toast.error(error.response?.data?.message || "Lỗi khi gửi email");
     }
   };
 
@@ -642,14 +802,14 @@ const OrdersPage = () => {
     console.log("Current menuItems:", menuItems);
 
     if (!selectedMenuItem) {
-      alert("Vui lòng chọn món ăn");
+      toast.error("Vui lòng chọn món ăn");
       return;
     }
 
     const menuItem = menuItems.find((item) => item.id === selectedMenuItem);
     if (!menuItem) {
       console.error("Menu item not found for ID:", selectedMenuItem);
-      alert("Không tìm thấy món ăn");
+      toast.error("Không tìm thấy món ăn");
       return;
     }
 
@@ -791,8 +951,17 @@ const OrdersPage = () => {
       setTables(tables);
     } catch (error) {
       console.error("Error fetching available tables:", error);
-      alert("Lỗi khi lấy danh sách bàn trống");
+      toast.error("Lỗi khi lấy danh sách bàn trống");
     }
+  };
+
+  // Thêm hàm kiểm tra thời gian
+  const canUpdateToCompleted = (order) => {
+    const now = new Date();
+    const arrivalTime = new Date(
+      order.bookingInfo?.thoiGianDen || order.arrivalTime
+    );
+    return now >= arrivalTime;
   };
 
   if (loading) {
@@ -969,7 +1138,7 @@ const OrdersPage = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="space-y-1">
-                      {getStatusBadgeOrderFood(order.status)}
+                      {getStatusBadge(order.status)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right text-center">
@@ -1505,7 +1674,7 @@ const OrdersPage = () => {
                       "completed"
                     );
                     if (!canUpdate) {
-                      alert(reason);
+                      toast.error(reason);
                       return;
                     }
                     handleUpdateStatus(currentOrder.id, "completed");
@@ -1788,22 +1957,43 @@ const OrdersPage = () => {
                   </label>
                   <select
                     value={editingOrder.orderInfo?.trangThai || "pending"}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const newStatus = e.target.value;
+                      if (
+                        newStatus === "completed" &&
+                        !canUpdateToCompleted(editingOrder)
+                      ) {
+                        toast.error(
+                          "Không thể chọn trạng thái hoàn thành trước thời gian đến bàn!"
+                        );
+                        return;
+                      }
                       setEditingOrder({
                         ...editingOrder,
                         orderInfo: {
                           ...editingOrder.orderInfo,
-                          trangThai: e.target.value,
+                          trangThai: newStatus,
                         },
-                      })
-                    }
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="pending">Chờ xử lý</option>
                     <option value="processing">Đang xử lý</option>
-                    <option value="completed">Hoàn thành</option>
+                    <option
+                      value="completed"
+                      disabled={!canUpdateToCompleted(editingOrder)}
+                    >
+                      Hoàn thành
+                    </option>
                     <option value="cancelled">Đã hủy</option>
                   </select>
+                  {!canUpdateToCompleted(editingOrder) && (
+                    <p className="mt-1 text-sm text-red-600">
+                      Chỉ có thể chọn trạng thái hoàn thành sau thời gian đến
+                      bàn
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1811,7 +2001,11 @@ const OrdersPage = () => {
                     Phương thức thanh toán
                   </label>
                   <select
-                    value={editingOrder.paymentMethod}
+                    value={
+                      editingOrder.paymentMethod?.toLowerCase() === "vnpay"
+                        ? "vnpay"
+                        : "cash"
+                    }
                     onChange={(e) =>
                       setEditingOrder({
                         ...editingOrder,
@@ -1821,7 +2015,7 @@ const OrdersPage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cash">Tiền mặt</option>
-                    <option value="VNPay">VNPay</option>
+                    <option value="vnpay">VNPay</option>
                   </select>
                 </div>
 
@@ -2514,6 +2708,53 @@ const OrdersPage = () => {
               >
                 <Save className="h-4 w-4 mr-2" />
                 Tạo đơn hàng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && currentOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">
+                Xác nhận xóa đơn hàng
+              </h2>
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="mb-4">
+              <p className="text-gray-600">
+                Bạn có chắc chắn muốn xóa đơn hàng này không?
+              </p>
+              <div className="mt-2 p-3 bg-gray-50 rounded-md">
+                <p className="font-medium">Mã đơn hàng: {currentOrder.id}</p>
+                <p className="font-medium">
+                  Khách hàng: {currentOrder.customerName}
+                </p>
+                <p className="font-medium">
+                  Tổng tiền: {currentOrder.total.toLocaleString("vi-VN")} ₫
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteOrder}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
+              >
+                Xóa
               </button>
             </div>
           </div>

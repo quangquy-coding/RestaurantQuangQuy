@@ -12,10 +12,13 @@ import {
   MapPin,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { getAllOrdersByCustomer, updateOrderFoodStatus } from "../../api/orderApi";
+import {
+  getAllOrdersByCustomer,
+  updateOrderFoodStatus,
+} from "../../api/orderApi";
 import { getAllDanhGia, themDanhGia } from "../../api/danhGiaApi";
 
-const AdminOrdersPage = () => {
+const OrdersPage = () => {
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [reviews, setReviews] = useState([]);
@@ -85,18 +88,33 @@ const AdminOrdersPage = () => {
         getAllOrdersByCustomer(userId),
         getAllDanhGia(),
       ]);
+
+      console.log("Raw API response:", ordersData);
+
       // Map orders to match expected structure
-      const mappedOrders = ordersData.map((order) => ({
-        id: order.maHoaDon || order.id,
-        customerName: order.tenKhachHang || order.customerName,
-        customerId: order.maKhachHang || order.customerId,
-        orderDate: order.ngayDat || order.orderDate,
-        total: order.tongTien || order.total,
-        paymentMethod: order.phuongThucThanhToan || order.paymentMethod,
-        status: order.trangThai || order.status,
-        tables: order.banList || order.tables || [],
-        items: order.chiTietDonHang || order.items || [],
-      }));
+      const mappedOrders = ordersData.map((order) => {
+        console.log("Processing order:", order);
+        return {
+          id: order.maHoaDon || order.id,
+          customerName: order.tenKhachHang || order.customerName,
+          customerId: order.maKhachHang || order.customerId,
+          orderDate: order.ngayDat || order.orderDate,
+          total: order.tongTien || order.total,
+          deposit: order.deposit || order.tienDatCoc,
+          remaining: order.tienConLai || order.remaining,
+          promoCode: order.maGiamGia || order.promoCode,
+          paymentMethod: order.phuongThucThanhToan || order.paymentMethod,
+          status: order.trangThai || order.status,
+          tables: order.banList || order.tables || [],
+          items: order.chiTietDonHang || order.items || [],
+          orderInfo: {
+            maDatMon: order.maDatMon || order.orderInfo?.maDatMon,
+            trangThai: order.trangThai || order.orderInfo?.trangThai,
+          },
+        };
+      });
+
+      console.log("Mapped orders:", mappedOrders);
       setOrders(mappedOrders);
       setFilteredOrders(mappedOrders);
       setReviews(reviewsData);
@@ -113,22 +131,35 @@ const AdminOrdersPage = () => {
   };
 
   const filterOrders = () => {
-    let filtered = orders;
+    let filtered = [...orders];
+
+    // Lọc theo từ khóa tìm kiếm
     if (searchTerm) {
-      filtered = filtered.filter(
-        (order) =>
-          order.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.customerName
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          order.tables?.some((table) =>
-            table.tenBan?.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-      );
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((order) => {
+        const orderId = order.id?.toString().toLowerCase() || "";
+        const customerName = order.customerName?.toLowerCase() || "";
+        const tableNames =
+          order.tables
+            ?.map((table) => table.tenBan?.toLowerCase() || "")
+            .join(" ") || "";
+
+        return (
+          orderId.includes(searchLower) ||
+          customerName.includes(searchLower) ||
+          tableNames.includes(searchLower)
+        );
+      });
     }
+
+    // Lọc theo trạng thái
     if (selectedStatus) {
-      filtered = filtered.filter((order) => order.status === selectedStatus);
+      filtered = filtered.filter((order) => {
+        const orderStatus = order.orderInfo?.trangThai || order.status;
+        return orderStatus?.toLowerCase() === selectedStatus.toLowerCase();
+      });
     }
+
     setFilteredOrders(filtered);
   };
 
@@ -236,17 +267,70 @@ const AdminOrdersPage = () => {
   };
 
   const handleCancelOrder = async (order) => {
-    if (!order.id) {
-      toast.error("Không thể hủy đơn: Thiếu mã đơn hàng.");
-      return;
-    }
     try {
-      await updateOrderFoodStatus(order.id, "cancelled");
-      toast.success("Hủy đơn thành công!");
-      await fetchData();
+      console.log("Order data:", order);
+
+      toast(
+        (t) => (
+          <div className="flex flex-col items-center">
+            <p className="mb-4">Bạn có chắc chắn muốn hủy đơn hàng này?</p>
+            <div className="flex gap-2">
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                onClick={() => {
+                  toast.dismiss(t.id);
+                  confirmCancelOrder(order);
+                }}
+              >
+                Xác nhận
+              </button>
+              <button
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+                onClick={() => toast.dismiss(t.id)}
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        ),
+        {
+          duration: 5000,
+          position: "top-center",
+        }
+      );
     } catch (error) {
       console.error("Error cancelling order:", error);
-      toast.error(`Hủy đơn thất bại: ${error.message}`);
+      console.error("Error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      toast.error("Có lỗi xảy ra khi hủy đơn hàng");
+    }
+  };
+
+  const confirmCancelOrder = async (order) => {
+    try {
+      // Lấy mã đặt món từ orderInfo
+      const orderId = order.orderInfo?.maDatMon;
+
+      if (!orderId) {
+        console.error("Không tìm thấy mã đặt món trong đơn hàng");
+        toast.error("Không thể hủy đơn hàng: Thiếu thông tin mã đặt món");
+        return;
+      }
+
+      console.log("Using order ID for cancellation:", orderId);
+
+      await updateOrderFoodStatus(orderId, "cancelled");
+      console.log("Order cancelled successfully");
+      toast.success("Hủy đơn hàng thành công!");
+
+      // Refresh data after cancellation
+      await fetchData();
+    } catch (error) {
+      console.error("Error in confirmCancelOrder:", error);
+      toast.error("Có lỗi xảy ra khi hủy đơn hàng");
     }
   };
 
@@ -261,38 +345,86 @@ const AdminOrdersPage = () => {
     return new Date(dateString).toLocaleDateString("vi-VN", options);
   };
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case "pending":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
-            <Clock className="mr-1.5 h-3.5 w-3.5" />
+  const getStatusBadge = (status, order) => {
+    // Kiểm tra cả status chính và status trong orderInfo
+    const orderStatus = order.orderInfo?.trangThai || status;
+
+    // Nếu status là null hoặc undefined, trả về pending
+    if (!orderStatus) {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
             Chờ xử lý
           </span>
+          <button
+            onClick={() => handleCancelOrder(order)}
+            className="px-2 py-1 text-xs font-medium text-red-600 hover:text-red-800"
+          >
+            Hủy đơn
+          </button>
+        </div>
+      );
+    }
+
+    // Chuyển status về chữ thường để so sánh
+    const normalizedStatus = orderStatus.toLowerCase().trim();
+
+    // Kiểm tra nếu đơn hàng đã bị hủy
+    if (normalizedStatus === "cancelled" || normalizedStatus === "đã hủy") {
+      return (
+        <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+          Đã hủy
+        </span>
+      );
+    }
+
+    switch (normalizedStatus) {
+      case "pending":
+      case "chờ xử lý":
+      case "chờ xử lí":
+        return (
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+              Chờ xử lý
+            </span>
+            <button
+              onClick={() => handleCancelOrder(order)}
+              className="px-2 py-1 text-xs font-medium text-red-600 hover:text-red-800"
+            >
+              Hủy đơn
+            </button>
+          </div>
         );
       case "processing":
+      case "đang xử lý":
+      case "đang xử lí":
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
-            <Clock className="mr-1.5 h-3.5 w-3.5" />
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
             Đang xử lý
           </span>
         );
       case "completed":
+      case "hoàn thành":
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
-            <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
             Hoàn thành
           </span>
         );
-      case "cancelled":
-        return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-            <XCircle className="mr-1.5 h-3.5 w-3.5" />
-            Đã hủy
-          </span>
-        );
       default:
-        return <span className="text-gray-500">Không xác định</span>;
+        // Nếu không khớp với bất kỳ trạng thái nào, mặc định là pending
+        return (
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+              Chờ xử lý
+            </span>
+            <button
+              onClick={() => handleCancelOrder(order)}
+              className="px-2 py-1 text-xs font-medium text-red-600 hover:text-red-800"
+            >
+              Hủy đơn
+            </button>
+          </div>
+        );
     }
   };
 
@@ -336,13 +468,13 @@ const AdminOrdersPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4 sm:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-            Quản Lý Đơn Hàng
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 text-center">
+            Đơn hàng của tôi
           </h1>
-          <button
+          {/* <button
             onClick={fetchData}
             className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
@@ -360,7 +492,7 @@ const AdminOrdersPage = () => {
               />
             </svg>
             Làm mới
-          </button>
+          </button> */}
         </div>
 
         {/* Search and filter */}
@@ -424,7 +556,7 @@ const AdminOrdersPage = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      {getStatusBadge(order.status)}
+                      {getStatusBadge(order.status, order)}
                       <div className="text-xl font-bold text-gray-900 mt-2">
                         {order.total?.toLocaleString("vi-VN")} VNĐ
                       </div>
@@ -516,7 +648,7 @@ const AdminOrdersPage = () => {
               </div>
 
               <div className="p-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div className="grid grid-cols-2 gap-6 mb-8">
                   <div>
                     <h3 className="text-sm font-semibold text-gray-500 mb-2">
                       Thông tin đơn hàng
@@ -548,7 +680,7 @@ const AdminOrdersPage = () => {
                         <span className="font-medium text-gray-700 mr-2">
                           Trạng thái:
                         </span>
-                        {getStatusBadge(currentOrder.status)}
+                        {getStatusBadge(currentOrder.status, currentOrder)}
                       </div>
                     </div>
                   </div>
@@ -560,16 +692,46 @@ const AdminOrdersPage = () => {
                     <div className="bg-gray-50 p-6 rounded-xl">
                       <div className="flex items-center mb-3">
                         <span className="font-medium text-gray-700 mr-2">
-                          Phương thức:
+                          Phương thức thanh toán:
                         </span>
                         <span>
                           {getPaymentMethodText(currentOrder.paymentMethod)}
                         </span>
                       </div>
+                      <div className="flex items-center mb-3">
+                        <span className="font-medium text-gray-700 mr-2">
+                          Trạng thái thanh toán:
+                        </span>
+                        <span className="text-green-600 font-semibold">
+                          {currentOrder.status === "completed"
+                            ? "Đã thanh toán"
+                            : "Chưa thanh toán"}
+                        </span>
+                      </div>
+
                       <div className="flex items-center">
                         <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
-                        <span className="font-bold text-xl text-gray-900">
-                          {currentOrder.total?.toLocaleString("vi-VN")} VNĐ
+                        <span className="text-xl text-gray-900">
+                          Mã giảm giá:{currentOrder.promoCode || "Không có"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center">
+                        <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
+                        <span className="text-xl text-gray-900">
+                          Tổng tiền:{currentOrder.total?.toLocaleString("vi-VN")} VNĐ
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
+                        <span className="text-xl text-red-700">
+                          Tiền cọc:{currentOrder.deposit?.toLocaleString("vi-VN")} VNĐ
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
+                        <span className=" text-xl text-red-700">
+                          Còn lại:{currentOrder.remaining?.toLocaleString("vi-VN")} VNĐ
                         </span>
                       </div>
                     </div>
@@ -735,7 +897,7 @@ const AdminOrdersPage = () => {
         {/* Review Modal */}
         {isReviewModalOpen && currentOrder && (
           <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-screen overflow-y-auto">
               <div className="p-8 border-b border-gray-100">
                 <h2 className="text-2xl font-bold text-gray-900">
                   Đánh giá đơn hàng #{currentOrder.id}
@@ -833,4 +995,4 @@ const AdminOrdersPage = () => {
   );
 };
 
-export default AdminOrdersPage;
+export default OrdersPage;
