@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
-import { toast } from "react-toastify";
+import { toast } from "react-hot-toast";
 import { saveAs } from "file-saver";
 import {
   Search,
