@@ -128,22 +128,30 @@ const OrdersPage = () => {
   };
 
   const filterOrders = () => {
-    let filtered = orders;
+    let filtered = [...orders];
+
+    // Lọc theo từ khóa tìm kiếm
     if (searchTerm) {
-      filtered = filtered.filter(
-        (order) =>
-          order.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          order.customerName
-            ?.toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          order.tables?.some((table) =>
-            table.tenBan?.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-      );
+      const searchLower = searchTerm.toLowerCase();
+      filtered = filtered.filter((order) => {
+        const orderId = order.id?.toString().toLowerCase() || '';
+        const customerName = order.customerName?.toLowerCase() || '';
+        const tableNames = order.tables?.map(table => table.tenBan?.toLowerCase() || '').join(' ') || '';
+        
+        return orderId.includes(searchLower) || 
+               customerName.includes(searchLower) || 
+               tableNames.includes(searchLower);
+      });
     }
+
+    // Lọc theo trạng thái
     if (selectedStatus) {
-      filtered = filtered.filter((order) => order.status === selectedStatus);
+      filtered = filtered.filter((order) => {
+        const orderStatus = order.orderInfo?.trangThai || order.status;
+        return orderStatus?.toLowerCase() === selectedStatus.toLowerCase();
+      });
     }
+
     setFilteredOrders(filtered);
   };
 
@@ -254,24 +262,32 @@ const OrdersPage = () => {
     try {
       console.log("Order data:", order);
 
-      if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này?")) {
-        // Lấy mã đặt món từ orderInfo
-        const orderId = order.orderInfo?.maDatMon;
+      toast((t) => (
+        <div className="flex flex-col items-center">
+          <p className="mb-4">Bạn có chắc chắn muốn hủy đơn hàng này?</p>
+          <div className="flex gap-2">
+            <button
+              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+              onClick={() => {
+                toast.dismiss(t.id);
+                confirmCancelOrder(order);
+              }}
+            >
+              Xác nhận
+            </button>
+            <button
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+              onClick={() => toast.dismiss(t.id)}
+            >
+              Hủy
+            </button>
+          </div>
+        </div>
+      ), {
+        duration: 5000,
+        position: "top-center",
+      });
 
-        if (!orderId) {
-          console.error("Không tìm thấy mã đặt món trong đơn hàng");
-          alert("Không thể hủy đơn hàng: Thiếu thông tin mã đặt món");
-          return;
-        }
-
-        console.log("Using order ID for cancellation:", orderId);
-
-        await updateOrderFoodStatus(orderId, "cancelled");
-        console.log("Order cancelled successfully");
-
-        // Refresh data after cancellation
-        await fetchData();
-      }
     } catch (error) {
       console.error("Error cancelling order:", error);
       console.error("Error details:", {
@@ -279,7 +295,32 @@ const OrdersPage = () => {
         response: error.response?.data,
         status: error.response?.status,
       });
-      alert("Có lỗi xảy ra khi hủy đơn hàng");
+      toast.error("Có lỗi xảy ra khi hủy đơn hàng");
+    }
+  };
+
+  const confirmCancelOrder = async (order) => {
+    try {
+      // Lấy mã đặt món từ orderInfo
+      const orderId = order.orderInfo?.maDatMon;
+
+      if (!orderId) {
+        console.error("Không tìm thấy mã đặt món trong đơn hàng");
+        toast.error("Không thể hủy đơn hàng: Thiếu thông tin mã đặt món");
+        return;
+      }
+
+      console.log("Using order ID for cancellation:", orderId);
+
+      await updateOrderFoodStatus(orderId, "cancelled");
+      console.log("Order cancelled successfully");
+      toast.success("Hủy đơn hàng thành công!");
+
+      // Refresh data after cancellation
+      await fetchData();
+    } catch (error) {
+      console.error("Error in confirmCancelOrder:", error);
+      toast.error("Có lỗi xảy ra khi hủy đơn hàng");
     }
   };
 
