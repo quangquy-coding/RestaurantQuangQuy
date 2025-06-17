@@ -91,18 +91,25 @@ const OrdersPage = () => {
 
       console.log("Raw API response:", ordersData);
 
-      // Map orders to match expected structure
+      // Map orders và tính lại remaining
       const mappedOrders = ordersData.map((order) => {
         console.log("Processing order:", order);
+        // Lấy giá trị từ API
+        const total = order.tongTien || order.total || 0;
+        const discount = order.tienGiam || order.discount || 0;
+        const deposit = order.deposit || order.tienDatCoc || 0;
+        // Tính lại remaining
+        const calculatedRemaining = total - discount - deposit;
+
         return {
           id: order.maHoaDon || order.id,
           customerName: order.tenKhachHang || order.customerName,
           customerId: order.maKhachHang || order.customerId,
           orderDate: order.ngayDat || order.orderDate,
-          total: order.tongTien || order.total,
-          deposit: order.deposit || order.tienDatCoc,
-          remaining: order.tienConLai || order.remaining,
-          discount: order.tienGiam || order.discount,
+          total: total,
+          deposit: deposit,
+          remaining: calculatedRemaining < 0 ? 0 : calculatedRemaining, // Đảm bảo không âm
+          discount: discount,
           paymentMethod: order.phuongThucThanhToan || order.paymentMethod,
           status: order.trangThai || order.status,
           tables: order.banList || order.tables || [],
@@ -724,7 +731,10 @@ const OrdersPage = () => {
                           <span className="text-lg font-medium">
                             <span className="text-gray-600">Giảm giá: </span>
                             <span className="text-black">
-                              {currentOrder.discount.toLocaleString("vi-VN") || 0} VNĐ
+                              {(currentOrder.discount ?? 0).toLocaleString(
+                                "vi-VN"
+                              )}{" "}
+                              VNĐ
                             </span>
                           </span>
                         </div>
@@ -745,8 +755,10 @@ const OrdersPage = () => {
                           <span className="text-lg font-medium">
                             <span className="text-gray-600">Còn lại: </span>
                             <span className="text-red-600 font-semibold">
-                              {currentOrder.remaining?.toLocaleString("vi-VN")}{" "}
-                              VNĐ
+                              {(currentOrder.remaining ?? 0).toLocaleString(
+                                "vi-VN"
+                              )}{" "}
+                              VNĐ VNĐ
                             </span>
                           </span>
                         </div>
