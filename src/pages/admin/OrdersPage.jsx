@@ -1335,14 +1335,14 @@ const OrdersPage = () => {
                           </button>
                         </>
                       )}
-                      <button
+                      {/* <button
                         onClick={() => openDeleteModal(order)}
                         className="text-red-600 hover:text-red-900"
                         title="Xóa"
                         disabled={order.status === "completed"}
                       >
                         <Trash2 className="h-5 w-5" />
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>

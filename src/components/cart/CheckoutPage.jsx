@@ -108,10 +108,10 @@ const CheckoutPage = () => {
           }
         });
 
-        // Chuyển hướng trang sau 3 giây
-        setTimeout(function () {
-          window.location.href = "/reservation";
-        }, 5000); // 3000 milliseconds = 3 giây
+        // // Chuyển hướng trang sau 3 giây
+        // setTimeout(function () {
+        //   window.location.href = "/reservation";
+        // }, 5000); // 3000 milliseconds = 3 giây
         return;
       }
 

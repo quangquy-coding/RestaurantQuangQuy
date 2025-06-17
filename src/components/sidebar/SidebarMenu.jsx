@@ -5,8 +5,7 @@ import { useLocation } from "react-router-dom";
 
 const SidebarMenu = () => {
   const { isMobile, toggleSidebar, isCollapsed } = useSidebar();
-
-  const location = useLocation(); // Get current location
+  const location = useLocation();
 
   const handleItemClick = () => {
     if (isMobile) {
@@ -14,6 +13,9 @@ const SidebarMenu = () => {
     }
   };
 
+  const role = localStorage.getItem("role"); // Lấy vai trò từ localStorage
+
+  // Danh sách menu items
   const menuItems = [
     {
       title: "Tổng quan",
@@ -33,10 +35,9 @@ const SidebarMenu = () => {
           />
         </svg>
       ),
-      end: true, // Use end to match exact path
+      end: true,
       to: "/admin",
     },
-    // hồ sơ cá nhân
     {
       title: "Hồ sơ cá nhân",
       icon: (
@@ -57,7 +58,6 @@ const SidebarMenu = () => {
       ),
       to: "/admin/profile",
     },
-
     {
       title: "Quản lý người dùng",
       icon: (
@@ -77,6 +77,7 @@ const SidebarMenu = () => {
         </svg>
       ),
       to: "/admin/users",
+      adminOnly: true, // Chỉ admin thấy
     },
     {
       title: "Quản lý danh mục",
@@ -110,7 +111,6 @@ const SidebarMenu = () => {
           <path d="M4 4h16v2H4V4zm1 4h14v3a7 7 0 11-14 0V8z" />
         </svg>
       ),
-
       to: "/admin/dishes",
     },
     {
@@ -131,7 +131,6 @@ const SidebarMenu = () => {
           />
         </svg>
       ),
-
       to: "/admin/tables",
     },
     {
@@ -155,7 +154,7 @@ const SidebarMenu = () => {
       to: "/admin/orders",
     },
     {
-      title: "Báo cáo",
+      title: "Thống kê doanh thu",
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -173,27 +172,8 @@ const SidebarMenu = () => {
         </svg>
       ),
       to: "/admin/reports",
+      adminOnly: true, // Chỉ admin thấy
     },
-    // {
-    //   title: "Phân tích",
-    //   icon: (
-    //     <svg
-    //       xmlns="http://www.w3.org/2000/svg"
-    //       className="h-6 w-6"
-    //       fill="none"
-    //       viewBox="0 0 24 24"
-    //       stroke="currentColor"
-    //     >
-    //       <path
-    //         strokeLinecap="round"
-    //         strokeLinejoin="round"
-    //         strokeWidth={2}
-    //         d="M11 5a7 7 0 107 7 7 7 0 00-7-7zm0 0v4m4.293 4.293l4.414 4.414"
-    //       />
-    //     </svg>
-    //   ),
-    //   to: "/admin/customer-analytics",
-    // },
     {
       title: "Quản lý khuyến mãi",
       icon: (
@@ -236,10 +216,15 @@ const SidebarMenu = () => {
     },
   ];
 
+  // Lọc menu items dựa trên vai trò
+  const filteredMenuItems = menuItems.filter(
+    (item) => !item.adminOnly || (item.adminOnly && role === "Admin")
+  );
+
   return (
     <div className="flex-1 overflow-y-auto py-4 px-3">
       <ul className={isCollapsed ? "space-y-1" : "space-y-2"}>
-        {menuItems.map((item) => (
+        {filteredMenuItems.map((item) => (
           <li key={item.to}>
             <SidebarMenuItem
               title={item.title}

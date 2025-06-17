@@ -349,9 +349,9 @@ const ReportsPage = () => {
   };
 
   // Export to PDF (placeholder)
-  const exportToPDF = () => {
-    alert("PDF export not implemented in this example.");
-  };
+  // const exportToPDF = () => {
+  //   alert("PDF export not implemented in this example.");
+  // };
 
   const formatDate = (dateString) => {
     if (!dateString) return "";
@@ -413,7 +413,7 @@ const ReportsPage = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Báo cáo doanh thu</h1>
+        <h1 className="text-2xl font-bold">Thống kê doanh thu</h1>
         <div className="flex space-x-2">
           <button
             onClick={() => {
@@ -454,13 +454,13 @@ const ReportsPage = () => {
             <Download className="w-4 h-4 mr-2" />
             Xuất Excel
           </button>
-          <button
+          {/* <button
             onClick={exportToPDF}
             className="flex items-center px-4 py-2 text-gray-700 bg-white border rounded-lg hover:bg-gray-50"
           >
             <Download className="w-4 h-4 mr-2" />
             Xuất PDF
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -627,7 +627,7 @@ const ReportsPage = () => {
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-sm font-medium text-gray-600">
-                  Đánh giá trung bình
+                  Đánh giá trung bình của khách hàng
                 </h3>
                 <p className="text-2xl font-bold">
                   {overviewData.danhGiaTrungBinh}/5
