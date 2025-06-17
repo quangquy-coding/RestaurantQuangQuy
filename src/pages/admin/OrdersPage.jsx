@@ -39,6 +39,151 @@ import {
   exportInvoicePdf,
   sendInvoiceEmail,
 } from "../../api/orderApi";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Font,
+  pdf,
+} from "@react-pdf/renderer";
+Font.register({
+  family: "Roboto",
+  src: "https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf",
+});
+
+// Styles cho PDF
+const styles = StyleSheet.create({
+  page: {
+    padding: 30,
+    fontFamily: "Roboto",
+    fontSize: 12,
+  },
+  header: {
+    fontSize: 20,
+    marginBottom: 20,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  section: {
+    marginBottom: 10,
+  },
+  label: {
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+  table: {
+    display: "table",
+    width: "auto",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    marginBottom: 10,
+  },
+  tableRow: {
+    flexDirection: "row",
+  },
+  tableCol: {
+    width: "25%",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderColor: "#bfbfbf",
+    padding: 5,
+  },
+  tableHeader: {
+    fontWeight: "bold",
+    backgroundColor: "#f0f0f0",
+  },
+  text: {
+    marginBottom: 4,
+  },
+  total: {
+    fontWeight: "bold",
+    marginTop: 10,
+  },
+});
+
+// Component PDF hóa đơn
+const InvoicePDF = ({ order }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      <Text style={styles.header}>Hóa Đơn #{order.id}</Text>
+      <View style={styles.section}>
+        <Text style={styles.label}>Thông tin đơn hàng</Text>
+        <Text style={styles.text}>Mã đơn hàng: {order.id}</Text>
+        <Text style={styles.text}>Khách hàng: {order.customerName}</Text>
+        <Text style={styles.text}>
+          Số điện thoại: {order.customerPhone || "N/A"}
+        </Text>
+        <Text style={styles.text}>Email: {order.customerEmail || "N/A"}</Text>
+        <Text style={styles.text}>
+          Bàn: {order.tables || order.tableNumber || "Chưa gán bàn"}
+        </Text>
+        <Text style={styles.text}>Thời gian đặt: {order.orderDate}</Text>
+        <Text style={styles.text}>
+          Phương thức thanh toán: {order.paymentMethod}
+        </Text>
+        <Text style={styles.text}>
+          Ghi chú: {order.notes || "Không có ghi chú"}
+        </Text>
+      </View>
+      <View style={styles.section}>
+        <Text style={styles.label}>Danh sách món ăn</Text>
+        <View style={styles.table}>
+          <View style={[styles.tableRow, styles.tableHeader]}>
+            <View style={styles.tableCol}>
+              <Text>Món ăn</Text>
+            </View>
+            <View style={styles.tableCol}>
+              <Text>Số lượng</Text>
+            </View>
+            <View style={styles.tableCol}>
+              <Text>Đơn giá</Text>
+            </View>
+            <View style={styles.tableCol}>
+              <Text>Thành tiền</Text>
+            </View>
+          </View>
+          {order.items.map((item, index) => (
+            <View style={styles.tableRow} key={index}>
+              <View style={styles.tableCol}>
+                <Text>{item.name}</Text>
+              </View>
+              <View style={styles.tableCol}>
+                <Text>{item.quantity}</Text>
+              </View>
+              <View style={styles.tableCol}>
+                <Text>{item.price.toLocaleString("vi-VN")} ₫</Text>
+              </View>
+              <View style={styles.tableCol}>
+                <Text>
+                  {(item.price * item.quantity).toLocaleString("vi-VN")} ₫
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      </View>
+      <View style={styles.section}>
+        <Text style={styles.total}>
+          Tạm tính: {order.total.toLocaleString("vi-VN")} ₫
+        </Text>
+        {order.discount > 0 && (
+          <Text style={styles.total}>
+            Giảm giá: -{order.discount.toLocaleString("vi-VN")} ₫
+          </Text>
+        )}
+        <Text style={styles.total}>
+          Tiền cọc: {order.deposit.toLocaleString("vi-VN")} ₫
+        </Text>
+        <Text style={styles.total}>
+          Còn lại: {order.remaining.toLocaleString("vi-VN")} ₫
+        </Text>
+      </View>
+    </Page>
+  </Document>
+);
 
 const OrdersPage = () => {
   // State declarations
@@ -730,13 +875,16 @@ const OrdersPage = () => {
         return;
       }
 
-      // Chuẩn bị dữ liệu để gửi lên server
+      // Chuẩn bị dữ liệu cho PDF
       const orderData = {
         id: order.id,
         customerName: order.customerName,
         customerPhone: order.customerPhone || "N/A",
         customerEmail: order.customerEmail || "N/A",
-        tables: order.tables?.map((t) => t.tenBan).join(", ") || "Chưa gán bàn",
+        tables:
+          order.tables?.map((t) => t.tenBan).join(", ") ||
+          order.tableNumber ||
+          "Chưa gán bàn",
         orderDate: formatDate(order.orderDate),
         paymentDate: formatDate(order.paymentDate),
         status:
@@ -752,29 +900,25 @@ const OrdersPage = () => {
           name: item.name,
           quantity: item.quantity,
           price: item.price,
-          total: item.price * item.quantity,
         })),
         total: order.total,
-        deposit: order.deposit,
-        remaining: order.remaining,
+        discount: order.discount || 0,
+        deposit: order.deposit || 0,
+        remaining: order.remaining || 0,
         paymentMethod: getPaymentMethodText(order.paymentMethod),
         notes: order.notes || "Không có ghi chú",
       };
 
-      console.log("Exporting PDF with data:", orderData);
-      const response = await exportInvoicePdf(orderId);
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `HoaDon_${orderId}_${new Date()
-        .toISOString()
-        .slice(0, 10)}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
+      // Tạo và tải PDF
+      const blob = await pdf(<InvoicePDF order={orderData} />).toBlob();
+      saveAs(
+        blob,
+        `HoaDon_${orderId}_${new Date().toISOString().slice(0, 10)}.pdf`
+      );
+      toast.success("Xuất PDF thành công!");
     } catch (error) {
       console.error("Error exporting PDF:", error);
-      toast.error(error.response?.data?.message || "Lỗi khi xuất PDF");
+      toast.error("Lỗi khi xuất PDF");
     }
   };
 
