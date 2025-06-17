@@ -100,6 +100,9 @@ const OrdersPage = () => {
           customerId: order.maKhachHang || order.customerId,
           orderDate: order.ngayDat || order.orderDate,
           total: order.tongTien || order.total,
+          deposit: order.deposit || order.tienDatCoc,
+          remaining: order.tienConLai || order.remaining,
+          promoCode: order.maGiamGia || order.promoCode,
           paymentMethod: order.phuongThucThanhToan || order.paymentMethod,
           status: order.trangThai || order.status,
           tables: order.banList || order.tables || [],
@@ -708,8 +711,27 @@ const OrdersPage = () => {
 
                       <div className="flex items-center">
                         <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
-                        <span className="font-bold text-xl text-gray-900">
-                          {currentOrder.total?.toLocaleString("vi-VN")} VNĐ
+                        <span className="text-xl text-gray-900">
+                          Mã giảm giá:{currentOrder.promoCode || "Không có"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center">
+                        <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
+                        <span className="text-xl text-gray-900">
+                          Tổng tiền:{currentOrder.total?.toLocaleString("vi-VN")} VNĐ
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
+                        <span className="text-xl text-red-700">
+                          Tiền cọc:{currentOrder.deposit?.toLocaleString("vi-VN")} VNĐ
+                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <CreditCard className="h-4 w-4 text-indigo-500 mr-2" />
+                        <span className=" text-xl text-red-700">
+                          Còn lại:{currentOrder.remaining?.toLocaleString("vi-VN")} VNĐ
                         </span>
                       </div>
                     </div>
