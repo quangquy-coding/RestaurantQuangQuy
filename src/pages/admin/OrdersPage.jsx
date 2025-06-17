@@ -22,6 +22,8 @@ import {
   Mail,
   AlertTriangle,
   Info,
+  HelpCircle,
+  X,
 } from "lucide-react";
 import {
   getAllOrders,
@@ -254,8 +256,11 @@ const OrdersPage = () => {
   };
 
   const openDeleteModal = (order) => {
+    console.log("Opening delete modal for order:", order);
+    console.log("Current isDeleteModalOpen:", isDeleteModalOpen);
     setCurrentOrder(order);
     setIsDeleteModalOpen(true);
+    console.log("After setting isDeleteModalOpen:", true);
   };
 
   const formatDate = (dateString) => {
@@ -271,67 +276,48 @@ const OrdersPage = () => {
   };
 
   const getStatusBadgeOrderFood = (status) => {
-    switch (status) {
-      case "pending":
-      case "Chưa thanh toán":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            <Clock className="mr-1 h-3 w-3" />
-            Chưa thanh toán
-          </span>
-        );
-      case "deposit":
-      case "Đã cọc":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            <Clock className="mr-1 h-3 w-3" />
-            Đã cọc
-          </span>
-        );
-      case "completed":
-      case "Đã thanh toán":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            <CheckCircle className="mr-1 h-3 w-3" />
-            Đã thanh toán
-          </span>
-        );
-      // case "cancelled":
-      // case "Đã hủy":
-      //   return (
-      //     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-      //       <XCircle className="mr-1 h-3 w-3" />
-      //       Đã hủy
-      //     </span>
-      //   );
-      default:
-        return null;
+    console.log("Current status:", status);
+    if (!status) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          <HelpCircle className="mr-1 h-3 w-3" />
+          Không xác định
+        </span>
+      );
     }
-  };
-  const getOrderStatusBadge = (status) => {
-    switch (status) {
+
+    const normalizedStatus = status.toLowerCase();
+    console.log("Normalized status:", normalizedStatus);
+
+    switch (normalizedStatus) {
       case "pending":
+      case "chờ xử lý":
+      case "chờ xử lí":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
             <Clock className="mr-1 h-3 w-3" />
-            Chưa xử lý
+            Chờ xử lý
           </span>
         );
       case "processing":
+      case "đang xử lý":
+      case "đang xử lí":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
             <Clock className="mr-1 h-3 w-3" />
-            Đang chuẩn bị
+            Đang xử lý
           </span>
         );
       case "completed":
+      case "hoàn thành":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircle className="mr-1 h-3 w-3" />
-            Hoàn tất
+            Hoàn thành
           </span>
         );
       case "cancelled":
+      case "đã hủy":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
             <XCircle className="mr-1 h-3 w-3" />
@@ -339,54 +325,142 @@ const OrdersPage = () => {
           </span>
         );
       default:
-        return null;
+        console.log("Unknown status:", normalizedStatus);
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <HelpCircle className="mr-1 h-3 w-3" />
+            Không xác định
+          </span>
+        );
+    }
+  };
+  const getOrderStatusBadge = (status) => {
+    console.log("Order status:", status);
+    if (!status) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          <HelpCircle className="mr-1 h-3 w-3" />
+          Không xác định
+        </span>
+      );
+    }
+
+    const normalizedStatus = status.toLowerCase();
+    console.log("Normalized order status:", normalizedStatus);
+
+    switch (normalizedStatus) {
+      case "pending":
+      case "chờ xử lý":
+      case "chờ xử lí":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+            <Clock className="mr-1 h-3 w-3" />
+            Chờ xử lý
+          </span>
+        );
+      case "processing":
+      case "đang xử lý":
+      case "đang xử lí":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <Clock className="mr-1 h-3 w-3" />
+            Đang xử lý
+          </span>
+        );
+      case "completed":
+      case "hoàn thành":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <CheckCircle className="mr-1 h-3 w-3" />
+            Hoàn thành
+          </span>
+        );
+      case "cancelled":
+      case "đã hủy":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <XCircle className="mr-1 h-3 w-3" />
+            Đã hủy
+          </span>
+        );
+      default:
+        console.log("Unknown order status:", normalizedStatus);
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <HelpCircle className="mr-1 h-3 w-3" />
+            Không xác định
+          </span>
+        );
     }
   };
 
   const getStatusBadge = (status) => {
-    switch (status) {
+    if (!status) return null;
+
+    // Normalize status string
+    const normalizedStatus = status.toLowerCase().trim();
+
+    switch (normalizedStatus) {
       case "pending":
+      case "chưa thanh toán":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
             <Clock className="mr-1 h-3 w-3" />
             Chưa thanh toán
           </span>
         );
-      case "deposit":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            <Clock className="mr-1 h-3 w-3" />
-            Đã cọc
-          </span>
-        );
+      case "paid":
       case "completed":
+      case "đã thanh toán":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircle className="mr-1 h-3 w-3" />
             Đã thanh toán
           </span>
         );
-      // case "cancelled":
-      //   return (
-      //     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-      //       <XCircle className="mr-1 h-3 w-3" />
-      //       Đã hủy
-      //     </span>
-      //   );
+      case "deposit":
+      case "đã cọc":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <Clock className="mr-1 h-3 w-3" />
+            Đã cọc
+          </span>
+        );
+      case "cancelled":
+      case "đã hủy":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <XCircle className="mr-1 h-3 w-3" />
+            Đã hủy
+          </span>
+        );
+      case "refunded":
+      case "đã hoàn tiền":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <RefreshCw className="mr-1 h-3 w-3" />
+            Đã hoàn tiền
+          </span>
+        );
       default:
-        return null;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            <HelpCircle className="mr-1 h-3 w-3" />
+            {status}
+          </span>
+        );
     }
   };
 
   const getPaymentMethodText = (method) => {
-    switch (method) {
+    switch (method?.toLowerCase()) {
       case "cash":
-      case "Tiền mặt":
+      case "tiền mặt":
         return "Tiền mặt";
-      case "VNPay":
+      case "vnpay":
         return "VNPay";
       default:
-        return method;
+        return method || "Không xác định";
     }
   };
 
@@ -501,12 +575,16 @@ const OrdersPage = () => {
 
   const handleSaveEditedOrder = async () => {
     try {
+      // Chuẩn hóa phương thức thanh toán trước khi gửi lên API
+      const normalizedPaymentMethod =
+        editingOrder.paymentMethod.toLowerCase() === "vnpay" ? "vnpay" : "cash";
+
       await updateOrder(editingOrder.id, {
         CustomerName: editingOrder.customerName,
         TableIds: editingOrder.tableIds,
         Status: editingOrder.status,
         StatusOrderFood: editingOrder.orderInfo.trangThai,
-        PaymentMethod: editingOrder.paymentMethod,
+        PaymentMethod: normalizedPaymentMethod,
         Notes: editingOrder.ghiChu || editingOrder.bookingInfo?.ghiChu || "",
         Guest: editingOrder.guestCount,
         Discount: editingOrder.discount,
@@ -577,11 +655,27 @@ const OrdersPage = () => {
 
   const handleDeleteOrder = async () => {
     try {
+      if (!currentOrder) {
+        alert("Không tìm thấy đơn hàng cần xóa");
+        return;
+      }
+
+      // Kiểm tra trạng thái đơn hàng
       if (currentOrder.status === "completed") {
         alert("Không thể xóa đơn hàng đã hoàn thành thanh toán");
         return;
       }
 
+      // Kiểm tra trạng thái đặt món
+      if (
+        currentOrder.orderInfo?.trangThai === "completed" ||
+        currentOrder.orderInfo?.trangThai === "hoàn thành"
+      ) {
+        alert("Không thể xóa đơn hàng đã hoàn thành phục vụ");
+        return;
+      }
+
+      console.log("Deleting order:", currentOrder);
       await deleteOrder(currentOrder.id);
       await fetchData();
       setIsDeleteModalOpen(false);
@@ -595,6 +689,11 @@ const OrdersPage = () => {
   const handleExportPdf = async (orderId) => {
     try {
       const order = orders.find((o) => o.id === orderId);
+      if (!order) {
+        alert("Không tìm thấy đơn hàng");
+        return;
+      }
+
       if (!order.canExportPdf) {
         alert(
           "Chỉ có thể xuất PDF cho đơn hàng đã hoàn thành cả thanh toán và phục vụ"
@@ -602,6 +701,38 @@ const OrdersPage = () => {
         return;
       }
 
+      // Chuẩn bị dữ liệu để gửi lên server
+      const orderData = {
+        id: order.id,
+        customerName: order.customerName,
+        customerPhone: order.customerPhone || "N/A",
+        customerEmail: order.customerEmail || "N/A",
+        tables: order.tables?.map((t) => t.tenBan).join(", ") || "Chưa gán bàn",
+        orderDate: formatDate(order.orderDate),
+        paymentDate: formatDate(order.paymentDate),
+        status:
+          order.status === "completed"
+            ? "Đã thanh toán"
+            : order.status === "deposit"
+            ? "Đã cọc"
+            : order.status === "processing"
+            ? "Chưa thanh toán"
+            : "N/A",
+        foodStatus: order.orderInfo?.trangThai || "N/A",
+        items: order.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.price * item.quantity,
+        })),
+        total: order.total,
+        deposit: order.deposit,
+        remaining: order.remaining,
+        paymentMethod: getPaymentMethodText(order.paymentMethod),
+        notes: order.notes || "Không có ghi chú",
+      };
+
+      console.log("Exporting PDF with data:", orderData);
       const response = await exportInvoicePdf(orderId);
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
@@ -795,6 +926,15 @@ const OrdersPage = () => {
     }
   };
 
+  // Thêm hàm kiểm tra thời gian
+  const canUpdateToCompleted = (order) => {
+    const now = new Date();
+    const arrivalTime = new Date(
+      order.bookingInfo?.thoiGianDen || order.arrivalTime
+    );
+    return now >= arrivalTime;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -969,7 +1109,7 @@ const OrdersPage = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="space-y-1">
-                      {getStatusBadgeOrderFood(order.status)}
+                      {getStatusBadge(order.status)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right text-center">
@@ -1389,62 +1529,72 @@ const OrdersPage = () => {
                       Cập nhật trạng thái đặt món:
                     </h4>
 
-                  {(currentOrder.orderInfo?.trangThai === "processing" ||
-                    currentOrder.orderInfo?.trangThai === "Đang xử lí") &&
-                    !tooEarly &&  (
-                    <button
-                      onClick={() =>
-                        handleUpdateFoodStatus(
-                          currentOrder.orderInfo.maDatMon,
-                          "processing"
-                        )
-                      }
-                      disabled={tooEarly || currentOrder.orderInfo?.trangThai !== "pending"}
-                      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Xử lý đơn hàng
-                    </button>
-                    )}
+                    {(currentOrder.orderInfo?.trangThai === "processing" ||
+                      currentOrder.orderInfo?.trangThai === "Đang xử lí") &&
+                      !tooEarly && (
+                        <button
+                          onClick={() =>
+                            handleUpdateFoodStatus(
+                              currentOrder.orderInfo.maDatMon,
+                              "processing"
+                            )
+                          }
+                          disabled={
+                            tooEarly ||
+                            currentOrder.orderInfo?.trangThai !== "pending"
+                          }
+                          className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed transition-colors"
+                        >
+                          Xử lý đơn hàng
+                        </button>
+                      )}
 
                     {(currentOrder.orderInfo?.trangThai === "pending" ||
                       currentOrder.orderInfo?.trangThai === "Chờ xử lí" ||
-                      currentOrder.orderInfo?.trangThai === "processing" || 
-                    currentOrder.orderInfo?.trangThai === "Đang xử lí" ) && (
-                    <button
-                      onClick={() => {
-                        if (tooEarly) {
-                          alert("Chưa đến thời gian giao hàng");
-                          return;
+                      currentOrder.orderInfo?.trangThai === "processing" ||
+                      currentOrder.orderInfo?.trangThai === "Đang xử lí") && (
+                      <button
+                        onClick={() => {
+                          if (tooEarly) {
+                            alert("Chưa đến thời gian giao hàng");
+                            return;
+                          }
+                          const { canUpdate, reason } = canUpdateStatus(
+                            currentOrder,
+                            "completed"
+                          );
+                          if (!canUpdate) {
+                            alert(reason);
+                            return;
+                          }
+                          handleUpdateFoodStatus(
+                            currentOrder.orderInfo.maDatMon,
+                            "completed"
+                          );
+                        }}
+                        disabled={
+                          tooEarly ||
+                          ![
+                            "pending",
+                            "processing",
+                            "Chờ xử lí",
+                            "Đang xử lí",
+                          ].includes(currentOrder.orderInfo?.trangThai)
                         }
-                        const { canUpdate, reason } = canUpdateStatus(
-                          currentOrder,
-                          "completed"
-                        );
-                        if (!canUpdate) {
-                          alert(reason);
-                          return;
-                        }
-                        handleUpdateFoodStatus(
-                          currentOrder.orderInfo.maDatMon,
-                          "completed"
-                        );
-                      }}
-                      disabled={
-                        tooEarly ||
-                        !["pending", "processing", "Chờ xử lí", "Đang xử lí"].includes(
-                          currentOrder.orderInfo?.trangThai
-                        )
-                      }
-                      className={`px-4 py-2 rounded-md transition-colors ${!tooEarly &&
-                          ["pending", "processing", "Chờ xử lí", "Đang xử lí"].includes(
-                            currentOrder.orderInfo?.trangThai
-                          )
-                          ? "bg-green-600 text-white hover:bg-green-700"
-                          : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        className={`px-4 py-2 rounded-md transition-colors ${
+                          !tooEarly &&
+                          [
+                            "pending",
+                            "processing",
+                            "Chờ xử lí",
+                            "Đang xử lí",
+                          ].includes(currentOrder.orderInfo?.trangThai)
+                            ? "bg-green-600 text-white hover:bg-green-700"
+                            : "bg-gray-300 text-gray-600 cursor-not-allowed"
                         }`}
-                    >
-                      Hoàn thành đơn hàng
-                    </button>
+                      >
+                        Hoàn thành đơn hàng
+                      </button>
                     )}
 
                     {(currentOrder.orderInfo?.trangThai === "pending" ||
@@ -1778,22 +1928,43 @@ const OrdersPage = () => {
                   </label>
                   <select
                     value={editingOrder.orderInfo?.trangThai || "pending"}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const newStatus = e.target.value;
+                      if (
+                        newStatus === "completed" &&
+                        !canUpdateToCompleted(editingOrder)
+                      ) {
+                        alert(
+                          "Không thể chọn trạng thái hoàn thành trước thời gian đến bàn!"
+                        );
+                        return;
+                      }
                       setEditingOrder({
                         ...editingOrder,
                         orderInfo: {
                           ...editingOrder.orderInfo,
-                          trangThai: e.target.value,
+                          trangThai: newStatus,
                         },
-                      })
-                    }
+                      });
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="pending">Chờ xử lý</option>
                     <option value="processing">Đang xử lý</option>
-                    {tooEarly && <option value="completed">Hoàn thành</option> }
+                    <option
+                      value="completed"
+                      disabled={!canUpdateToCompleted(editingOrder)}
+                    >
+                      Hoàn thành
+                    </option>
                     <option value="cancelled">Đã hủy</option>
                   </select>
+                  {!canUpdateToCompleted(editingOrder) && (
+                    <p className="mt-1 text-sm text-red-600">
+                      Chỉ có thể chọn trạng thái hoàn thành sau thời gian đến
+                      bàn
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1801,7 +1972,11 @@ const OrdersPage = () => {
                     Phương thức thanh toán
                   </label>
                   <select
-                    value={editingOrder.paymentMethod}
+                    value={
+                      editingOrder.paymentMethod?.toLowerCase() === "vnpay"
+                        ? "vnpay"
+                        : "cash"
+                    }
                     onChange={(e) =>
                       setEditingOrder({
                         ...editingOrder,
@@ -1811,7 +1986,7 @@ const OrdersPage = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="cash">Tiền mặt</option>
-                    <option value="VNPay">VNPay</option>
+                    <option value="vnpay">VNPay</option>
                   </select>
                 </div>
 
@@ -2504,6 +2679,53 @@ const OrdersPage = () => {
               >
                 <Save className="h-4 w-4 mr-2" />
                 Tạo đơn hàng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && currentOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">
+                Xác nhận xóa đơn hàng
+              </h2>
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="mb-4">
+              <p className="text-gray-600">
+                Bạn có chắc chắn muốn xóa đơn hàng này không?
+              </p>
+              <div className="mt-2 p-3 bg-gray-50 rounded-md">
+                <p className="font-medium">Mã đơn hàng: {currentOrder.id}</p>
+                <p className="font-medium">
+                  Khách hàng: {currentOrder.customerName}
+                </p>
+                <p className="font-medium">
+                  Tổng tiền: {currentOrder.total.toLocaleString("vi-VN")} ₫
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleDeleteOrder}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-md"
+              >
+                Xóa
               </button>
             </div>
           </div>
