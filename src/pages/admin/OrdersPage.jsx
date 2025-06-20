@@ -2025,19 +2025,31 @@ const OrdersPage = () => {
                     <button
                       type="button"
                       className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                      onClick={() => {
+                      onClick={async () => {
                         if (
                           selectedTableId &&
                           !editingOrder.tableIds.includes(selectedTableId)
                         ) {
-                          setEditingOrder({
-                            ...editingOrder,
-                            tableIds: [
-                              ...editingOrder.tableIds,
-                              String(selectedTableId),
-                            ].filter(Boolean),
-                          });
-                          setSelectedTableId("");
+                          try {
+                            await assignTableToOrder(
+                              editingOrder.id,
+                              selectedTableId
+                            );
+                            setEditingOrder({
+                              ...editingOrder,
+                              tableIds: [
+                                ...editingOrder.tableIds,
+                                String(selectedTableId),
+                              ].filter(Boolean),
+                            });
+                            setSelectedTableId("");
+                            toast.success("Gán bàn thành công!");
+                            await fetchData();
+                          } catch (error) {
+                            toast.error(
+                              error.response?.data?.message || "Lỗi khi gán bàn"
+                            );
+                          }
                         }
                       }}
                     >
@@ -2073,6 +2085,29 @@ const OrdersPage = () => {
                       );
                     })}
                   </div>
+                  {/* Nút Gán bàn */}
+                  {/* <div className="mt-3">
+                    <button
+                      type="button"
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                      onClick={async () => {
+                        if (!editingOrder.id || !selectedTableId) {
+                          toast.error("Vui lòng chọn đơn hàng và bàn để gán!");
+                          return;
+                        }
+                        try {
+                          await assignTableToOrder(editingOrder.id, selectedTableId);
+                          toast.success("Gán bàn thành công!");
+                          await fetchData();
+                        } catch (error) {
+                          toast.error(error.response?.data?.message || "Lỗi khi gán bàn");
+                        }
+                      }}
+                      disabled={!editingOrder.id || !selectedTableId}
+                    >
+                      Gán bàn
+                    </button>
+                  </div> */}
                 </div>
 
                 <div>

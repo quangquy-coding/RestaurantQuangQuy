@@ -415,25 +415,51 @@ namespace RestaurantQuangQuy.Controllers.Admin
 					return NotFound(new { message = "Không tìm thấy bàn" });
 				}
 
-				// Kiểm tra bàn có đang được sử dụng không
-				var orderDateTime = order.ThoiGianDat;
-				var startTime = orderDateTime.AddHours(-2);
-				var endTime = orderDateTime.AddHours(2);
+				// Lấy thông tin đặt bàn của đơn hàng này
+				var datBan = await _context.Datbans.FirstOrDefaultAsync(db => db.MaBanAn == order.MaBanAn);
+				if (datBan == null)
+				{
+					return BadRequest(new { message = "Không tìm thấy thông tin đặt bàn cho đơn hàng này" });
+				}
 
-				var isTableOccupied = await _context.Hoadonthanhtoans
-					.AnyAsync(h => h.MaBanAn == request.TableId &&
-								  h.ThoiGianDat >= startTime && h.ThoiGianDat <= endTime &&
-								  (h.TrangThaiThanhToan == "pending" ||
-								   h.TrangThaiThanhToan == "deposit" ||
-								   h.TrangThaiThanhToan == "completed") &&
-								  h.MaHoaDon != orderId);
+				var arrivalTime = datBan.ThoiGianDen;
+				var startTime = arrivalTime.AddHours(-2);
+				var endTime = arrivalTime.AddHours(2);
+
+				// Kiểm tra xem bàn này đã được đặt trong khoảng thời gian này chưa
+				var isTableOccupied = await (
+					from dbba in _context.DatBanBanAns
+					join db in _context.Datbans on dbba.MaDatBan equals db.MaBanAn
+					where dbba.MaBanAn == request.TableId
+					  && db.ThoiGianDen == arrivalTime
+					  && db.MaBanAn != datBan.MaBanAn
+					  && (db.TrangThai != "Đã hủy" && db.TrangThai != "cancelled")
+					select dbba
+				).AnyAsync();
 
 				if (isTableOccupied)
 				{
-					return BadRequest(new { message = "Bàn đã được sử dụng trong khoảng thời gian này" });
+					return BadRequest(new { message = "Bàn đã được đặt trong khoảng thời gian này" });
 				}
 
-				order.MaBanAn = request.TableId;
+				// Gán bàn cho booking (DatBanBanAn)
+				// Xóa các liên kết cũ nếu có
+				var oldLinks = await _context.DatBanBanAns.Where(x => x.MaDatBan == datBan.MaBanAn).ToListAsync();
+				if (oldLinks.Any())
+				{
+					_context.DatBanBanAns.RemoveRange(oldLinks);
+					await _context.SaveChangesAsync();
+				}
+				// Thêm liên kết mới
+				_context.DatBanBanAns.Add(new DatBanBanAn
+				{
+					MaDatBan = datBan.MaBanAn,
+					MaBanAn = request.TableId
+				});
+				await _context.SaveChangesAsync();
+
+				// Cập nhật mã bàn cho hóa đơn
+				order.MaBanAn = datBan.MaBanAn;
 				await _context.SaveChangesAsync();
 
 				return Ok(new { message = "Gán bàn thành công" });
