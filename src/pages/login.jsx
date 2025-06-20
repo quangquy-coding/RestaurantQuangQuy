@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
+import Swal from "sweetalert2";
 import imgLogin from "../assets/imgLogin.jpg"; // Adjust the path as necessary
 const LoginPage = () => {
   const [credentials, setCredentials] = useState({
     tenTaiKhoan: "",
     matKhau: "",
   });
-  const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const navigate = useNavigate();
@@ -26,10 +26,8 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-
     try {
-      const response = await fetch("http://localhost:5080/api/login/login", {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/login/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -39,46 +37,59 @@ const LoginPage = () => {
           MatKhau: credentials.matKhau,
         }),
       });
-
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.message || "Đăng nhập thất bại");
+        await Swal.fire({
+          icon: "error",
+          title: "Đăng nhập thất bại",
+          text: errData.message || "Đăng nhập thất bại",
+        });
+        return;
       }
-
       const data = await response.json();
       localStorage.setItem("token", data.user.Token);
       localStorage.setItem("role", data.user.quyen);
       localStorage.setItem("usersId", data.user.maTaiKhoan);
-
       if (rememberMe) {
         localStorage.setItem("rememberMe", "true");
       } else {
         localStorage.removeItem("rememberMe");
       }
-
       window.dispatchEvent(new Event("loginSuccess"));
+      let redirectUrl = "/";
       if (data.user.quyen === "Admin" || data.user.quyen === "Q001") {
-        navigate("/admin");
+        redirectUrl = "/admin";
       } else if (
         data.user.quyen === "Nhân viên" ||
         data.user.quyen === "Q003"
       ) {
-        navigate("/admin");
+        redirectUrl = "/admin";
       } else if (
         data.user.quyen === "Khách hàng" ||
         data.user.quyen === "Q006"
       ) {
-        navigate("/");
+        redirectUrl = "/";
       }
+      await Swal.fire({
+        icon: "success",
+        title: "Đăng nhập thành công!",
+        showConfirmButton: true,
+        timer: 1500,
+      });
+      navigate(redirectUrl);
     } catch (err) {
-      setError(err.message);
+      await Swal.fire({
+        icon: "error",
+        title: "Đăng nhập thất bại",
+        text: err.message,
+      });
     }
   };
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const response = await fetch(
-        "http://localhost:5080/api/login/google-login",
+        `${import.meta.env.VITE_API_BASE_URL}/login/google-login`,
         {
           method: "POST",
           headers: {
@@ -89,12 +100,15 @@ const LoginPage = () => {
           }),
         }
       );
-
       if (!response.ok) {
         const errData = await response.json();
-        throw new Error(errData.message || "Đăng nhập Google thất bại");
+        await Swal.fire({
+          icon: "error",
+          title: "Đăng nhập Google thất bại",
+          text: errData.message || "Đăng nhập Google thất bại",
+        });
+        return;
       }
-
       const data = await response.json();
       localStorage.setItem("token", data.user.Token);
       localStorage.setItem("usersId", data.user.maTaiKhoan);
@@ -103,9 +117,10 @@ const LoginPage = () => {
       } else {
         localStorage.removeItem("rememberMe");
       }
+      let redirectUrl = "/";
       if (data.user.quyen === "Admin" || data.user.quyen === "Q001") {
         localStorage.setItem("role", data.user.quyen);
-        navigate("/admin");
+        redirectUrl = "/admin";
       } else if (
         data.user.quyen === "Nhân viên" ||
         data.user.quyen === "Q003" ||
@@ -113,17 +128,28 @@ const LoginPage = () => {
         data.user.quyen === "staff"
       ) {
         localStorage.setItem("role", data.user.quyen);
-        navigate("/admin/staff");
+        redirectUrl = "/admin/staff";
       } else if (
         data.user.quyen === "Khách hàng" ||
         data.user.quyen === "Q006"
       ) {
         localStorage.setItem("role", data.user.quyen);
-        navigate("/");
+        redirectUrl = "/";
       }
       window.dispatchEvent(new Event("loginSuccess"));
+      await Swal.fire({
+        icon: "success",
+        title: "Đăng nhập Google thành công!",
+        showConfirmButton: true,
+        timer: 1500,
+      });
+      navigate(redirectUrl);
     } catch (err) {
-      setError(err.message);
+      await Swal.fire({
+        icon: "error",
+        title: "Đăng nhập Google thất bại",
+        text: err.message,
+      });
     }
   };
 
@@ -146,12 +172,6 @@ const LoginPage = () => {
           <h1 className="text-3xl  font-bold text-center text-gray-800 mb-8">
             Đăng nhập tài khoản
           </h1>
-
-          {error && (
-            <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-lg text-center font-medium animate-pulse">
-              {error}
-            </div>
-          )}
 
           <div className="space-y-6">
             <div>
@@ -291,7 +311,7 @@ const LoginPage = () => {
           <div className="mt-6">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => setError("Đăng nhập Google thất bại")}
+              onError={() => Swal.fire("Đăng nhập Google thất bại")}
               text="signin_with"
               shape="rectangular"
               theme="filled_white"
