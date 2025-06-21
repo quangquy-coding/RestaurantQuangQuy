@@ -506,7 +506,7 @@ const AdvancedSearchPage = () => {
                           {dish.tinhTrang && (
                             <div
                               className={`absolute bottom-2 left-2 text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm ${
-                                dish.tinhTrang === "Còn hàng"
+                                dish.tinhTrang === "Phổ biến"
                                   ? "bg-green-500"
                                   : dish.tinhTrang === "Món đặc biệt"
                                   ? "bg-purple-500 animate-pulse"

@@ -67,7 +67,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 		{
 			var tinhTrangList = new List<string>
 	{
-		"Còn hàng",
+		"Phổ biến",
 		"Món đặc biệt",
 		"Món mới",
 		"Hết hàng"

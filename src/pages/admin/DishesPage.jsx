@@ -113,7 +113,7 @@ const DishesPage = () => {
         : newDish.isNew
         ? "Món mới"
         : newDish.isAvailable
-        ? "Còn hàng"
+        ? "Phổ biến"
         : "Hết hàng",
     };
 
@@ -284,7 +284,7 @@ const DishesPage = () => {
     let tinhTrang = "Hết hàng";
     if (currentDish.isSpecial) tinhTrang = "Món đặc biệt";
     else if (currentDish.isNew) tinhTrang = "Món mới";
-    else if (currentDish.isAvailable) tinhTrang = "Còn hàng";
+    else if (currentDish.isAvailable) tinhTrang = "Phổ biến";
 
     try {
       setIsLoading(true);
@@ -377,7 +377,7 @@ const DishesPage = () => {
     }
     setCurrentDish({
       ...dish,
-      isAvailable: dish.tinhTrang === "Còn hàng",
+      isAvailable: dish.tinhTrang === "Phổ biến",
       isSpecial: dish.tinhTrang === "Món đặc biệt",
       isNew: dish.tinhTrang === "Món mới",
     });
@@ -691,9 +691,9 @@ const DishesPage = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {{
-                        "Còn hàng": (
+                        "Phổ biến": (
                           <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            Còn hàng
+                            Phổ biến
                           </span>
                         ),
                         "Món đặc biệt": (
@@ -1011,7 +1011,7 @@ const DishesPage = () => {
                         htmlFor="isAvailable"
                         className="ml-2 text-sm text-gray-700"
                       >
-                        Còn hàng
+                        Phổ biến
                       </label>
                     </div>
 
@@ -1237,7 +1237,7 @@ const DishesPage = () => {
                         htmlFor="edit-isAvailable"
                         className="ml-2 text-sm text-gray-700"
                       >
-                        Còn hàng
+                        Phổ biến
                       </label>
                     </div>
 
@@ -1393,9 +1393,9 @@ const DishesPage = () => {
 
                   <div className="flex flex-wrap gap-2 mt-3">
                     {{
-                      "Còn hàng": (
+                      "Phổ biến": (
                         <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                          Còn hàng
+                          Phổ biến
                         </span>
                       ),
                       "Món đặc biệt": (
