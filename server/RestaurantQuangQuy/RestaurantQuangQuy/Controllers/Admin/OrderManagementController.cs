@@ -215,30 +215,37 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				var startTime = targetDateTime.AddHours(-2);
 				var endTime = targetDateTime.AddHours(2);
 
-				var occupiedTableIds = await _context.Hoadonthanhtoans
-					.Where(h => h.ThoiGianDat >= startTime && h.ThoiGianDat <= endTime &&
-							   (h.TrangThaiThanhToan == "pending" ||
-								h.TrangThaiThanhToan == "deposit" ||
-								h.TrangThaiThanhToan == "completed") &&
-							   !string.IsNullOrEmpty(h.MaBanAn))
-					.Select(h => h.MaBanAn)
-					.ToListAsync();
+				// Lấy danh sách bàn đã được đặt trong khoảng thời gian 2 giờ trước và sau
+				var occupiedTableIds = await (
+					from dbba in _context.DatBanBanAns
+					join db in _context.Datbans on dbba.MaDatBan equals db.MaBanAn
+					where db.ThoiGianDen >= startTime && db.ThoiGianDen <= endTime
+					  && (db.TrangThai != "Đã hủy" && db.TrangThai != "cancelled")
+					select dbba.MaBanAn
+				).Distinct().ToListAsync();
 
-				var availableTables = await _context.Banans
-					.Where(b => !occupiedTableIds.Contains(b.MaBan))
+				// Lấy tất cả bàn và đánh dấu trạng thái
+				var allTables = await _context.Banans
 					.Select(b => new
 					{
 						id = b.MaBan,
 						name = b.TenBan,
 						capacity = b.SoChoNgoi,
 						location = b.ViTri,
-						status = "available",
-						description = b.GhiChu
+						status = occupiedTableIds.Contains(b.MaBan) ? "occupied" : "available",
+						description = b.GhiChu,
+						occupiedTime = occupiedTableIds.Contains(b.MaBan) ? 
+							_context.Datbans
+								.Where(db => db.ThoiGianDen >= startTime && db.ThoiGianDen <= endTime)
+								.Join(_context.DatBanBanAns, db => db.MaBanAn, dbba => dbba.MaDatBan, (db, dbba) => new { db, dbba })
+								.Where(x => x.dbba.MaBanAn == b.MaBan)
+								.Select(x => x.db.ThoiGianDen)
+								.FirstOrDefault() : (DateTime?)null
 					})
 					.OrderBy(b => b.name)
 					.ToListAsync();
 
-				return Ok(availableTables);
+				return Ok(allTables);
 			}
 			catch (Exception ex)
 			{
@@ -246,8 +253,53 @@ namespace RestaurantQuangQuy.Controllers.Admin
 			}
 		}
 
-		// Lấy menu items
+		// Kiểm tra bàn có sẵn theo thời gian cụ thể
+		[HttpGet("check-table-availability")]
+		public async Task<IActionResult> CheckTableAvailability([FromQuery] string tableId, [FromQuery] DateTime arrivalTime)
+		{
+			try
+			{
+				var table = await _context.Banans.FindAsync(tableId);
+				if (table == null)
+				{
+					return NotFound(new { message = "Không tìm thấy bàn" });
+				}
 
+				var startTime = arrivalTime.AddHours(-2);
+				var endTime = arrivalTime.AddHours(2);
+
+				// Kiểm tra xem bàn có được đặt trong khoảng thời gian này không
+				var isOccupied = await (
+					from dbba in _context.DatBanBanAns
+					join db in _context.Datbans on dbba.MaDatBan equals db.MaBanAn
+					where dbba.MaBanAn == tableId
+					  && db.ThoiGianDen >= startTime && db.ThoiGianDen <= endTime
+					  && (db.TrangThai != "Đã hủy" && db.TrangThai != "cancelled")
+					select new { db.ThoiGianDen, db.MaBanAn }
+				).FirstOrDefaultAsync();
+
+				return Ok(new
+				{
+					tableId = tableId,
+					tableName = table.TenBan,
+					isAvailable = isOccupied == null,
+					conflictingBooking = isOccupied != null ? new
+					{
+						arrivalTime = isOccupied.ThoiGianDen,
+						bookingId = isOccupied.MaBanAn
+					} : null,
+					searchTime = arrivalTime,
+					startTime = startTime,
+					endTime = endTime
+				});
+			}
+			catch (Exception ex)
+			{
+				return BadRequest(new { message = "Lỗi khi kiểm tra bàn", error = ex.Message });
+			}
+		}
+
+		// Lấy menu items
 		[HttpGet("menu-items")]
 		public async Task<IActionResult> GetMenuItems()
 		{
@@ -426,20 +478,31 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				var startTime = arrivalTime.AddHours(-2);
 				var endTime = arrivalTime.AddHours(2);
 
-				// Kiểm tra xem bàn này đã được đặt trong khoảng thời gian này chưa
-				var isTableOccupied = await (
+				// Kiểm tra xem bàn này đã được đặt trong khoảng thời gian 2 giờ trước và sau chưa
+				var conflictingBooking = await (
 					from dbba in _context.DatBanBanAns
 					join db in _context.Datbans on dbba.MaDatBan equals db.MaBanAn
 					where dbba.MaBanAn == request.TableId
-					  && db.ThoiGianDen == arrivalTime
+					  && db.ThoiGianDen >= startTime && db.ThoiGianDen <= endTime
 					  && db.MaBanAn != datBan.MaBanAn
 					  && (db.TrangThai != "Đã hủy" && db.TrangThai != "cancelled")
-					select dbba
-				).AnyAsync();
+					select new { 
+						BookingId = db.MaBanAn, 
+						ArrivalTime = db.ThoiGianDen,
+						GuestCount = db.SoLuongKhach,
+						CustomerName = _context.Khachhangs
+							.Where(k => k.MaKhachHang == db.MaKhachHang)
+							.Select(k => k.TenKhachHang)
+							.FirstOrDefault() ?? "Khách vãng lai"
+					}
+				).FirstOrDefaultAsync();
 
-				if (isTableOccupied)
+				if (conflictingBooking != null)
 				{
-					return BadRequest(new { message = "Bàn đã được đặt trong khoảng thời gian này" });
+					return BadRequest(new { 
+						message = $"Bàn {table.TenBan} đã được đặt bởi {conflictingBooking.CustomerName} vào lúc {conflictingBooking.ArrivalTime:HH:mm dd/MM/yyyy} (khoảng thời gian từ {startTime:HH:mm dd/MM/yyyy} đến {endTime:HH:mm dd/MM/yyyy})",
+						conflictingBooking = conflictingBooking
+					});
 				}
 
 				// Gán bàn cho booking (DatBanBanAn)
@@ -450,6 +513,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 					_context.DatBanBanAns.RemoveRange(oldLinks);
 					await _context.SaveChangesAsync();
 				}
+				
 				// Thêm liên kết mới
 				_context.DatBanBanAns.Add(new DatBanBanAn
 				{
@@ -462,7 +526,12 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				order.MaBanAn = datBan.MaBanAn;
 				await _context.SaveChangesAsync();
 
-				return Ok(new { message = "Gán bàn thành công" });
+				return Ok(new { 
+					message = $"Gán bàn {table.TenBan} thành công cho thời gian {arrivalTime:HH:mm dd/MM/yyyy}",
+					tableId = request.TableId,
+					tableName = table.TenBan,
+					arrivalTime = arrivalTime
+				});
 			}
 			catch (Exception ex)
 			{
@@ -523,8 +592,46 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				_context.Datbans.Add(datBan);
 				await _context.SaveChangesAsync();  // để Datban có ID nếu cần khoá ngoại
 
+				// Kiểm tra xung đột bàn trước khi gán
 				if (request.TableIds?.Any() == true)
 				{
+					var arrivalTime = datBan.ThoiGianDen;
+					var startTime = arrivalTime.AddHours(-2);
+					var endTime = arrivalTime.AddHours(2);
+
+					foreach (var tableId in request.TableIds)
+					{
+						// Kiểm tra xem bàn có bị xung đột không
+						var conflictingBooking = await (
+							from dbba in _context.DatBanBanAns
+							join db in _context.Datbans on dbba.MaDatBan equals db.MaBanAn
+							where dbba.MaBanAn == tableId
+							  && db.ThoiGianDen >= startTime && db.ThoiGianDen <= endTime
+							  && (db.TrangThai != "Đã hủy" && db.TrangThai != "cancelled")
+							select new { 
+								BookingId = db.MaBanAn, 
+								ArrivalTime = db.ThoiGianDen,
+								CustomerName = _context.Khachhangs
+									.Where(k => k.MaKhachHang == db.MaKhachHang)
+									.Select(k => k.TenKhachHang)
+									.FirstOrDefault() ?? "Khách vãng lai",
+								TableName = _context.Banans
+									.Where(b => b.MaBan == tableId)
+									.Select(b => b.TenBan)
+									.FirstOrDefault() ?? "Bàn"
+							}
+						).FirstOrDefaultAsync();
+
+						if (conflictingBooking != null)
+						{
+							return BadRequest(new { 
+								message = $"Bàn {conflictingBooking.TableName} đã được đặt bởi {conflictingBooking.CustomerName} vào lúc {conflictingBooking.ArrivalTime:HH:mm dd/MM/yyyy} (khoảng thời gian từ {startTime:HH:mm dd/MM/yyyy} đến {endTime:HH:mm dd/MM/yyyy})",
+								conflictingBooking = conflictingBooking
+							});
+						}
+					}
+
+					// Nếu không có xung đột, thêm liên kết bàn
 					foreach (var tableId in request.TableIds)
 					{
 						_context.DatBanBanAns.Add(new DatBanBanAn
@@ -703,6 +810,47 @@ namespace RestaurantQuangQuy.Controllers.Admin
 					datBan.ThoiGianDen = request.DateComming;
 					datBan.GhiChu = request.Notes;
 					_context.Datbans.Update(datBan);
+
+					// Kiểm tra xung đột bàn trước khi cập nhật
+					if (request.TableIds?.Any() == true)
+					{
+						var arrivalTime = request.DateComming;
+						var startTime = arrivalTime.AddHours(-2);
+						var endTime = arrivalTime.AddHours(2);
+
+						foreach (var tableId in request.TableIds)
+						{
+							// Kiểm tra xem bàn có bị xung đột không (loại trừ booking hiện tại)
+							var conflictingBooking = await (
+								from dbba in _context.DatBanBanAns
+								join db in _context.Datbans on dbba.MaDatBan equals db.MaBanAn
+								where dbba.MaBanAn == tableId
+								  && db.ThoiGianDen >= startTime && db.ThoiGianDen <= endTime
+								  && db.MaBanAn != datBan.MaBanAn
+								  && (db.TrangThai != "Đã hủy" && db.TrangThai != "cancelled")
+								select new { 
+									BookingId = db.MaBanAn, 
+									ArrivalTime = db.ThoiGianDen,
+									CustomerName = _context.Khachhangs
+										.Where(k => k.MaKhachHang == db.MaKhachHang)
+										.Select(k => k.TenKhachHang)
+										.FirstOrDefault() ?? "Khách vãng lai",
+									TableName = _context.Banans
+										.Where(b => b.MaBan == tableId)
+										.Select(b => b.TenBan)
+										.FirstOrDefault() ?? "Bàn"
+								}
+							).FirstOrDefaultAsync();
+
+							if (conflictingBooking != null)
+							{
+								return BadRequest(new { 
+									message = $"Bàn {conflictingBooking.TableName} đã được đặt bởi {conflictingBooking.CustomerName} vào lúc {conflictingBooking.ArrivalTime:HH:mm dd/MM/yyyy} (khoảng thời gian từ {startTime:HH:mm dd/MM/yyyy} đến {endTime:HH:mm dd/MM/yyyy})",
+									conflictingBooking = conflictingBooking
+								});
+							}
+						}
+					}
 
 					// Xóa liên kết bàn cũ
 					var oldLinks = await _context.DatBanBanAns

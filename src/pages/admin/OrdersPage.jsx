@@ -765,7 +765,24 @@ const OrdersPage = () => {
       toast.success("Cập nhật đơn hàng thành công!");
     } catch (error) {
       console.error("Error updating order:", error);
-      toast.error(error.response?.data?.message || "Lỗi khi cập nhật đơn hàng");
+
+      // Hiển thị thông báo lỗi chi tiết cho xung đột bàn
+      if (error.response?.data?.message && error.response?.data?.details) {
+        toast.error(
+          `${error.response.data.message}\n${error.response.data.details}`,
+          {
+            duration: 6000,
+            style: {
+              whiteSpace: "pre-line",
+              maxWidth: "500px",
+            },
+          }
+        );
+      } else {
+        toast.error(
+          error.response?.data?.message || "Lỗi khi cập nhật đơn hàng"
+        );
+      }
       // alert(error.response?.data?.message || "Lỗi khi cập nhật đơn hàng");
     }
   };
@@ -812,14 +829,25 @@ const OrdersPage = () => {
       toast.success("Tạo đơn hàng thành công!");
     } catch (error) {
       console.error("Error creating order:", error);
-      // alert(
-      //   error.response?.data?.message ||
-      //     `Lỗi khi tạo đơn hàng: ${error.message}`
-      // );
-      toast.error(
-        error.response?.data?.message ||
-          `Lỗi khi tạo đơn hàng: ${error.message}`
-      );
+
+      // Hiển thị thông báo lỗi chi tiết cho xung đột bàn
+      if (error.response?.data?.message && error.response?.data?.details) {
+        toast.error(
+          `${error.response.data.message}\n${error.response.data.details}`,
+          {
+            duration: 6000,
+            style: {
+              whiteSpace: "pre-line",
+              maxWidth: "500px",
+            },
+          }
+        );
+      } else {
+        toast.error(
+          error.response?.data?.message ||
+            `Lỗi khi tạo đơn hàng: ${error.message}`
+        );
+      }
     }
   };
 
@@ -1495,7 +1523,7 @@ const OrdersPage = () => {
                     </div>
                     {currentOrder.bookingInfo && (
                       <>
-                        <div className="flex items-center mb-2">
+                        {/* <div className="flex items-center mb-2">
                           <Calendar className="h-4 w-4 text-gray-400 mr-2" />
                           <span className="font-medium mr-2">
                             Ngày giờ đặt bàn:
@@ -1503,7 +1531,7 @@ const OrdersPage = () => {
                           <span>
                             {formatDate(currentOrder.bookingInfo.thoiGianDat)}
                           </span>
-                        </div>
+                        </div> */}
                         <div className="flex items-center mb-2">
                           <Calendar className="h-4 w-4 text-gray-400 mr-2" />
                           <span className="font-medium mr-2">
@@ -1880,6 +1908,21 @@ const OrdersPage = () => {
             </div>
 
             <div className="p-6">
+              {/* Cảnh báo về kiểm tra xung đột bàn */}
+              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <Info className="h-5 w-5 text-blue-400 mr-2" />
+                  <span className="text-blue-800 text-sm font-medium">
+                    Hệ thống sẽ tự động kiểm tra xung đột bàn 2 giờ trước và sau
+                    thời gian đến
+                  </span>
+                </div>
+                <p className="text-blue-700 text-sm mt-1">
+                  Nếu bàn đã được đặt trong khoảng thời gian này, hệ thống sẽ
+                  hiển thị thông báo lỗi chi tiết.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -2018,7 +2061,12 @@ const OrdersPage = () => {
                         )
                         .map((table) => (
                           <option key={table.id} value={table.id}>
-                            {table.name} ({table.capacity} người)
+                            {table.name} ({table.capacity} người) -{" "}
+                            {table.status === "occupied" ? "Đã đặt" : "Trống"}
+                            {table.occupiedTime &&
+                              ` - Đặt lúc ${new Date(
+                                table.occupiedTime
+                              ).toLocaleString("vi-VN")}`}
                           </option>
                         ))}
                     </select>
@@ -2062,10 +2110,16 @@ const OrdersPage = () => {
                       return (
                         <span
                           key={id}
-                          className="inline-flex items-center px-2 py-1 bg-gray-100 rounded text-sm"
+                          className={`inline-flex items-center px-2 py-1 rounded text-sm ${
+                            table?.status === "occupied"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
                         >
                           {table
-                            ? `${table.name} (${table.capacity} người)`
+                            ? `${table.name} (${table.capacity} người) - ${
+                                table.status === "occupied" ? "Đã đặt" : "Trống"
+                              }`
                             : id}
                           <button
                             type="button"
@@ -2478,6 +2532,21 @@ const OrdersPage = () => {
             </div>
 
             <div className="p-6">
+              {/* Cảnh báo về kiểm tra xung đột bàn */}
+              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <Info className="h-5 w-5 text-blue-400 mr-2" />
+                  <span className="text-blue-800 text-sm font-medium">
+                    Hệ thống sẽ tự động kiểm tra xung đột bàn 2 giờ trước và sau
+                    thời gian đến
+                  </span>
+                </div>
+                <p className="text-blue-700 text-sm mt-1">
+                  Nếu bàn đã được đặt trong khoảng thời gian này, hệ thống sẽ
+                  hiển thị thông báo lỗi chi tiết.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -2565,7 +2634,12 @@ const OrdersPage = () => {
                         )
                         .map((table) => (
                           <option key={table.id} value={table.id}>
-                            {table.name} ({table.capacity} người)
+                            {table.name} ({table.capacity} người) -{" "}
+                            {table.status === "occupied" ? "Đã đặt" : "Trống"}
+                            {table.occupiedTime &&
+                              ` - Đặt lúc ${new Date(
+                                table.occupiedTime
+                              ).toLocaleString("vi-VN")}`}
                           </option>
                         ))}
                     </select>
@@ -2597,10 +2671,16 @@ const OrdersPage = () => {
                       return (
                         <span
                           key={id}
-                          className="inline-flex items-center px-2 py-1 bg-gray-100 rounded text-sm"
+                          className={`inline-flex items-center px-2 py-1 rounded text-sm ${
+                            table?.status === "occupied"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
                         >
                           {table
-                            ? `${table.name} (${table.capacity} người)`
+                            ? `${table.name} (${table.capacity} người) - ${
+                                table.status === "occupied" ? "Đã đặt" : "Trống"
+                              }`
                             : id}
                           <button
                             type="button"
