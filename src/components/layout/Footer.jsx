@@ -19,11 +19,13 @@ const Footer = () => {
           {/* Logo & Info */}
           <div className="text-center sm:text-left">
             <div className="flex justify-center sm:justify-start mb-4">
-              <img
-                src={logo}
-                alt="Restaurant Logo"
-                className="h-20 w-20 rounded-full border-4 border-white shadow-lg"
-              />
+              <Link to="/about">
+                <img
+                  src={logo}
+                  alt="Restaurant Logo"
+                  className="h-20 w-20 rounded-full border-4 border-white shadow-lg"
+                />
+              </Link>
             </div>
             <h3 className="text-2xl font-bold mb-2">Nhà hàng Quang Quý</h3>
             <p className="text-sm text-gray-300 leading-relaxed">

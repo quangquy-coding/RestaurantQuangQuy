@@ -510,7 +510,7 @@ const OrdersPage = () => {
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
             <Clock className="mr-1 h-3 w-3" />
-            Đang chuẩn bị
+            Đang xử lí
           </span>
         );
       case "completed":

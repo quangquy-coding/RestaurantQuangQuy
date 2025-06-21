@@ -156,7 +156,7 @@ const DashboardPage = () => {
   }, []);
 
   const formatCurrency = (value) => {
-    return value.toLocaleString("vi-VN") + " ₫";
+    return Math.round(value).toLocaleString("vi-VN") + " ₫";
   };
 
   const formatRelativeTime = (date) => {
@@ -186,13 +186,12 @@ const DashboardPage = () => {
   const getStatusText = (status) => {
     switch (status) {
       case "deposit":
-        return "Đang chuẩn bị";
+        return "Đã cọc";
       case "pending":
-        return "Đang giao";
+        return "Chưa thanh toán";
       case "completed":
-        return "Hoàn thành";
-      case "cancelled":
-        return "Đã hủy";
+        return "Đã thanh toán";
+
       default:
         return status;
     }
@@ -377,7 +376,7 @@ const DashboardPage = () => {
                     Tổng tiền
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Trạng thái
+                    Trạng thái thanh toán
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Thời gian

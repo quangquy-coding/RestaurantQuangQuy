@@ -204,16 +204,16 @@ const OrdersPage = () => {
       return;
     }
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "demo_preset"); // Replace with your Cloudinary preset
+    const formDataUpload = new FormData();
+    formDataUpload.append("file", file);
+    formDataUpload.append("upload_preset", "demo_preset"); // Thay bằng preset Cloudinary của bạn
 
     try {
       const res = await fetch(
         "https://api.cloudinary.com/v1_1/dlozjvjhf/image/upload",
         {
           method: "POST",
-          body: formData,
+          body: formDataUpload,
         }
       );
       const data = await res.json();
@@ -224,15 +224,16 @@ const OrdersPage = () => {
           preview: data.secure_url,
         }));
         setImageFile(file);
+        toast.success("Tải ảnh thành công!");
       } else {
         toast.error(
-          "Lỗi upload ảnh lên Cloudinary: " +
+          "Lỗi upload ảnh Cloudinary: " +
             (data.error?.message || "Unknown error")
         );
       }
     } catch (err) {
-      toast.error("Lỗi upload ảnh lên Cloudinary");
-      console.error("Cloudinary upload error:", err);
+      toast.error("Lỗi upload ảnh Cloudinary");
+      console.error(err);
     }
   };
 

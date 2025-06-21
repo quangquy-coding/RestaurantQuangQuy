@@ -104,7 +104,7 @@ const BlogPostDetailPage = () => {
           date: "2025-06-20",
           author: "Nguyễn Trí Ngọc",
           authorImage:
-            "https://scontent.fdad1-2.fna.fbcdn.net/v/t39.30808-6/471170652_2418264198516191_7695343810811801870_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=a5f93a&_nc_eui2=AeEQbcKAJmcIrGDbPJdZgG8ZE6PYvl17L0cTo9i-XXsvRzupVeDVPMnUmbHnkBDm0oxk4gAY3gtQGgThIaX1xHSw&_nc_ohc=AjMrQybWtJ4Q7kNvwE-qMwo&_nc_oc=AdnX4LYa2I2x5vs74L-OOpvXEH3Jy0y7R_BQAiRVADpF4UvSUO2uRIvzYs_4Jl-wzQs_mCgg6LFgJITyDyxItZHd&_nc_zt=23&_nc_ht=scontent.fdad1-2.fna&_nc_gid=T42Lsz-32Va2IRr7J4C9kw&oh=00_AfNaDAfiZr-uZ5E3ujvDJU9ceWP-uJtf_Arb1Ptj-b5lxQ&oe=6850CBCB",
+            "https://scontent.fdad3-6.fna.fbcdn.net/v/t1.6435-9/202361970_1511714459171174_2151864717001032842_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=a5f93a&_nc_eui2=AeGe4-j9TpIiURyhXla7Tjji7qTI837p4UfupMjzfunhRzTPyw1SuhKFzbiu87rf5ApT8HsQ_Kal9Wx89okECTzm&_nc_ohc=icn5gLS59ccQ7kNvwEpeG1y&_nc_oc=Adn6Tcutw_WQ6WoBSMrSRC6QvwXmGxnRaKDtz_W1S8nKccJ8AEi3cGlb919DBE0NGiBhWe5PTGTYZss_PjDhx2pR&_nc_zt=23&_nc_ht=scontent.fdad3-6.fna&_nc_gid=iYcAnKVtPjaAvuemU6cAmA&oh=00_AfN6kzIK6HLv1qJlYUmbo9jl_T_fk8M8kEvATtzXXtYE3A&oe=687E547E",
           authorBio:
             "Bếp trưởng với hơn 15 năm kinh nghiệm trong ngành ẩm thực. Chuyên về ẩm thực Á-Âu fusion.",
           category: "Thực đơn mới",

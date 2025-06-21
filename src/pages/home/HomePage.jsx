@@ -27,7 +27,7 @@ const HomePage = () => {
     if (!isPaused) {
       const interval = setInterval(() => {
         setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
-      }, 5000);
+      }, 2000);
       return () => clearInterval(interval);
     }
   }, [isPaused, carouselImages.length]);

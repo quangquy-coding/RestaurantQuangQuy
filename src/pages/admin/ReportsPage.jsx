@@ -366,7 +366,8 @@ const ReportsPage = () => {
   };
 
   const formatCurrency = (value) => {
-    return value.toLocaleString("vi-VN") + " ₫";
+    // Làm tròn xuống hoặc làm tròn số tiền về số nguyên
+    return Math.round(value).toLocaleString("vi-VN") + " ₫";
   };
 
   const calculateTotalRevenue = () => {
