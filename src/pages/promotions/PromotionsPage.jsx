@@ -16,7 +16,7 @@ const PromotionsPage = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("startDateDesc");
 
-  const API_BASE_URL = "http://localhost:5080/api/KhuyenMaiManager";
+  const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/KhuyenMaiManager`;
 
   // Format date
   const formatDate = (dateString) => {

@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import axios from "axios";
 import { useDebounce } from "use-debounce";
 import Swal from "sweetalert2";
-const API_BASE_URL = "http://localhost:5080/api/DanhGiaManager";
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/DanhGiaManager`;
 
 const AdminReviewsPage = () => {
   const [reviews, setReviews] = useState([]);

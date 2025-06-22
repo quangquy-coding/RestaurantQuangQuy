@@ -15,8 +15,8 @@ import Swal from "sweetalert2";
 import axios from "axios";
 
 // API Configuration
-const API_URL = "http://localhost:5080/api/DatBan";
-const USER_API_URL = "http://localhost:5080/api/NguoiDungManager";
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/DatBan`;
+const USER_API_URL = `${import.meta.env.VITE_API_BASE_URL}/NguoiDungManager`;
 
 // API Functions
 const api = {

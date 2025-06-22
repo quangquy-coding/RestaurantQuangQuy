@@ -26,8 +26,12 @@ const ForgotPasswordPage = () => {
     try {
       const endpoint =
         method === "code"
-          ? "http://localhost:5080/api/NguoiDung/forgot-password/send-code"
-          : "http://localhost:5080/api/NguoiDung/forgot-password/send-link";
+          ? `${
+              import.meta.env.VITE_API_BASE_URL
+            }/NguoiDung/forgot-password/send-code`
+          : `${
+              import.meta.env.VITE_API_BASE_URL
+            }/NguoiDung/forgot-password/send-link`;
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -71,7 +75,7 @@ const ForgotPasswordPage = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        "http://localhost:5080/api/NguoiDung/verify-code",
+        `${import.meta.env.VITE_API_BASE_URL}/NguoiDung/verify-code`,
         {
           method: "POST",
           headers: {
@@ -121,8 +125,10 @@ const ForgotPasswordPage = () => {
     try {
       const endpoint =
         method === "code"
-          ? "http://localhost:5080/api/NguoiDung/reset-password/code"
-          : "http://localhost:5080/api/NguoiDung/reset-password/link";
+          ? `${import.meta.env.VITE_API_BASE_URL}/NguoiDung/reset-password/code`
+          : `${
+              import.meta.env.VITE_API_BASE_URL
+            }/NguoiDung/reset-password/link`;
 
       const payload =
         method === "code"

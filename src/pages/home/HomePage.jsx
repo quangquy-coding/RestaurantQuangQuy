@@ -39,7 +39,7 @@ const HomePage = () => {
       setErrorFeatured(null);
       try {
         const res = await fetch(
-          "http://localhost:5080/api/MonAnManager/NoiBat"
+          `${import.meta.env.VITE_API_BASE_URL}/MonAnManager/NoiBat`
         );
         if (!res.ok) throw new Error("Lỗi khi lấy món ăn nổi bật");
         const data = await res.json();
@@ -60,7 +60,9 @@ const HomePage = () => {
       setLoadingTestimonials(true);
       setErrorTestimonials(null);
       try {
-        const res = await fetch("http://localhost:5080/api/DanhGiaManager");
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/DanhGiaManager`
+        );
         if (!res.ok) throw new Error("Lỗi khi lấy đánh giá");
         const data = await res.json();
         const mappedTestimonials = data.map((dg) => ({

@@ -19,16 +19,18 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = "http://localhost:5080/api/ReportManager";
-  const API_MONAN_URL = "http://localhost:5080/api/MonAnManager";
-  const API_ORDER_URL = "http://localhost:5080/api/OrderManagement/all";
+  const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/ReportManager`;
+  const API_MONAN_URL = `${import.meta.env.VITE_API_BASE_URL}/MonAnManager`;
+  const API_ORDER_URL = `${
+    import.meta.env.VITE_API_BASE_URL
+  }/OrderManagement/all`;
 
   // Hàm kiểm tra an toàn URL hình ảnh
   function getSafeImageSrc(src) {
     if (!src) return "/placeholder.svg?height=40&width=40";
     // Nếu là URL tương đối, thêm prefix
     if (src.startsWith("/")) {
-      return `http://localhost:5080${src}`;
+      return `${import.meta.env.VITE_API_BASE_URL}${src}`;
     }
     return src;
   }

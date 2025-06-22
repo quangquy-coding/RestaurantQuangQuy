@@ -53,7 +53,7 @@ const AdminPromotionsPage = () => {
     role === "Quản trị viên";
 
   // Base URL của API
-  const API_BASE_URL = "http://localhost:5080/api/KhuyenMaiManager";
+  const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/KhuyenMaiManager`;
 
   // Hàm chuyển đổi DateOnly sang định dạng yyyy-MM-dd
   const formatDateForInput = (dateOnly) => {

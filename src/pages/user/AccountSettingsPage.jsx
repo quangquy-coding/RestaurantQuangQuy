@@ -65,7 +65,7 @@ const AccountSettingsPage = () => {
   const [userId, setUserId] = useState(null);
 
   // API Configuration
-  const API_BASE_URL = "http://localhost:5080/api";
+  const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}`;
   const USER_API_URL = `${API_BASE_URL}/NguoiDungManager`;
   const DEFAULT_AVATAR = "/placeholder.svg?height=200&width=200";
 

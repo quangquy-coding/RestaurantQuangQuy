@@ -1,9 +1,9 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5080/api/DatBan";
+const API_URL = import.meta.env.VITE_API_BASE_URL + "/DatBan";
 
 export const getAll = () => axios.get(`${API_URL}/GetAll`);
-
+z;
 export const createOrderTable = (data) => {
   // Đảm bảo dữ liệu thời gian được format đúng trước khi gửi
   const formattedData = {

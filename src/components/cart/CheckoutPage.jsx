@@ -8,9 +8,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { orderService } from "../../api/orderApi";
 import { toast } from "react-hot-toast";
 
-const USER_API_URL = "http://localhost:5080/api/NguoiDungManager";
-const PAYMENT_API_URL = "http://localhost:5080/api/Payment";
-const PROMO_API_URL = "http://localhost:5080/api/KhuyenMaiManager";
+const USER_API_URL = `${import.meta.env.VITE_API_BASE_URL}/NguoiDungManager`;
+const PAYMENT_API_URL = `${import.meta.env.VITE_API_BASE_URL}/Payment`;
+const PROMO_API_URL = `${import.meta.env.VITE_API_BASE_URL}/KhuyenMaiManager`;
 
 const api = {
   getUserById: (userId) => axios.get(`${USER_API_URL}/${userId}`),

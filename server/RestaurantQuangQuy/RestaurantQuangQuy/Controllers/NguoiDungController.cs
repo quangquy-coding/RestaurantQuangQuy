@@ -292,7 +292,7 @@ namespace RestaurantQuangQuy.Controllers
 
 			await _context.SaveChangesAsync();
 
-			string resetLink = $"http://localhost:3000/reset-password?token={token}";
+			string resetLink = $"https://quynguyenquang.top/reset-password?token={token}";
 			string emailBody = $@"
 <div style='font-family: Arial, sans-serif; background-color: #f2f4f6; padding: 40px;'>
     <div style='max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); overflow: hidden;'>

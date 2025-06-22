@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { orderService } from "../../api/orderApi";
 
-const PAYMENT_API_URL = "http://localhost:5080/api/Payment";
+const PAYMENT_API_URL = `${import.meta.env.VITE_API_BASE_URL}/Payment`;
 
 const PaymentReturnPage = () => {
   const navigate = useNavigate();

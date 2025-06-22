@@ -1,10 +1,13 @@
 export const getAllDanhGia = async () => {
-  const response = await fetch("http://localhost:5080/api/DanhGiaManager", {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  const response = await fetch(
+    import.meta.env.VITE_API_BASE_URL + "/DanhGiaManager",
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
   if (!response.ok) {
     let errorData;
     try {

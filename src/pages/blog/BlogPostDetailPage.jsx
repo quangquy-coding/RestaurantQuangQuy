@@ -34,7 +34,7 @@ const BlogPostDetailPage = () => {
         // Gọi API để lấy thông tin khách hàng
         try {
           const res = await fetch(
-            `http://localhost:5080/api/DanhGiaManager/KhachHangs`,
+            `${import.meta.env.VITE_API_BASE_URL}/DanhGiaManager/KhachHangs`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -146,7 +146,9 @@ const BlogPostDetailPage = () => {
         ];
 
         // Lấy bình luận từ API
-        const res = await fetch("http://localhost:5080/api/DanhGiaManager");
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/DanhGiaManager`
+        );
         if (!res.ok) throw new Error("Lỗi khi lấy đánh giá");
         const data = await res.json();
         const mappedComments = data.map((dg) => ({
@@ -238,7 +240,7 @@ const BlogPostDetailPage = () => {
         const formData = new FormData();
         formData.append("file", imageFile);
         const uploadRes = await fetch(
-          "http://localhost:5080/api/DanhGiaManager/UploadImage",
+          `${import.meta.env.VITE_API_BASE_URL}/DanhGiaManager/UploadImage`,
           {
             method: "POST",
             body: formData,
@@ -251,20 +253,23 @@ const BlogPostDetailPage = () => {
 
       // Gửi bình luận
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5080/api/DanhGiaManager", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          maKhachHang: userInfo.maKhachHang,
-          maHoaDon: "HD001", // Giả lập, thay bằng logic thực tế nếu cần
-          noiDungPhanHoi: newComment.content,
-          xepHang: parseInt(newComment.xepHang),
-          hinhAnhDanhGia: imageUrl,
-        }),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/DanhGiaManager`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            maKhachHang: userInfo.maKhachHang,
+            maHoaDon: "HD001", // Giả lập, thay bằng logic thực tế nếu cần
+            noiDungPhanHoi: newComment.content,
+            xepHang: parseInt(newComment.xepHang),
+            hinhAnhDanhGia: imageUrl,
+          }),
+        }
+      );
 
       if (!res.ok) {
         const errData = await res.json();
