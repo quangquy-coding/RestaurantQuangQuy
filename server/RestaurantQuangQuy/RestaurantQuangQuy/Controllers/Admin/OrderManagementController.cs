@@ -674,7 +674,7 @@ namespace RestaurantQuangQuy.Controllers.Admin
 				await _context.SaveChangesAsync();
 
 				// 6. Tạo hoá đơn
-				var maHoaDon = "HDTT" + Guid.NewGuid().ToString("N").Substring(0, 6);
+				var maHoaDon = "HDTQ" + Guid.NewGuid().ToString("N").Substring(0, 6);
 				var totalAmount = request.Items.Sum(i => i.Price * i.Quantity);
 				var depositAmt = request.Deposit ?? totalAmount * 0.3m;
 				var remaining = totalAmount - depositAmt;
