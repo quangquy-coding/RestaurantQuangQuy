@@ -1,3 +1,7 @@
+# Link demo:
+
+https://nguyenquangquy.id.vn/
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
@@ -13,15 +17,13 @@ If you are developing a production application, we recommend using TypeScript an
 
 - npm i
 - npm i lucide-react
-npm install tailwindcss @tailwindcss/vite
-npm install react-router-dom
-npm install react-icons
-npm install recharts
-npm install react-hot-toast
-
+  npm install tailwindcss @tailwindcss/vite
+  npm install react-router-dom
+  npm install react-icons
+  npm install recharts
+  npm install react-hot-toast
 
 npm install framer-motion# -restaurant-management
 npm install react-icons
 npm install xlsx file-saver
 npm install jspdf jspdf-autotable
-
