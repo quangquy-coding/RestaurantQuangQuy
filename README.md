@@ -1,6 +1,5 @@
 # Link demo:
 
-> > > > > > > QuyNQ
 > > > > > > > https://nguyenquangquy.id.vn/
 
 # React + Vite
