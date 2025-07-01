@@ -8,8 +8,13 @@ const SidebarFooter = () => {
   const navigate = useNavigate()
 
   const handleLogout = () => {
-    // Logic to log out
+    // Xóa token và các thông tin liên quan
     localStorage.removeItem("token")
+    localStorage.removeItem("role")
+    localStorage.removeItem("user")
+    // Phát sự kiện để các component khác cập nhật trạng thái đăng nhập
+    window.dispatchEvent(new Event("loginSuccess"))
+    // Chuyển hướng về trang đăng nhập
     navigate("/login")
   }
 

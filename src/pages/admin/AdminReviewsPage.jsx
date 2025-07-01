@@ -1,231 +1,235 @@
-import React from "react"
-
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
-import { toast } from "react-hot-toast"
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { toast } from "react-hot-toast";
+import axios from "axios";
+import { useDebounce } from "use-debounce";
+import Swal from "sweetalert2";
+const API_BASE_URL = `${import.meta.env.VITE_API_BASE_URL}/DanhGiaManager`;
 
 const AdminReviewsPage = () => {
-  const [reviews, setReviews] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [filterRating, setFilterRating] = useState("all")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [reviewsPerPage] = useState(10)
-  const [selectedReview, setSelectedReview] = useState(null)
-  const [replyText, setReplyText] = useState("")
-  const [isReplyModalOpen, setIsReplyModalOpen] = useState(false)
-
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterRating, setFilterRating] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [reviewsPerPage] = useState(10);
+  const [selectedReview, setSelectedReview] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 500);
+  const role = localStorage.getItem("role");
+  const isAdmin =
+    role === "Admin" ||
+    role === "admin" ||
+    role === "Q001" ||
+    role === "Quản trị viên";
   useEffect(() => {
-    // Simulate fetching reviews from API
-    setTimeout(() => {
-      const mockReviews = [
-        {
-          id: 1,
-          customerName: "Nguyễn Văn A",
-          customerEmail: "nguyenvana@example.com",
-          customerAvatar: "https://randomuser.me/api/portraits/men/1.jpg",
-          dishName: "Bún chả Hà Nội",
-          dishId: 101,
-          rating: 5,
-          title: "Món ăn tuyệt vời!",
-          content: "Bún chả rất ngon, thịt nướng đậm đà, nước chấm vừa miệng. Nhân viên phục vụ nhiệt tình, chu đáo.",
-          date: "2023-09-15",
-          status: "published",
-          reply: null,
-          images: [
-            "https://images.unsplash.com/photo-1529973625058-a665431328fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          ],
-        },
-        {
-          id: 2,
-          customerName: "Trần Thị B",
-          customerEmail: "tranthib@example.com",
-          customerAvatar: "https://randomuser.me/api/portraits/women/2.jpg",
-          dishName: "Phở bò tái lăn",
-          dishId: 102,
-          rating: 4,
-          title: "Phở ngon nhưng hơi ít thịt",
-          content: "Nước dùng phở rất ngọt và thơm, bánh phở dai, nhưng phần thịt bò hơi ít so với giá tiền.",
-          date: "2023-09-14",
-          status: "published",
-          reply: {
-            content:
-              "Cảm ơn bạn đã góp ý. Chúng tôi sẽ điều chỉnh phần thịt bò nhiều hơn. Mong bạn sẽ quay lại nhà hàng của chúng tôi.",
-            date: "2023-09-14",
-            staffName: "Quản lý nhà hàng",
-          },
-          images: [],
-        },
-        {
-          id: 3,
-          customerName: "Lê Văn C",
-          customerEmail: "levanc@example.com",
-          customerAvatar: "https://randomuser.me/api/portraits/men/3.jpg",
-          dishName: "Cơm tấm sườn bì chả",
-          dishId: 103,
-          rating: 2,
-          title: "Thất vọng với chất lượng",
-          content:
-            "Sườn khô và cháy, bì không giòn, chả lại mặn. Phần cơm cũng không được nóng. Rất thất vọng với chất lượng món ăn.",
-          date: "2023-09-13",
-          status: "published",
-          reply: {
-            content:
-              "Chúng tôi thành thật xin lỗi về trải nghiệm không tốt của bạn. Chúng tôi đã ghi nhận phản hồi và sẽ cải thiện ngay. Mong bạn cho chúng tôi cơ hội được phục vụ bạn tốt hơn trong lần tới.",
-            date: "2023-09-13",
-            staffName: "Quản lý nhà hàng",
-          },
-          images: [
-            "https://images.unsplash.com/photo-1562967914-608f82629710?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          ],
-        },
-        {
-          id: 4,
-          customerName: "Phạm Thị D",
-          customerEmail: "phamthid@example.com",
-          customerAvatar: "https://randomuser.me/api/portraits/women/4.jpg",
-          dishName: "Bánh xèo miền Trung",
-          dishId: 104,
-          rating: 5,
-          title: "Bánh xèo ngon tuyệt!",
-          content:
-            "Bánh xèo giòn, nhân đầy đặn với tôm, thịt và giá đỗ. Nước chấm chua ngọt rất vừa miệng. Sẽ quay lại nhiều lần nữa!",
-          date: "2023-09-12",
-          status: "pending",
-          reply: null,
-          images: [
-            "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
-          ],
-        },
-        {
-          id: 5,
-          customerName: "Hoàng Văn E",
-          customerEmail: "hoangvane@example.com",
-          customerAvatar: "https://randomuser.me/api/portraits/men/5.jpg",
-          dishName: "Lẩu Thái hải sản",
-          dishId: 105,
-          rating: 4,
-          title: "Lẩu ngon, phục vụ tốt",
-          content:
-            "Nước lẩu chua cay đúng vị, hải sản tươi ngon. Nhân viên phục vụ nhanh nhẹn và thân thiện. Không gian nhà hàng sạch sẽ, thoáng mát.",
-          date: "2023-09-11",
-          status: "published",
-          reply: null,
-          images: [],
-        },
-        {
-          id: 6,
-          customerName: "Ngô Thị F",
-          customerEmail: "ngothif@example.com",
-          customerAvatar: "https://randomuser.me/api/portraits/women/6.jpg",
-          dishName: "Gỏi cuốn tôm thịt",
-          dishId: 106,
-          rating: 1,
-          title: "Thất vọng với chất lượng phục vụ",
-          content:
-            "Đợi món quá lâu, gần 30 phút mới có. Gỏi cuốn không tươi, bánh tráng dai, tôm không ngon. Nhân viên phục vụ thiếu chuyên nghiệp.",
-          date: "2023-09-10",
-          status: "hidden",
-          reply: null,
-          images: [],
-        },
-      ]
-      setReviews(mockReviews)
-      setLoading(false)
-    }, 1000)
-  }, [])
+    fetchReviews();
+  }, [filterRating, debouncedSearchQuery]);
+
+  const fetchReviews = async () => {
+    setLoading(true);
+    try {
+      let url;
+      if (debouncedSearchQuery) {
+        url = `${API_BASE_URL}/search?query=${encodeURIComponent(
+          debouncedSearchQuery
+        )}`;
+      } else {
+        url =
+          filterRating === "all"
+            ? API_BASE_URL
+            : `${API_BASE_URL}/LocTheoXepHang/${filterRating}`;
+      }
+
+      const response = await axios.get(url);
+      const fetchedReviews = response.data.map((review) => ({
+        id: review.maDanhGia,
+        customerName: review.tenKhachHang || "Khách hàng ẩn danh",
+        customerEmail: review.email || "N/A",
+        customerAvatar: review.avatar || "/placeholder.svg",
+        maKhachHang: review.maKhachHang,
+        maHoaDon: review.maHoaDon,
+        content: review.noiDungPhanHoi || "",
+        date: review.ngayDanhGia,
+        rating: review.xepHang,
+        reply: review.phanHoiDanhGia
+          ? {
+              content: review.phanHoiDanhGia,
+              date: new Date().toISOString().split("T")[0], // Simulated date
+              staffName: "Chủ nhà hàng",
+            }
+          : null,
+        images: review.hinhAnhDanhGia ? [review.hinhAnhDanhGia] : [],
+        tongTienHoaDon: review.tongTienHoaDon,
+        status: "published", // Simulated status
+      }));
+
+      setReviews(fetchedReviews);
+      setLoading(false);
+    } catch (error) {
+      toast.error("Lỗi khi tải đánh giá: " + error.message);
+      setLoading(false);
+    }
+  };
 
   const handleStatusChange = (id, newStatus) => {
-    setReviews((prev) => prev.map((review) => (review.id === id ? { ...review, status: newStatus } : review)))
-    toast.success(
-      `Đã cập nhật trạng thái đánh giá thành ${newStatus === "published" ? "công khai" : newStatus === "hidden" ? "ẩn" : "chờ duyệt"}!`,
-    )
-  }
-
-  const handleDeleteReview = (id) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa đánh giá này?")) {
-      setReviews((prev) => prev.filter((review) => review.id !== id))
-      toast.success("Đã xóa đánh giá thành công!")
-    }
-  }
-
-  const handleOpenReplyModal = (review) => {
-    setSelectedReview(review)
-    setReplyText(review.reply ? review.reply.content : "")
-    setIsReplyModalOpen(true)
-  }
-
-  const handleCloseReplyModal = () => {
-    setIsReplyModalOpen(false)
-    setSelectedReview(null)
-    setReplyText("")
-  }
-
-  const handleSubmitReply = (e) => {
-    e.preventDefault()
-
-    if (!replyText.trim()) {
-      toast.error("Vui lòng nhập nội dung phản hồi!")
-      return
-    }
-
     setReviews((prev) =>
       prev.map((review) =>
-        review.id === selectedReview.id
-          ? {
-              ...review,
-              reply: {
-                content: replyText,
-                date: new Date().toISOString().split("T")[0],
-                staffName: "Quản lý nhà hàng",
-              },
-            }
-          : review,
-      ),
-    )
+        review.id === id ? { ...review, status: newStatus } : review
+      )
+    );
+    toast.success(
+      `Đã cập nhật trạng thái thành ${
+        newStatus === "published"
+          ? "công khai"
+          : newStatus === "hidden"
+          ? "ẩn"
+          : "chờ duyệt"
+      }!`
+    );
+  };
 
-    toast.success("Đã gửi phản hồi thành công!")
-    handleCloseReplyModal()
-  }
+  // ...existing code...
+  const handleDeleteReview = async (id) => {
+    if (!isAdmin) {
+      Swal.fire({
+        icon: "warning",
+        title: "⚠️ Cảnh báo",
+        text: "Chỉ quản trị viên mới được xóa đánh giá",
+        confirmButtonColor: "#d33",
+        confirmButtonText: "Tôi đã hiểu",
+      });
+      return;
+    }
+    const result = await Swal.fire({
+      title: "Bạn có chắc chắn muốn xóa đánh giá này?",
+      text: "Hành động này không thể hoàn tác!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    });
+    if (result.isConfirmed) {
+      try {
+        await axios.delete(`${API_BASE_URL}/${id}`);
+        setReviews((prev) => prev.filter((review) => review.id !== id));
+        Swal.fire({
+          icon: "success",
+          title: "Đã xóa!",
+          text: "Đã xóa đánh giá thành công!",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: "Lỗi khi xóa đánh giá: " + error.message,
+        });
+      }
+    }
+  };
+  // ...existing code...
 
-  // Apply filters
-  let filteredReviews = reviews
+  const handleOpenReplyModal = (review) => {
+    setSelectedReview(review);
+    setReplyText(review.reply ? review.reply.content : "");
+    setIsReplyModalOpen(true);
+  };
 
+  const handleCloseReplyModal = () => {
+    setIsReplyModalOpen(false);
+    setSelectedReview(null);
+    setReplyText("");
+  };
+
+  const handleSubmitReply = async (e) => {
+    e.preventDefault();
+    if (!replyText.trim()) {
+      toast.error("Vui lòng nhập nội dung phản hồi!");
+      return;
+    }
+
+    try {
+      const review = reviews.find((r) => r.id === selectedReview.id);
+      await axios.put(`${API_BASE_URL}/${selectedReview.id}`, {
+        maKhachHang: review.maKhachHang,
+        maHoaDon: review.maHoaDon,
+        noiDungPhanHoi: review.content,
+        xepHang: review.rating,
+        phanHoiDanhGia: replyText,
+        hinhAnhDanhGia: review.images[0] || null,
+      });
+
+      setReviews((prev) =>
+        prev.map((r) =>
+          r.id === selectedReview.id
+            ? {
+                ...r,
+                reply: {
+                  content: replyText,
+                  date: new Date().toISOString().split("T")[0],
+                  staffName: "Chủ nhà hàng",
+                },
+              }
+            : r
+        )
+      );
+
+      toast.success("Đã gửi phản hồi thành công!");
+      handleCloseReplyModal();
+    } catch (error) {
+      toast.error("Lỗi khi gửi phản hồi: " + error.message);
+    }
+  };
+
+  // Apply status filter client-side
+  let filteredReviews = reviews;
   if (filterStatus !== "all") {
-    filteredReviews = filteredReviews.filter((review) => review.status === filterStatus)
-  }
-
-  if (filterRating !== "all") {
-    filteredReviews = filteredReviews.filter((review) => review.rating === Number.parseInt(filterRating))
+    filteredReviews = filteredReviews.filter(
+      (review) => review.status === filterStatus
+    );
   }
 
   // Pagination
-  const indexOfLastReview = currentPage * reviewsPerPage
-  const indexOfFirstReview = indexOfLastReview - reviewsPerPage
-  const currentReviews = filteredReviews.slice(indexOfFirstReview, indexOfLastReview)
-  const totalPages = Math.ceil(filteredReviews.length / reviewsPerPage)
+  const indexOfLastReview = currentPage * reviewsPerPage;
+  const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
+  const currentReviews = filteredReviews.slice(
+    indexOfFirstReview,
+    indexOfLastReview
+  );
+  const totalPages = Math.ceil(filteredReviews.length / reviewsPerPage);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber)
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Quản lý đánh giá</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-6 w-full text-center">
+          Quản lý đánh giá
+        </h1>
       </div>
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-md p-4 mb-6">
         <div className="flex flex-wrap items-center gap-4">
           <div>
-            <label htmlFor="statusFilter" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="statusFilter"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Trạng thái
             </label>
             <select
@@ -242,7 +246,10 @@ const AdminReviewsPage = () => {
           </div>
 
           <div>
-            <label htmlFor="ratingFilter" className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="ratingFilter"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Đánh giá
             </label>
             <select
@@ -264,6 +271,8 @@ const AdminReviewsPage = () => {
             <input
               type="text"
               placeholder="Tìm kiếm đánh giá..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -273,7 +282,11 @@ const AdminReviewsPage = () => {
       {/* Reviews List */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
         {currentReviews.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">Không tìm thấy đánh giá nào phù hợp với bộ lọc.</div>
+          <div className="p-8 text-center text-gray-500">
+            {searchQuery
+              ? `Không tìm thấy đánh giá nào cho "${searchQuery}".`
+              : "Không tìm thấy đánh giá nào phù hợp với bộ lọc."}
+          </div>
         ) : (
           <div className="divide-y divide-gray-200">
             {currentReviews.map((review) => (
@@ -286,20 +299,29 @@ const AdminReviewsPage = () => {
               >
                 <div className="flex items-start">
                   <img
-                    src={review.customerAvatar || "/placeholder.svg"}
+                    src={review.customerAvatar}
                     alt={review.customerName}
                     className="w-12 h-12 rounded-full mr-4"
                   />
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900">{review.customerName}</h3>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {review.customerName}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {review.customerEmail}
+                        </p>
                         <div className="flex items-center mt-1">
                           <div className="flex">
                             {[...Array(5)].map((_, i) => (
                               <svg
                                 key={i}
-                                className={`w-5 h-5 ${i < review.rating ? "text-yellow-400" : "text-gray-300"}`}
+                                className={`w-5 h-5 ${
+                                  i < review.rating
+                                    ? "text-yellow-400"
+                                    : "text-gray-300"
+                                }`}
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                               >
@@ -307,7 +329,9 @@ const AdminReviewsPage = () => {
                               </svg>
                             ))}
                           </div>
-                          <span className="text-sm text-gray-500 ml-2">{review.date}</span>
+                          <span className="text-sm text-gray-500 ml-2">
+                            {review.date}
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center">
@@ -316,38 +340,22 @@ const AdminReviewsPage = () => {
                             review.status === "published"
                               ? "bg-green-100 text-green-800"
                               : review.status === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-red-100 text-red-800"
                           }`}
                         >
                           {review.status === "published"
                             ? "Đã đăng"
                             : review.status === "pending"
-                              ? "Chờ duyệt"
-                              : "Đã ẩn"}
+                            ? "Chờ duyệt"
+                            : "Đã ẩn"}
                         </span>
-                        <div className="relative">
-                          <button className="text-gray-500 hover:text-gray-700">
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                              ></path>
-                            </svg>
-                          </button>
-                        </div>
                       </div>
                     </div>
-                    <h4 className="text-base font-medium text-gray-900 mt-2">{review.title}</h4>
-                    <p className="text-gray-700 mt-1">{review.content}</p>
+                    <p className="text-gray-700 mt-2">{review.content}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Mã hóa đơn: {review.maHoaDon}
+                    </p>
 
                     {/* Review Images */}
                     {review.images.length > 0 && (
@@ -355,7 +363,7 @@ const AdminReviewsPage = () => {
                         {review.images.map((image, index) => (
                           <img
                             key={index}
-                            src={image || "/placeholder.svg"}
+                            src={image}
                             alt={`Review image ${index + 1}`}
                             className="w-20 h-20 object-cover rounded-lg"
                           />
@@ -363,72 +371,81 @@ const AdminReviewsPage = () => {
                       </div>
                     )}
 
-                    {/* Product Info */}
-                    <div className="mt-3 flex items-center">
-                      <span className="text-sm text-gray-500">Đánh giá cho:</span>
-                      <a
-                        href={`/admin/dishes/${review.dishId}`}
-                        className="ml-1 text-sm font-medium text-blue-600 hover:text-blue-800"
-                      >
-                        {review.dishName}
-                      </a>
-                    </div>
-
                     {/* Reply */}
                     {review.reply && (
                       <div className="mt-4 bg-gray-50 p-4 rounded-lg">
                         <div className="flex justify-between items-start">
-                          <div className="font-medium text-gray-900">Phản hồi từ {review.reply.staffName}</div>
-                          <div className="text-sm text-gray-500">{review.reply.date}</div>
+                          <div className="font-medium text-gray-900">
+                            Phản hồi từ {review.reply.staffName}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {review.reply.date}
+                          </div>
                         </div>
-                        <p className="text-gray-700 mt-1">{review.reply.content}</p>
+                        <p className="text-gray-700 mt-1">
+                          {review.reply.content}
+                        </p>
                       </div>
                     )}
 
                     {/* Actions */}
                     <div className="mt-4 flex space-x-3">
-                      <button
-                        onClick={() => handleOpenReplyModal(review)}
-                        className="text-sm font-medium text-blue-600 hover:text-blue-800"
-                      >
-                        {review.reply ? "Chỉnh sửa phản hồi" : "Phản hồi"}
-                      </button>
-                      {review.status === "published" ? (
+                      {isAdmin && (
                         <button
-                          onClick={() => handleStatusChange(review.id, "hidden")}
+                          onClick={() => handleOpenReplyModal(review)}
+                          className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                        >
+                          {review.reply ? "Chỉnh sửa phản hồi" : "Phản hồi"}
+                        </button>
+                      )}
+                      {isAdmin && review.status === "published" && (
+                        <button
+                          onClick={() =>
+                            handleStatusChange(review.id, "hidden")
+                          }
                           className="text-sm font-medium text-red-600 hover:text-red-800"
                         >
                           Ẩn đánh giá
                         </button>
-                      ) : review.status === "hidden" ? (
+                      )}
+                      {isAdmin && review.status === "hidden" && (
                         <button
-                          onClick={() => handleStatusChange(review.id, "published")}
+                          onClick={() =>
+                            handleStatusChange(review.id, "published")
+                          }
                           className="text-sm font-medium text-green-600 hover:text-green-800"
                         >
                           Hiện đánh giá
                         </button>
-                      ) : (
+                      )}
+                      {isAdmin && review.status === "pending" && (
                         <>
                           <button
-                            onClick={() => handleStatusChange(review.id, "published")}
+                            onClick={() =>
+                              handleStatusChange(review.id, "published")
+                            }
                             className="text-sm font-medium text-green-600 hover:text-green-800"
                           >
                             Phê duyệt
                           </button>
                           <button
-                            onClick={() => handleStatusChange(review.id, "hidden")}
+                            onClick={() =>
+                              handleStatusChange(review.id, "hidden")
+                            }
                             className="text-sm font-medium text-red-600 hover:text-red-800"
                           >
                             Từ chối
                           </button>
                         </>
                       )}
-                      <button
-                        onClick={() => handleDeleteReview(review.id)}
-                        className="text-sm font-medium text-red-600 hover:text-red-800"
-                      >
-                        Xóa
-                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDeleteReview(review.id)}
+                          className="text-sm font-medium text-red-600 hover:text-red-800"
+                        >
+                          Xóa
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -446,7 +463,9 @@ const AdminReviewsPage = () => {
               onClick={() => paginate(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
               className={`px-3 py-1 rounded-md ${
-                currentPage === 1 ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"
+                currentPage === 1
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               Trước
@@ -457,7 +476,9 @@ const AdminReviewsPage = () => {
                   key={i}
                   onClick={() => paginate(i + 1)}
                   className={`px-3 py-1 mx-1 rounded-md ${
-                    currentPage === i + 1 ? "bg-blue-600 text-white" : "text-gray-700 hover:bg-gray-100"
+                    currentPage === i + 1
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
                   {i + 1}
@@ -468,7 +489,9 @@ const AdminReviewsPage = () => {
               onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
               className={`px-3 py-1 rounded-md ${
-                currentPage === totalPages ? "text-gray-400 cursor-not-allowed" : "text-gray-700 hover:bg-gray-100"
+                currentPage === totalPages
+                  ? "text-gray-400 cursor-not-allowed"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               Sau
@@ -483,7 +506,9 @@ const AdminReviewsPage = () => {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-xl font-bold text-gray-800">
-                {selectedReview.reply ? "Chỉnh sửa phản hồi" : "Phản hồi đánh giá"}
+                {selectedReview.reply
+                  ? "Chỉnh sửa phản hồi"
+                  : "Phản hồi đánh giá"}
               </h3>
             </div>
             <form onSubmit={handleSubmitReply}>
@@ -491,16 +516,21 @@ const AdminReviewsPage = () => {
                 <div className="mb-4">
                   <div className="flex items-center mb-2">
                     <img
-                      src={selectedReview.customerAvatar || "/placeholder.svg"}
+                      src={selectedReview.customerAvatar}
                       alt={selectedReview.customerName}
                       className="w-8 h-8 rounded-full mr-2"
                     />
-                    <span className="font-medium text-gray-800">{selectedReview.customerName}</span>
+                    <span className="font-medium text-gray-800">
+                      {selectedReview.customerName}
+                    </span>
                   </div>
                   <p className="text-gray-700">{selectedReview.content}</p>
                 </div>
                 <div>
-                  <label htmlFor="replyText" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="replyText"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Nội dung phản hồi
                   </label>
                   <textarea
@@ -534,7 +564,7 @@ const AdminReviewsPage = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default AdminReviewsPage
+export default AdminReviewsPage;

@@ -13,7 +13,7 @@ public partial class Nhanvien
 
     public decimal? Luong { get; set; }
 
-    public DateOnly NgayTuyenDung { get; set; }
+    public DateOnly? NgayTuyenDung { get; set; }
 
     public string? SoCccd { get; set; }
 

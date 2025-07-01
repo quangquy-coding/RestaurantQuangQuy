@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  restaurant-api:
+    build:
+      context: .
+      dockerfile: server/RestaurantQuangQuy/RestaurantQuangQuy/Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=RestaurantManagementQA;User Id=SA;Password=NewStrongPassword@123;TrustServerCertificate=true
+    depends_on:
+      - sqlserver
+    restart: unless-stopped
+    networks:
+      - restaurant-network
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=NewStrongPassword@123
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    restart: unless-stopped
+    networks:
+      - restaurant-network
+
+networks:
+  restaurant-network:
+    driver: bridge
+
+volumes:
+  sqldata: 

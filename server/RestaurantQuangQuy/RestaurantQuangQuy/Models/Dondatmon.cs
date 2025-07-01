@@ -29,5 +29,6 @@ public partial class Dondatmon
 
     public virtual Datban? MaBanAnNavigation { get; set; }
 
+
     public virtual Khachhang? MaKhachHangNavigation { get; set; }
 }

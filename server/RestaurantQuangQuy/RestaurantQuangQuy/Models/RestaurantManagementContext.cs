@@ -8,6 +8,7 @@ public partial class RestaurantManagementContext : DbContext
 {
     public RestaurantManagementContext()
     {
+
     }
 
     public RestaurantManagementContext(DbContextOptions<RestaurantManagementContext> options)
@@ -15,17 +16,17 @@ public partial class RestaurantManagementContext : DbContext
     {
     }
 
-    public virtual DbSet<Banan> Banans { get; set; }
-
-    public virtual DbSet<Baocaodoanhthu> Baocaodoanhthus { get; set; }
+	public virtual DbSet<Banan> Banans { get; set; }
+	
+	public virtual DbSet<Baocaodoanhthu> Baocaodoanhthus { get; set; }
 
     public virtual DbSet<Chitietdondatmon> Chitietdondatmons { get; set; }
 
     public virtual DbSet<Danhgium> Danhgia { get; set; }
-
-    public virtual DbSet<Danhmuc> Danhmucs { get; set; }
-
-    public virtual DbSet<Datban> Datbans { get; set; }
+	
+	public virtual DbSet<Danhmuc> Danhmucs { get; set; }
+	public object DanhMucs { get; internal set; }
+	public virtual DbSet<Datban> Datbans { get; set; }
 
     public virtual DbSet<Dondatmon> Dondatmons { get; set; }
 
@@ -43,7 +44,11 @@ public partial class RestaurantManagementContext : DbContext
 
     public virtual DbSet<Taikhoan> Taikhoans { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    public virtual DbSet<DatBanBanAn> DatBanBanAns { get; set; }
+
+    public object BanAnDTO { get; internal set; }
+
+	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseSqlServer("Name=DefaultConnection");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -65,35 +70,24 @@ public partial class RestaurantManagementContext : DbContext
             entity.Property(e => e.TenBan)
                 .HasMaxLength(50)
                 .HasColumnName("tenBan");
-            entity.Property(e => e.TrangThai)
-                .HasMaxLength(20)
-                .HasColumnName("trangThai");
+         
 
-            entity.HasMany(d => d.MaBanAns).WithMany(p => p.MaBans)
-                .UsingEntity<Dictionary<string, object>>(
-                    "DatbanBanan",
-                    r => r.HasOne<Datban>().WithMany()
-                        .HasForeignKey("MaBanAn")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__DATBAN_BA__maBan__5812160E"),
-                    l => l.HasOne<Banan>().WithMany()
-                        .HasForeignKey("MaBan")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__DATBAN_BA__maBan__571DF1D5"),
-                    j =>
-                    {
-                        j.HasKey("MaBan", "MaBanAn").HasName("PK__DATBAN_B__241A23E6A4488252");
-                        j.ToTable("DATBAN_BANAN", tb => tb.HasTrigger("trg_CapNhatTrangThaiBan"));
-                        j.IndexerProperty<string>("MaBan")
-                            .HasMaxLength(10)
-                            .IsUnicode(false)
-                            .HasColumnName("maBan");
-                        j.IndexerProperty<string>("MaBanAn")
-                            .HasMaxLength(10)
-                            .IsUnicode(false)
-                            .HasColumnName("maBanAn");
-                    });
         });
+
+        modelBuilder.Entity<Banan>()
+        .HasMany(b => b.DatBanBanAns)
+        .WithOne(dbba => dbba.Banans)
+        .HasForeignKey(dbba => dbba.MaBanAn)
+        .OnDelete(DeleteBehavior.ClientSetNull)
+        .HasConstraintName("FK__DATBAN_BA__maBan__571DF1D5");
+
+        modelBuilder.Entity<Datban>()
+            .HasMany(d => d.DatBanBanAns)
+            .WithOne(dbba => dbba.Datbans)
+            .HasForeignKey(dbba => dbba.MaDatBan)
+            .OnDelete(DeleteBehavior.ClientSetNull)
+            .HasConstraintName("FK__DATBAN_BA__maBan__5812160E");
+
 
         modelBuilder.Entity<Baocaodoanhthu>(entity =>
         {
@@ -325,7 +319,6 @@ public partial class RestaurantManagementContext : DbContext
             entity.Property(e => e.PhuongThucThanhToan)
                 .HasMaxLength(50)
                 .HasColumnName("phuongThucThanhToan");
-            entity.Property(e => e.SoLuongKhach).HasColumnName("soLuongKhach");
             entity.Property(e => e.ThoiGianDat)
                 .HasColumnType("datetime")
                 .HasColumnName("thoiGianDat");
@@ -563,6 +556,20 @@ public partial class RestaurantManagementContext : DbContext
             entity.HasOne(d => d.MaQuyenNavigation).WithMany(p => p.Taikhoans)
                 .HasForeignKey(d => d.MaQuyen)
                 .HasConstraintName("FK__TAIKHOAN__maQuye__33D4B598");
+        });
+
+        modelBuilder.Entity<DatBanBanAn>(entity =>
+        {
+            entity.HasKey(e => new { e.MaDatBan, e.MaBanAn }).HasName("PK__DATBAN_B__241A23E6A4488252");
+            entity.ToTable("DATBANBANAN", tb => tb.HasTrigger("trg_CapNhatTrangThaiBan"));
+            entity.Property(e => e.MaDatBan)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("maBan");
+            entity.Property(e => e.MaBanAn)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("maBanAn");
         });
         modelBuilder.HasSequence("BanAnSeq");
         modelBuilder.HasSequence("DanhGiaSeq");

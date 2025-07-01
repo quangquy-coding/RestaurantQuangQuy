@@ -1,8 +1,17 @@
-import React from "react"
+import React from "react";
 
-import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
-import { Gift, Award, Star, Clock, ChevronRight, Ticket, Info, AlertCircle } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import {
+  Gift,
+  Award,
+  Star,
+  Clock,
+  ChevronRight,
+  Ticket,
+  Info,
+  AlertCircle,
+} from "lucide-react";
 
 // Mock data for user loyalty
 const mockUserLoyalty = {
@@ -65,7 +74,7 @@ const mockUserLoyalty = {
       description: "Đơn hàng #23250",
     },
   ],
-}
+};
 
 // Mock data for rewards
 const mockRewards = [
@@ -125,7 +134,7 @@ const mockRewards = [
     expiryDays: 60,
     category: "food",
   },
-]
+];
 
 // Mock data for tiers
 const mockTiers = [
@@ -133,7 +142,11 @@ const mockTiers = [
     id: 1,
     name: "Đồng",
     pointsRequired: 0,
-    benefits: ["Tích 1 điểm cho mỗi 10.000đ chi tiêu", "Ưu đãi sinh nhật", "Thông báo khuyến mãi sớm"],
+    benefits: [
+      "Tích 1 điểm cho mỗi 10.000đ chi tiêu",
+      "Ưu đãi sinh nhật",
+      "Thông báo khuyến mãi sớm",
+    ],
     color: "bg-amber-700",
   },
   {
@@ -176,28 +189,28 @@ const mockTiers = [
     ],
     color: "bg-blue-500",
   },
-]
+];
 
 const LoyaltyProgramPage = () => {
-  const [userLoyalty, setUserLoyalty] = useState(null)
-  const [rewards, setRewards] = useState([])
-  const [tiers, setTiers] = useState([])
-  const [activeTab, setActiveTab] = useState("overview")
-  const [selectedReward, setSelectedReward] = useState(null)
-  const [showRedeemModal, setShowRedeemModal] = useState(false)
-  const [redeemSuccess, setRedeemSuccess] = useState(false)
+  const [userLoyalty, setUserLoyalty] = useState(null);
+  const [rewards, setRewards] = useState([]);
+  const [tiers, setTiers] = useState([]);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [selectedReward, setSelectedReward] = useState(null);
+  const [showRedeemModal, setShowRedeemModal] = useState(false);
+  const [redeemSuccess, setRedeemSuccess] = useState(false);
 
   useEffect(() => {
     // In a real app, you would fetch this data from an API
-    setUserLoyalty(mockUserLoyalty)
-    setRewards(mockRewards)
-    setTiers(mockTiers)
-  }, [])
+    setUserLoyalty(mockUserLoyalty);
+    setRewards(mockRewards);
+    setTiers(mockTiers);
+  }, []);
 
   const handleRedeemReward = (reward) => {
-    setSelectedReward(reward)
-    setShowRedeemModal(true)
-  }
+    setSelectedReward(reward);
+    setShowRedeemModal(true);
+  };
 
   const confirmRedemption = () => {
     // In a real app, you would send a request to the API to redeem the reward
@@ -216,49 +229,54 @@ const LoyaltyProgramPage = () => {
         },
         ...userLoyalty.history,
       ],
-    })
+    });
 
-    setRedeemSuccess(true)
+    setRedeemSuccess(true);
 
     // Reset after 3 seconds
     setTimeout(() => {
-      setShowRedeemModal(false)
-      setRedeemSuccess(false)
-      setSelectedReward(null)
-    }, 3000)
-  }
+      setShowRedeemModal(false);
+      setRedeemSuccess(false);
+      setSelectedReward(null);
+    }, 3000);
+  };
 
   const formatDate = (dateString) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return new Intl.DateTimeFormat("vi-VN", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
-    }).format(date)
-  }
+    }).format(date);
+  };
 
   if (!userLoyalty) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
-    )
+    );
   }
 
   // Find current tier and next tier
-  const currentTier = tiers.find((tier) => tier.name === userLoyalty.tier)
-  const nextTierIndex = tiers.findIndex((tier) => tier.name === userLoyalty.tier) + 1
-  const nextTier = nextTierIndex < tiers.length ? tiers[nextTierIndex] : null
+  const currentTier = tiers.find((tier) => tier.name === userLoyalty.tier);
+  const nextTierIndex =
+    tiers.findIndex((tier) => tier.name === userLoyalty.tier) + 1;
+  const nextTier = nextTierIndex < tiers.length ? tiers[nextTierIndex] : null;
 
   // Calculate progress percentage to next tier
   const progressPercentage = nextTier
-    ? ((userLoyalty.points - currentTier.pointsRequired) / (nextTier.pointsRequired - currentTier.pointsRequired)) * 100
-    : 100
+    ? ((userLoyalty.points - currentTier.pointsRequired) /
+        (nextTier.pointsRequired - currentTier.pointsRequired)) *
+      100
+    : 100;
 
   return (
     <div className="min-h-screen bg-red-50 py-8">
       <div className="max-w-5xl mx-auto px-4">
-        <h1 className="text-3xl font-bold mb-8">Chương trình khách hàng thân thiết</h1>
+        <h1 className="text-3xl font-bold mb-8">
+          Chương trình khách hàng thân thiết
+        </h1>
 
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow-md mb-6">
@@ -296,7 +314,9 @@ const LoyaltyProgramPage = () => {
             <button
               onClick={() => setActiveTab("tiers")}
               className={`px-6 py-3 text-sm font-medium ${
-                activeTab === "tiers" ? "border-b-2 border-blue-600 text-blue-600" : "text-gray-500 hover:text-gray-700"
+                activeTab === "tiers"
+                  ? "border-b-2 border-blue-600 text-blue-600"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               Hạng thành viên
@@ -312,16 +332,25 @@ const LoyaltyProgramPage = () => {
               <div className="p-6">
                 <div className="flex flex-row md:items-center md:justify-between">
                   <div>
-                    <h2 className="text-xl font-bold mb-1">{userLoyalty.name}</h2>
+                    <h2 className="text-xl font-bold mb-1">
+                      {userLoyalty.name}
+                    </h2>
                     <div className="flex items-center">
-                      <div className={`h-4 w-4 rounded-full ${currentTier.color} mr-2`}></div>
-                      <span className="text-sm font-medium">Hạng {userLoyalty.tier}</span>
+                      <div
+                        className={`h-4 w-4 rounded-full ${currentTier.color} mr-2`}
+                      ></div>
+                      <span className="text-sm font-medium">
+                        Hạng {userLoyalty.tier}
+                      </span>
                     </div>
                   </div>
                   <div className="mt-4 md:mt-0">
-                    <div className="text-sm text-gray-500">Thành viên từ {formatDate(userLoyalty.memberSince)}</div>
                     <div className="text-sm text-gray-500">
-                      Điểm tích lũy hết hạn: {formatDate(userLoyalty.expiryDate)}
+                      Thành viên từ {formatDate(userLoyalty.memberSince)}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Điểm tích lũy hết hạn:{" "}
+                      {formatDate(userLoyalty.expiryDate)}
                     </div>
                   </div>
                 </div>
@@ -331,18 +360,22 @@ const LoyaltyProgramPage = () => {
                 <div className="flex flex-row md:items-center md:justify-between mb-4">
                   <div>
                     <div className="text-sm text-gray-500">Điểm hiện tại</div>
-                    <div className="text-3xl font-bold">{userLoyalty.points}</div>
+                    <div className="text-3xl font-bold">
+                      {userLoyalty.points}
+                    </div>
                   </div>
                   <div>
                     <div className="text-sm text-gray-500">Ưu đãi khả dụng</div>
-                    <div className="text-3xl font-bold">{userLoyalty.availableRewards}</div>
+                    <div className="text-3xl font-bold">
+                      {userLoyalty.availableRewards}
+                    </div>
                   </div>
                   <div>
                     <Link
                       to="/loyalty/rewards"
                       onClick={(e) => {
-                        e.preventDefault()
-                        setActiveTab("rewards")
+                        e.preventDefault();
+                        setActiveTab("rewards");
                       }}
                       className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                     >
@@ -355,7 +388,9 @@ const LoyaltyProgramPage = () => {
                 {nextTier && (
                   <div>
                     <div className="flex justify-between mb-1">
-                      <span className="text-sm font-medium">Tiến độ lên hạng {nextTier.name}</span>
+                      <span className="text-sm font-medium">
+                        Tiến độ lên hạng {nextTier.name}
+                      </span>
                       <span className="text-sm text-gray-500">
                         {userLoyalty.points}/{nextTier.pointsRequired} điểm
                       </span>
@@ -363,11 +398,14 @@ const LoyaltyProgramPage = () => {
                     <div className="w-full bg-gray-200 rounded-full h-2.5">
                       <div
                         className="bg-blue-600 h-2.5 rounded-full"
-                        style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+                        style={{
+                          width: `${Math.min(progressPercentage, 100)}%`,
+                        }}
                       ></div>
                     </div>
                     <div className="mt-2 text-sm text-gray-500">
-                      Cần thêm {userLoyalty.pointsToNextTier} điểm để lên hạng {nextTier.name}
+                      Cần thêm {userLoyalty.pointsToNextTier} điểm để lên hạng{" "}
+                      {nextTier.name}
                     </div>
                   </div>
                 )}
@@ -384,20 +422,34 @@ const LoyaltyProgramPage = () => {
                   <div key={item.id} className="p-4 flex items-start">
                     <div
                       className={`rounded-full p-2 mr-4 ${
-                        item.type === "earn" ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600"
+                        item.type === "earn"
+                          ? "bg-green-100 text-green-600"
+                          : "bg-blue-100 text-blue-600"
                       }`}
                     >
-                      {item.type === "earn" ? <Star className="h-5 w-5" /> : <Gift className="h-5 w-5" />}
+                      {item.type === "earn" ? (
+                        <Star className="h-5 w-5" />
+                      ) : (
+                        <Gift className="h-5 w-5" />
+                      )}
                     </div>
                     <div className="flex-1">
                       <div className="flex justify-between">
                         <div className="font-medium">{item.description}</div>
-                        <div className={item.type === "earn" ? "text-green-600" : "text-blue-600"}>
+                        <div
+                          className={
+                            item.type === "earn"
+                              ? "text-green-600"
+                              : "text-blue-600"
+                          }
+                        >
                           {item.type === "earn" ? "+" : ""}
                           {item.points} điểm
                         </div>
                       </div>
-                      <div className="text-sm text-gray-500">{formatDate(item.date)}</div>
+                      <div className="text-sm text-gray-500">
+                        {formatDate(item.date)}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -451,21 +503,25 @@ const LoyaltyProgramPage = () => {
                 <div className="flex justify-between items-center">
                   <h2 className="text-lg font-semibold">Đổi ưu đãi</h2>
                   <div className="text-sm font-medium">
-                    Điểm hiện tại: <span className="text-blue-600">{userLoyalty.points}</span>
+                    Điểm hiện tại:{" "}
+                    <span className="text-blue-600">{userLoyalty.points}</span>
                   </div>
                 </div>
               </div>
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {rewards.map((reward) => (
-                    <div key={reward.id} className="border rounded-lg overflow-hidden">
+                    <div
+                      key={reward.id}
+                      className="border rounded-lg overflow-hidden"
+                    >
                       <div
                         className={`p-4 ${
                           reward.category === "discount"
                             ? "bg-blue-50"
                             : reward.category === "food"
-                              ? "bg-green-50"
-                              : "bg-purple-50"
+                            ? "bg-green-50"
+                            : "bg-purple-50"
                         }`}
                       >
                         <div
@@ -473,8 +529,8 @@ const LoyaltyProgramPage = () => {
                             reward.category === "discount"
                               ? "bg-blue-100 text-blue-600"
                               : reward.category === "food"
-                                ? "bg-green-100 text-green-600"
-                                : "bg-purple-100 text-purple-600"
+                              ? "bg-green-100 text-green-600"
+                              : "bg-purple-100 text-purple-600"
                           }`}
                         >
                           {reward.category === "discount" ? (
@@ -486,7 +542,9 @@ const LoyaltyProgramPage = () => {
                           )}
                         </div>
                         <h3 className="font-bold mb-1">{reward.name}</h3>
-                        <p className="text-sm text-gray-600 mb-2">{reward.description}</p>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {reward.description}
+                        </p>
                         <div className="flex items-center text-sm text-gray-500">
                           <Clock className="h-4 w-4 mr-1" />
                           Có hiệu lực trong {reward.expiryDays} ngày
@@ -525,20 +583,34 @@ const LoyaltyProgramPage = () => {
                 <div key={item.id} className="p-4 flex items-start">
                   <div
                     className={`rounded-full p-2 mr-4 ${
-                      item.type === "earn" ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600"
+                      item.type === "earn"
+                        ? "bg-green-100 text-green-600"
+                        : "bg-blue-100 text-blue-600"
                     }`}
                   >
-                    {item.type === "earn" ? <Star className="h-5 w-5" /> : <Gift className="h-5 w-5" />}
+                    {item.type === "earn" ? (
+                      <Star className="h-5 w-5" />
+                    ) : (
+                      <Gift className="h-5 w-5" />
+                    )}
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between">
                       <div className="font-medium">{item.description}</div>
-                      <div className={item.type === "earn" ? "text-green-600" : "text-blue-600"}>
+                      <div
+                        className={
+                          item.type === "earn"
+                            ? "text-green-600"
+                            : "text-blue-600"
+                        }
+                      >
                         {item.type === "earn" ? "+" : ""}
                         {item.points} điểm
                       </div>
                     </div>
-                    <div className="text-sm text-gray-500">{formatDate(item.date)}</div>
+                    <div className="text-sm text-gray-500">
+                      {formatDate(item.date)}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -563,16 +635,21 @@ const LoyaltyProgramPage = () => {
                           className={`w-8 h-8 rounded-full flex items-center justify-center z-10 ${
                             tier.name === userLoyalty.tier
                               ? "bg-blue-600 text-white"
-                              : index < tiers.findIndex((t) => t.name === userLoyalty.tier)
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-200 text-gray-500"
+                              : index <
+                                tiers.findIndex(
+                                  (t) => t.name === userLoyalty.tier
+                                )
+                              ? "bg-blue-600 text-white"
+                              : "bg-gray-200 text-gray-500"
                           }`}
                         >
                           {index + 1}
                         </div>
                         <div className="mt-2 text-center">
                           <div className="font-medium">{tier.name}</div>
-                          <div className="text-sm text-gray-500">{tier.pointsRequired} điểm</div>
+                          <div className="text-sm text-gray-500">
+                            {tier.pointsRequired} điểm
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -584,12 +661,16 @@ const LoyaltyProgramPage = () => {
                     <div
                       key={tier.id}
                       className={`border rounded-lg overflow-hidden ${
-                        tier.name === userLoyalty.tier ? "border-blue-500 bg-blue-50" : ""
+                        tier.name === userLoyalty.tier
+                          ? "border-blue-500 bg-blue-50"
+                          : ""
                       }`}
                     >
                       <div className="p-4 flex items-center justify-between border-b">
                         <div className="flex items-center">
-                          <div className={`w-6 h-6 rounded-full ${tier.color} mr-3`}></div>
+                          <div
+                            className={`w-6 h-6 rounded-full ${tier.color} mr-3`}
+                          ></div>
                           <h3 className="font-bold">Hạng {tier.name}</h3>
                         </div>
                         {tier.name === userLoyalty.tier && (
@@ -620,11 +701,14 @@ const LoyaltyProgramPage = () => {
               <div className="flex">
                 <Info className="h-5 w-5 text-blue-600 mr-3 flex-shrink-0" />
                 <div>
-                  <h3 className="font-medium text-blue-800 mb-1">Làm thế nào để lên hạng?</h3>
+                  <h3 className="font-medium text-blue-800 mb-1">
+                    Làm thế nào để lên hạng?
+                  </h3>
                   <p className="text-sm text-blue-700">
-                    Bạn sẽ được nâng hạng khi đạt đủ số điểm yêu cầu. Hạng thành viên của bạn sẽ được duy trì trong 12
-                    tháng. Sau đó, hạng thành viên sẽ được đánh giá lại dựa trên số điểm tích lũy trong 12 tháng gần
-                    nhất.
+                    Bạn sẽ được nâng hạng khi đạt đủ số điểm yêu cầu. Hạng thành
+                    viên của bạn sẽ được duy trì trong 12 tháng. Sau đó, hạng
+                    thành viên sẽ được đánh giá lại dựa trên số điểm tích lũy
+                    trong 12 tháng gần nhất.
                   </p>
                 </div>
               </div>
@@ -641,18 +725,25 @@ const LoyaltyProgramPage = () => {
                   <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
                     <Award className="h-6 w-6 text-green-600" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Đổi ưu đãi thành công!</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Đổi ưu đãi thành công!
+                  </h3>
                   <p className="text-sm text-gray-500 mb-4">
-                    Bạn đã đổi thành công ưu đãi "{selectedReward.name}". Ưu đãi sẽ được gửi đến email của bạn.
+                    Bạn đã đổi thành công ưu đãi "{selectedReward.name}". Ưu đãi
+                    sẽ được gửi đến email của bạn.
                   </p>
                   <div className="bg-gray-50 p-4 rounded-md mb-4">
                     <div className="text-sm font-medium">Điểm còn lại</div>
-                    <div className="text-2xl font-bold">{userLoyalty.points - selectedReward.points}</div>
+                    <div className="text-2xl font-bold">
+                      {userLoyalty.points - selectedReward.points}
+                    </div>
                   </div>
                 </div>
               ) : (
                 <>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Xác nhận đổi ưu đãi</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                    Xác nhận đổi ưu đãi
+                  </h3>
                   <div className="bg-gray-50 p-4 rounded-md mb-4">
                     <div className="flex items-center mb-3">
                       <div
@@ -660,8 +751,8 @@ const LoyaltyProgramPage = () => {
                           selectedReward.category === "discount"
                             ? "bg-blue-100 text-blue-600"
                             : selectedReward.category === "food"
-                              ? "bg-green-100 text-green-600"
-                              : "bg-purple-100 text-purple-600"
+                            ? "bg-green-100 text-green-600"
+                            : "bg-purple-100 text-purple-600"
                         }`}
                       >
                         {selectedReward.category === "discount" ? (
@@ -674,20 +765,28 @@ const LoyaltyProgramPage = () => {
                       </div>
                       <div>
                         <h4 className="font-medium">{selectedReward.name}</h4>
-                        <p className="text-sm text-gray-500">{selectedReward.description}</p>
+                        <p className="text-sm text-gray-500">
+                          {selectedReward.description}
+                        </p>
                       </div>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Điểm cần thiết:</span>
-                      <span className="font-medium">{selectedReward.points} điểm</span>
+                      <span className="font-medium">
+                        {selectedReward.points} điểm
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Điểm hiện tại:</span>
-                      <span className="font-medium">{userLoyalty.points} điểm</span>
+                      <span className="font-medium">
+                        {userLoyalty.points} điểm
+                      </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Điểm còn lại:</span>
-                      <span className="font-medium">{userLoyalty.points - selectedReward.points} điểm</span>
+                      <span className="font-medium">
+                        {userLoyalty.points - selectedReward.points} điểm
+                      </span>
                     </div>
                   </div>
 
@@ -695,8 +794,9 @@ const LoyaltyProgramPage = () => {
                     <div className="flex">
                       <AlertCircle className="h-5 w-5 text-yellow-600 mr-2 flex-shrink-0" />
                       <p className="text-sm text-yellow-700">
-                        Ưu đãi sẽ có hiệu lực trong {selectedReward.expiryDays} ngày kể từ ngày đổi. Bạn sẽ nhận được
-                        email xác nhận sau khi đổi ưu đãi.
+                        Ưu đãi sẽ có hiệu lực trong {selectedReward.expiryDays}{" "}
+                        ngày kể từ ngày đổi. Bạn sẽ nhận được email xác nhận sau
+                        khi đổi ưu đãi.
                       </p>
                     </div>
                   </div>
@@ -722,7 +822,7 @@ const LoyaltyProgramPage = () => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default LoyaltyProgramPage;

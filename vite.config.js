@@ -7,7 +7,9 @@ import React from 'react'
 // https://vite.dev/config/
 
 export default defineConfig({
- 
+  optimizeDeps: {
+    include: ['@react-oauth/google','sweetalert2'],
+  },
   plugins: [
     tailwindcss(),],
     autoprefixer: {},
